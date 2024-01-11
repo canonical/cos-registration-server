@@ -31,7 +31,7 @@ def read_requirements(path):
 
 setup(
     name="cos_registration_server",
-    version=read("cos_registration_server", "VERSION"),
+    version=read("cos_registration_server/cos_registration_server", "VERSION"),
     description="Awesome cos_registration_server created by ubuntu-robotics",
     url="https://github.com/ubuntu-robotics/cos-registration-server/",
     long_description=read("README.md"),
@@ -39,8 +39,5 @@ setup(
     author="ubuntu-robotics",
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
-    entry_points={
-        "console_scripts": ["cos-registration-server = cos_registration_server.__main__:main"]
-    },
     extras_require={"test": read_requirements("requirements-test.txt")},
 )
