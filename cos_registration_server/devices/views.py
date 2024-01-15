@@ -1,6 +1,5 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.template import loader
 from django.views import generic
 
 from .models import Device
@@ -18,7 +17,7 @@ def device(request, uid):
     try:
         device = Device.objects.get(uid=uid)
     except Device.DoesNotExist:
-        return HttpResponse(f"devices not found")
+        return HttpResponse(f"device {uid} not found")
     base_url = request.META["HTTP_HOST"]
     grafana_folder = base_url + "/cos-grafana/f/" + uid + "/"
     foxglove = (
