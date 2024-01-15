@@ -1,0 +1,10 @@
+{% if devices_list %}
+    <p>Devices list:</p>
+    <ul>
+    {% for device in devices_list %}
+        <li><a href="{% url 'devices:device' device.uid %}">{{ device.uid }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No devices are available.</p>
+{% endif %}
