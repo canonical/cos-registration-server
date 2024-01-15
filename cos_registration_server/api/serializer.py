@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from devices.models import Device
+from rest_framework import serializers
 
 
 class DeviceSerializer(serializers.Serializer):
@@ -11,6 +11,6 @@ class DeviceSerializer(serializers.Serializer):
         return Device.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        instance.address = validated_data.get('address', instance.address)
+        instance.address = validated_data.get("address", instance.address)
         instance.save()
         return instance
