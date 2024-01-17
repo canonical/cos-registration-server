@@ -15,7 +15,6 @@ def devices(request):
         data = JSONParser().parse(request)
         serialized = DeviceSerializer(data=data)
         if serialized.is_valid():
-            print(f"HEEEEERRRRRR: {serialized.validated_data['uid']}")
             if Device.objects.filter(
                 uid=serialized.validated_data["uid"]
             ).exists():
