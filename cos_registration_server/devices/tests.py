@@ -88,7 +88,7 @@ class DeviceViewTests(TestCase):
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%b. %d, %Y, %I')}",
+            f" {device.creation_date.strftime('%b. %d, %Y, %-I')}",
         )
         self.assertContains(
             response, self.base_url + "/cos-grafana/f/" + device.uid + "/"
