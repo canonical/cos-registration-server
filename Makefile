@@ -23,6 +23,10 @@ install:          ## Install the project in dev mode.
 	@echo "Don't forget to run 'make virtualenv' if you got errors."
 	$(ENV_PREFIX)pip install -e .[test]
 
+.PHONY: runserver
+runserver:          ## Django run server.
+	$(ENV_PREFIX)python3 cos_registration_server/manage.py runserver
+
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
 	$(ENV_PREFIX)isort cos_registration_server/
