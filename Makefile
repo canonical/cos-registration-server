@@ -27,6 +27,11 @@ install:          ## Install the project in dev mode.
 runserver:          ## Django run server.
 	$(ENV_PREFIX)python3 cos_registration_server/manage.py runserver
 
+.PHONY: secretkey
+runserver:          ## Generate the dajngo secret key
+	$(ENV_PREFIX)python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+
+
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
 	$(ENV_PREFIX)isort cos_registration_server/

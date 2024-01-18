@@ -137,6 +137,13 @@ requiring to access the device database.
 </details>
 
 ## Installation
+First we must generate a secret key for our django to sign data.
+The secret key must be a large random value and it must be kept secret.
+
+A secret key can be generated with the following command:
+```
+export SECRET_KEY_DJANGO=$(make secretkey)
+```
 
 `make install`
 
