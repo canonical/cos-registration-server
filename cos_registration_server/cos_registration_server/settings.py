@@ -78,10 +78,16 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# to be able to store the database in a juju storage
+try:
+    database_base_dir = Path(os.environ["DATABASE_BASE_DIR_DJANGO"])
+except KeyError:
+    database_base_dir = BASE_DIR
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": database_base_dir / "db.sqlite3",
     }
 }
 

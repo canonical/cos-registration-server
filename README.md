@@ -144,9 +144,13 @@ A secret key can be generated with the following command:
 
 `export SECRET_KEY_DJANGO=$(make secretkey)`
 
-Additionally, we can expand the allowed hosts list by defining `ALLOWED_HOST_DJANGO`:
+We can expand the allowed hosts list:
 
 `export ALLOWED_HOST_DJANGO="cos-registration-server.com"`
+
+Additionally, we can provide a directory for the database:
+
+`export DATABASE_BASE_DIR_DJANGO="/var/lib"`
 
 `make install`
 
