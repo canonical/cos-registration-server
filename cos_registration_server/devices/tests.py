@@ -71,7 +71,7 @@ class DevicesViewTests(TestCase):
 class DeviceViewTests(TestCase):
     def setUp(self):
         # custom client with META HTTP_HOST specified
-        self.base_url = "192.168.1.2:8080"
+        self.base_url = "127.0.0.1:8080"
         self.client = Client(HTTP_HOST=self.base_url)
 
     def test_unlisted_device(self):

@@ -141,9 +141,12 @@ First we must generate a secret key for our django to sign data.
 The secret key must be a large random value and it must be kept secret.
 
 A secret key can be generated with the following command:
-```
-export SECRET_KEY_DJANGO=$(make secretkey)
-```
+
+`export SECRET_KEY_DJANGO=$(make secretkey)`
+
+Additionally, we can expand the allowed hosts list by defining `ALLOWED_HOST_DJANGO`:
+
+`export ALLOWED_HOST_DJANGO="cos-registration-server.com"`
 
 `make install`
 
