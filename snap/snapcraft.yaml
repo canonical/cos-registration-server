@@ -30,3 +30,6 @@ apps:
     plugs:
       - network
       - network-bind
+
+  create-super-user:
+    command: usr/bin/create_super_user.bash
