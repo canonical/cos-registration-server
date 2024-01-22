@@ -17,7 +17,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
-  SECRET_KEY = os.environ["SECRET_KEY_DJANGO"]
+    SECRET_KEY = os.environ["SECRET_KEY_DJANGO"]
 except KeyError:
     pass
 
