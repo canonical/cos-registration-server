@@ -28,7 +28,7 @@ runserver:          ## Django run server.
 	$(ENV_PREFIX)python3 cos_registration_server/manage.py runserver
 
 .PHONY: secretkey
-runserver:          ## Generate the dajngo secret key
+secretkey:          ## Generate the django secret key.
 	$(ENV_PREFIX)python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 
 
@@ -80,9 +80,9 @@ virtualenv:       ## Create a virtual environment.
 release:          ## Create a new tag for release.
 	@echo "WARNING: This operation will create s version tag and push to github"
 	@read -p "Version? (provide the next x.y.z semver) : " TAG
-	@echo "$${TAG}" > cos_registration_server/VERSION
+	@echo "$${TAG}" > cos_registration_server/cos_registration_server/VERSION
 	@$(ENV_PREFIX)gitchangelog > HISTORY.md
-	@git add cos_registration_server/VERSION HISTORY.md
+	@git add cos_registration_server/cos_registration_server/VERSION HISTORY.md
 	@git commit -m "release: version $${TAG} 🚀"
 	@echo "creating git tag : $${TAG}"
 	@git tag $${TAG}
