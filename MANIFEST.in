@@ -1,5 +1,4 @@
 include LICENSE
 include HISTORY.md
-include Containerfile
-graft tests
 graft cos_registration_server
+recursive-include cos_registration_server/devices/templates *
