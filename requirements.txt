@@ -2,3 +2,4 @@ django
 djangorestframework
 daphne
 whitenoise
+tzdata
