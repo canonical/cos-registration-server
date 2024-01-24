@@ -1,0 +1,37 @@
+name: cos-registration-server
+summary: The COS registration server
+description: |
+        COS registation server with production server
+        and static fileserver
+version: '0.1'
+license: GPL-3.0
+
+base: ubuntu@22.04
+build-base: ubuntu@22.04
+platforms:
+  amd64:
+
+
+services:
+  cos-registration-server:
+    override: replace
+    startup: enabled
+    command: /usr/bin/launcher.bash
+
+# Parts section
+parts:
+  cos-registration-server:
+    plugin: python
+    source: .
+    python-packages: ["django"]
+    stage-packages: ["python3", "python3-venv"]
+    override-build: |
+      craftctl default
+      cd $CRAFT_PART_INSTALL/lib/python3.10/site-packages/cos_registration_server
+      PYTHONPATH=../ python3 manage.py collectstatic --no-input
+
+  local:
+    plugin: dump
+    source: rock/local
+    organize:
+      '*.bash' : usr/bin/
