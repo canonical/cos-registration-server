@@ -145,3 +145,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_SECURE = True
+
+# To keep the reverse proxy prefix when forwarding.
+USE_X_FORWARDED_HOST = True
