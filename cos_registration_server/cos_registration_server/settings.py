@@ -148,3 +148,6 @@ CSRF_COOKIE_SECURE = True
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
+
+# Enable script name enforcement.
+FORCE_SCRIPT_NAME = os.getenv("FORCE_SCRIPT_NAME_DJANGO", None)
