@@ -146,7 +146,13 @@ SESSION_COOKIE_SECURE = True
 
 CSRF_COOKIE_SECURE = True
 
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS_DJANGO", [])
+CSRF_TRUSTED_ORIGINS = []
+try:
+    additional_csrf_trusted_origins = os.getenv("CSRF_TRUSTED_ORIGINS_DJANGO")
+    CSRF_TRUSTED_ORIGINS.append(additional_csrf_trusted_origins)
+except KeyError:
+    pass
+
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
