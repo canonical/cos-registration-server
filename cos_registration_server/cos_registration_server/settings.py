@@ -36,6 +36,7 @@ except KeyError:
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "api.apps.ApiConfig",
     "devices.apps.DevicesConfig",
     "django.contrib.admin",
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -147,12 +149,12 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 CSRF_TRUSTED_ORIGINS = []
-try:
-    additional_csrf_trusted_origins = os.getenv("CSRF_TRUSTED_ORIGINS_DJANGO")
-    CSRF_TRUSTED_ORIGINS.append(additional_csrf_trusted_origins)
-except KeyError:
-    pass
+CORS_ALLOWED_ORIGINS = []
+for allowed_host in ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS.append(f"http://{allowed_host}:8000")
+    CORS_ALLOWED_ORIGINS.append(f"http://{allowed_host}:8000")
 
+CORS_ALLOW_ALL_ORIGINS = False
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
