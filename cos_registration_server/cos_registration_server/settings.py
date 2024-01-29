@@ -36,7 +36,6 @@ except KeyError:
 # Application definition
 
 INSTALLED_APPS = [
-    "corsheaders",
     "api.apps.ApiConfig",
     "devices.apps.DevicesConfig",
     "django.contrib.admin",

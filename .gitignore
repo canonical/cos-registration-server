@@ -135,3 +135,5 @@ dmypy.json
 *.snap
 # rock
 *.rock
+# static files
+cos_registration_server/static/
