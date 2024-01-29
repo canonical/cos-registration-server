@@ -147,17 +147,17 @@ WHITENOISE_STATIC_PREFIX = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
 
-CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 
-CSRF_TRUSTED_ORIGINS = []
-CORS_ALLOWED_ORIGINS = []
-for allowed_host in ALLOWED_HOSTS:
-    CSRF_TRUSTED_ORIGINS.append(f"http://{allowed_host}:8000")
-    CORS_ALLOWED_ORIGINS.append(f"http://{allowed_host}:8000")
+# CSRF_TRUSTED_ORIGINS = []
+# CORS_ALLOWED_ORIGINS = []
+# for allowed_host in ALLOWED_HOSTS:
+#     CSRF_TRUSTED_ORIGINS.append(f"http://{allowed_host}:8000")
+#     CORS_ALLOWED_ORIGINS.append(f"http://{allowed_host}:8000")
 
-CORS_ALLOW_ALL_ORIGINS = False
+#CORS_ALLOW_ALL_ORIGINS = True
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
