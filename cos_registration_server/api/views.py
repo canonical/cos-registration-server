@@ -13,12 +13,6 @@ def devices(request):
         data = JSONParser().parse(request)
         serialized = DeviceSerializer(data=data)
         if serialized.is_valid():
-            if Device.objects.filter(
-                uid=serialized.validated_data["uid"]
-            ).exists():
-                return JsonResponse(
-                    {"error": "Device uid already exists"}, status=409
-                )
             serialized.save()
             return JsonResponse(serialized.data, status=201)
         return JsonResponse(serialized.errors, status=400)

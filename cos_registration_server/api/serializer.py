@@ -1,9 +1,13 @@
 from devices.models import Device
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 
 class DeviceSerializer(serializers.Serializer):
-    uid = serializers.CharField(required=True)
+    uid = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=Device.objects.all())],
+    )
     creation_date = serializers.DateTimeField(read_only=True)
     address = serializers.IPAddressField(required=True)
 
