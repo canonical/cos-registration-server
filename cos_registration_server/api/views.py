@@ -6,7 +6,9 @@ from rest_framework.parsers import JSONParser
 
 def devices(request):
     if request.method == "GET":
-        devices = Device.objects.all()
+        devices = Device.objects.all().values(
+            "uid", "creation_date", "address"
+        )
         serialized = DeviceSerializer(devices, many=True)
         return JsonResponse(serialized.data, safe=False)
     elif request.method == "POST":
