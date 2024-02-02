@@ -6,7 +6,7 @@ from django.db.models.constraints import UniqueConstraint
 
 
 def default_dashboards_json_field():
-    return "[]"
+    return []
 
 
 class Device(models.Model):

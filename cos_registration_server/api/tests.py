@@ -104,7 +104,7 @@ class DevicesViewTests(APITestCase):
         self.assertContains(
             response,
             '{"grafana_dashboards": ["gafana_dashboards is not a supported '
-            'format (list).',
+            "format (list).",
             status_code=400,
         )
 
