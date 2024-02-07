@@ -6,19 +6,15 @@ from django.utils import timezone
 
 from .models import Device, default_dashboards_json_field
 
-SIMPLE_GRAFANA_DASHBOARD = """{
-  "dashboard": {
-    "id": null,
-    "uid": null,
+SIMPLE_GRAFANA_DASHBOARD = {
+    "id": None,
+    "uid": None,
     "title": "Production Overview",
-    "tags": [ "templated" ],
+    "tags": ["templated"],
     "timezone": "browser",
     "schemaVersion": 16,
-    "refresh": "25s"
-  },
-  "message": "Made changes to xyz",
-  "overwrite": false
-}"""
+    "refresh": "25s",
+}
 
 
 class DeviceModelTests(TestCase):
@@ -43,7 +39,7 @@ class DeviceModelTests(TestCase):
         self.assertEqual(str(device), "hello-123")
 
     def test_device_grafana_dashboards(self):
-        custom_grafana_dashboards = eval(default_dashboards_json_field())
+        custom_grafana_dashboards = default_dashboards_json_field()
         custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
         device = Device(
             uid="hello-123",
@@ -52,7 +48,7 @@ class DeviceModelTests(TestCase):
             grafana_dashboards=custom_grafana_dashboards,
         )
         self.assertEqual(
-            str(device.grafana_dashboards[0]),
+            device.grafana_dashboards[0],
             SIMPLE_GRAFANA_DASHBOARD,
         )
 

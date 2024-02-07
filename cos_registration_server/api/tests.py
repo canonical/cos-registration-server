@@ -1,28 +1,29 @@
 import json
+from os import mkdir
+from shutil import rmtree
 
 from devices.models import Device, default_dashboards_json_field
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-SIMPLE_GRAFANA_DASHBOARD = """{
-  "dashboard": {
-    "id": null,
-    "uid": null,
+SIMPLE_GRAFANA_DASHBOARD = {
+    "id": None,
+    "uid": None,
     "title": "Production Overview",
-    "tags": [ "templated" ],
+    "tags": ["templated"],
     "timezone": "browser",
     "schemaVersion": 16,
-    "refresh": "25s"
-  },
-  "message": "Made changes to xyz",
-  "overwrite": false
-}"""
+    "refresh": "25s",
+}
 
 
 class DevicesViewTests(APITestCase):
     def setUp(self):
         self.url = reverse("api:devices")
+        self.grafana_dashboards_path = "grafana_dashboards"
+        rmtree(self.grafana_dashboards_path, ignore_errors=True)
+        mkdir(self.grafana_dashboards_path)
 
     def create_device(self, **fields):
         data = {}
@@ -38,7 +39,7 @@ class DevicesViewTests(APITestCase):
     def test_create_device(self):
         uid = "robot-1"
         address = "192.168.0.1"
-        custom_grafana_dashboards = eval(default_dashboards_json_field())
+        custom_grafana_dashboards = default_dashboards_json_field()
         custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
         response = self.create_device(
             uid=uid,
@@ -176,6 +177,10 @@ class DeviceViewTests(APITestCase):
         response = self.client.patch(self.url(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
+        # necessary since patching returns the modified title
+        SIMPLE_GRAFANA_DASHBOARD[
+            "title"
+        ] = f'{uid}-{SIMPLE_GRAFANA_DASHBOARD["title"]}'
         self.assertEqual(
             content_json["grafana_dashboards"][0],
             SIMPLE_GRAFANA_DASHBOARD,
