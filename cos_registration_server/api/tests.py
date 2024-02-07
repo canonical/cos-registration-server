@@ -4,6 +4,8 @@ from pathlib import Path
 from shutil import rmtree
 
 from devices.models import Device, default_dashboards_json_field
+from django.core.management import call_command
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -255,3 +257,45 @@ class DeviceViewTests(APITestCase):
             )
         )
 
+
+class CommandsTestCase(TestCase):
+    def setUp(self):
+        self.grafana_dashboards_path = Path("grafana_dashboards")
+        rmtree(self.grafana_dashboards_path, ignore_errors=True)
+        mkdir(self.grafana_dashboards_path)
+        self.simple_grafana_dashboard = {
+            "id": None,
+            "uid": None,
+            "title": "Production Overview",
+            "tags": ["templated"],
+            "timezone": "browser",
+            "schemaVersion": 16,
+            "refresh": "25s",
+        }
+
+    def test_update_all_dashboards(self):
+        robot_1 = Device(
+            uid="robot-1",
+            address="127.0.0.1",
+            grafana_dashboards=[self.simple_grafana_dashboard],
+        )
+        robot_1.save()
+        robot_2 = Device(
+            uid="robot-2",
+            address="127.0.0.1",
+            grafana_dashboards=[self.simple_grafana_dashboard],
+        )
+        robot_2.save()
+        call_command("update_all_dashboards")
+        self.assertTrue(
+            path.isfile(
+                self.grafana_dashboards_path
+                / "robot-1-Production_Overview.json"
+            )
+        )
+        self.assertTrue(
+            path.isfile(
+                self.grafana_dashboards_path
+                / "robot-2-Production_Overview.json"
+            )
+        )
