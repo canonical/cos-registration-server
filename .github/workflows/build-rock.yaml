@@ -1,4 +1,4 @@
-name: Pull Requests
+name: Build rock on PR
 
 on:
   workflow_dispatch: {}
