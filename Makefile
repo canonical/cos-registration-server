@@ -39,7 +39,7 @@ fmt:              ## Format code using black & isort.
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
-	$(ENV_PREFIX)flake8 cos_registration_server/
+	$(ENV_PREFIX)flake8 cos_registration_server/ --exclude migrations,tests.py
 	$(ENV_PREFIX)black -l 79 --check cos_registration_server/
 	$(ENV_PREFIX)mypy --ignore-missing-imports cos_registration_server/
 

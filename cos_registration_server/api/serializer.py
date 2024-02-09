@@ -1,3 +1,4 @@
+"""API app serializer."""
 import json
 
 from devices.models import Device
@@ -6,6 +7,8 @@ from rest_framework.validators import UniqueValidator
 
 
 class DeviceSerializer(serializers.Serializer):
+    """Device Serializer class."""
+
     uid = serializers.CharField(
         required=True,
         validators=[UniqueValidator(queryset=Device.objects.all())],
@@ -15,9 +18,18 @@ class DeviceSerializer(serializers.Serializer):
     grafana_dashboards = serializers.JSONField(required=False)
 
     def create(self, validated_data):
+        """Create Device object from data.
+
+        validated_data: Dict of complete and validated data.
+        """
         return Device.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
+        """Update a Device from data.
+
+        instance: Device instance.
+        validated_data: Dict of partial and validated data.
+        """
         address = validated_data.get("address", instance.address)
         instance.address = address
         grafana_dashboards = validated_data.get(
@@ -28,6 +40,14 @@ class DeviceSerializer(serializers.Serializer):
         return instance
 
     def validate_grafana_dashboards(self, value):
+        """Validate grafana dashboards data.
+
+        value: Grafana dashboards provided data.
+        return: Grafana dashboards as list.
+        raise:
+          json.JSONDecodeError
+          serializers.ValidationError
+        """
         if isinstance(value, str):
             try:
                 dashboards = json.loads(value)

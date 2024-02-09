@@ -1,0 +1,1 @@
+"""API django application."""

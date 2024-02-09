@@ -1,0 +1,1 @@
+"""Devices django application."""

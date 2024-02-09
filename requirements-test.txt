@@ -6,5 +6,6 @@ black
 isort
 pytest-cov
 mypy
+flake8-docstrings
 gitchangelog
 mkdocs

@@ -1,3 +1,4 @@
+"""API views."""
 from api.serializer import DeviceSerializer
 from devices.models import Device
 from django.http import HttpResponse, JsonResponse
@@ -7,6 +8,11 @@ from .dashboards import add_dashboards, delete_dashboards
 
 
 def devices(request):
+    """Devices API view.
+
+    request: Http request (GET,POST).
+    return: Http JSON response.
+    """
     if request.method == "GET":
         devices = Device.objects.all().values(
             "uid", "creation_date", "address"
@@ -24,6 +30,12 @@ def devices(request):
 
 
 def device(request, uid):
+    """Device API view.
+
+    request: Http request (GET,PACH, DELETE).
+    uid: Device UID passed in the URL.
+    return: Http JSON response.
+    """
     try:
         device = Device.objects.get(uid=uid)
     except Device.DoesNotExist:
