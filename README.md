@@ -20,19 +20,19 @@ The COS registration server consist of two applications: Devices and API.
 ### Devices
 
 This application is describing the database as well as offering views for
-the user to visualize the list of devices and the specificities of one device.
+the user to visualize the list of devices and the specificities of each device.
 
 #### Device model
 The Device model represent a device stored in the database.
 It consists of:
-- UID: Unique ID per device. Typically, the name of the instance of the serial number.
+- UID: Unique ID per device. Typically, the name of the instance or the serial number.
 - Creation date: DateTime of the device creation in the server.
 - Address: IP address or hostname of the device.
 
 #### View: `devices/`
 
 It provides a simple list of all the registered devices.
-Every device listed provides a link to explore the specificities of a specific
+Every device listed provides a link to explore the specificities of each
 device.
 
 #### View: `devices/<str:uid>`
