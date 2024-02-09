@@ -1,11 +1,12 @@
 # This requirements are for development and testing only, not for production.
-pytest
+black
 coverage
 flake8
-black
-isort
-pytest-cov
-mypy
+flake8-django
 flake8-docstrings
 gitchangelog
+isort
 mkdocs
+mypy
+pytest
+pytest-cov

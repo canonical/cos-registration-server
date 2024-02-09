@@ -33,16 +33,16 @@ class Device(models.Model):
         "Dashboards json field", default=default_dashboards_json_field
     )
 
-    def __str__(self):
-        """Str representation of a device."""
-        return self.uid
-
     class Meta:
         """Model Meta class overwritting."""
 
         constraints = [
             UniqueConstraint(fields=["uid"], name="unique_uid_blocking")
         ]
+
+    def __str__(self):
+        """Str representation of a device."""
+        return self.uid
 
     def clean(self):
         """Model clean overwritting.
