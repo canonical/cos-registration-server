@@ -33,10 +33,11 @@ jobs:
       id: rockcraft
 
     - name: Upload locally built ROCK artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cos-registration-agent-rock
         path: ${{ steps.rockcraft.outputs.rock }}
+        retention-days: 7
 
     - name: Upload ROCK to ghcr.io
       run: |
@@ -52,7 +53,7 @@ jobs:
       run: syft $(realpath ${{ steps.rockcraft.outputs.rock }}) -o spdx-json=cos-registration-server.sbom.json
 
     - name: Upload SBOM
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cos-registration-server-sbom
         path: "cos-registration-server.sbom.json"
