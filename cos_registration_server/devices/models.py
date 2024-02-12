@@ -21,7 +21,7 @@ class Device(models.Model):
     This class represent a device in the DB.
 
     uid: Unique ID of the device.
-    creation_data: Creation date of the device.
+    creation_date: Creation date of the device.
     address: IP address of the device.
     grafana_dashboards: list of Grafana dashboards.
     """
