@@ -10,25 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    "django-insecure-$b#5b(2h9_%p439=#ev0!dkde9wqt=rgoc!jvi-y93^@+wcvw8"
-)
+try:
+    SECRET_KEY = os.environ["SECRET_KEY_DJANGO"]
+except KeyError:
+    pass
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+# to be able to add the webserver address
+try:
+    additional_host = os.environ["ALLOWED_HOST_DJANGO"]
+    ALLOWED_HOSTS.append(additional_host)
+except KeyError:
+    pass
 
 # Application definition
 
@@ -48,10 +51,10 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "cos_registration_server.urls"
@@ -78,10 +81,16 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# to be able to store the database in a juju storage
+try:
+    database_base_dir = Path(os.environ["DATABASE_BASE_DIR_DJANGO"])
+except KeyError:
+    database_base_dir = BASE_DIR
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": database_base_dir / "db.sqlite3",
     }
 }
 
@@ -124,9 +133,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = os.getenv("SCRIPT_NAME", "") + "/static/"
+
+STATIC_ROOT = BASE_DIR / "static/"
+
+WHITENOISE_STATIC_PREFIX = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# To keep the reverse proxy prefix when forwarding.
+USE_X_FORWARDED_HOST = True
+

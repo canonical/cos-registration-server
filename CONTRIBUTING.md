@@ -21,6 +21,10 @@ then activate it with `source .venv/bin/activate`.
 
 Run `make install` to install the project in develop mode.
 
+## Start the developer server
+
+Run `make runserver` to start the django developer server.
+
 ## Run the tests to ensure everything is working
 
 Run `make test` to run the tests.

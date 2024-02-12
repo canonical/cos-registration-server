@@ -38,6 +38,7 @@ setup(
     long_description_content_type="text/markdown",
     author="ubuntu-robotics",
     packages=find_packages(exclude=[".github"]),
+    include_package_data=True,
     install_requires=read_requirements("requirements.txt"),
     extras_require={"test": read_requirements("requirements-test.txt")},
 )

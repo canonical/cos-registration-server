@@ -1,11 +1,9 @@
 from api.serializer import DeviceSerializer
 from devices.models import Device
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 
 
-@csrf_exempt
 def devices(request):
     if request.method == "GET":
         devices = Device.objects.all()
@@ -26,7 +24,6 @@ def devices(request):
         return JsonResponse(serialized.errors, status=400)
 
 
-@csrf_exempt
 def device(request, uid):
     try:
         device = Device.objects.get(uid=uid)

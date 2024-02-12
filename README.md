@@ -137,6 +137,20 @@ requiring to access the device database.
 </details>
 
 ## Installation
+First we must generate a secret key for our django to sign data.
+The secret key must be a large random value and it must be kept secret.
+
+A secret key can be generated with the following command:
+
+`export SECRET_KEY_DJANGO=$(make secretkey)`
+
+We can expand the allowed hosts list:
+
+`export ALLOWED_HOST_DJANGO="cos-registration-server.com"`
+
+Additionally, we can provide a directory for the database:
+
+`export DATABASE_BASE_DIR_DJANGO="/var/lib"`
 
 `make install`
 
