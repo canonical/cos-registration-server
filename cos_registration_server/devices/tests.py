@@ -4,7 +4,21 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Device
+from .models import Device, default_dashboards_json_field
+
+SIMPLE_GRAFANA_DASHBOARD = """{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "Production Overview",
+    "tags": [ "templated" ],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "refresh": "25s"
+  },
+  "message": "Made changes to xyz",
+  "overwrite": false
+}"""
 
 
 class DeviceModelTests(TestCase):
@@ -18,12 +32,29 @@ class DeviceModelTests(TestCase):
         self.assertGreater(
             device.creation_date, timezone.now() - timezone.timedelta(hours=1)
         )
+        self.assertEquals(
+            device.grafana_dashboards, default_dashboards_json_field()
+        )
 
     def test_device_str(self):
         device = Device(
             uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
         )
         self.assertEqual(str(device), "hello-123")
+
+    def test_device_grafana_dashboards(self):
+        custom_grafana_dashboards = eval(default_dashboards_json_field())
+        custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
+        device = Device(
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+            grafana_dashboards=custom_grafana_dashboards,
+        )
+        self.assertEqual(
+            str(device.grafana_dashboards[0]),
+            SIMPLE_GRAFANA_DASHBOARD,
+        )
 
 
 def create_device(uid, address):

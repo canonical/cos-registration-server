@@ -6,19 +6,15 @@ from rest_framework.parsers import JSONParser
 
 def devices(request):
     if request.method == "GET":
-        devices = Device.objects.all()
+        devices = Device.objects.all().values(
+            "uid", "creation_date", "address"
+        )
         serialized = DeviceSerializer(devices, many=True)
         return JsonResponse(serialized.data, safe=False)
     elif request.method == "POST":
         data = JSONParser().parse(request)
         serialized = DeviceSerializer(data=data)
         if serialized.is_valid():
-            if Device.objects.filter(
-                uid=serialized.validated_data["uid"]
-            ).exists():
-                return JsonResponse(
-                    {"error": "Device uid already exists"}, status=409
-                )
             serialized.save()
             return JsonResponse(serialized.data, status=201)
         return JsonResponse(serialized.errors, status=400)

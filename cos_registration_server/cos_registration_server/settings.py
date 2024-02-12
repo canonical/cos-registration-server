@@ -146,4 +146,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
-
