@@ -15,6 +15,11 @@ def default_dashboards_json_field():
     return []
 
 
+def default_layouts_json_field():
+    """Return default value for layouts."""
+    return {}
+
+
 class Device(models.Model):
     """Device model.
 
@@ -30,7 +35,10 @@ class Device(models.Model):
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
     address = models.GenericIPAddressField("device IP")
     grafana_dashboards = models.JSONField(
-        "Dashboards json field", default=default_dashboards_json_field
+        "Grafana dashboards json field", default=default_dashboards_json_field
+    )
+    foxglove_layouts = models.JSONField(
+        "Foxglove layouts json field", default=default_layouts_json_field
     )
 
     class Meta:
@@ -44,6 +52,66 @@ class Device(models.Model):
         """Str representation of a device."""
         return self.uid
 
+    def _validate_json_list_field(json_field):
+        """Validate a json field as a list.
+
+        raise:
+          json.JSONDecodeError
+          ValidationError
+        """
+        json_field_list = []
+        if isinstance(json_field, str):
+            try:
+                json_field_list = json.loads(json_field)
+            except json.JSONDecodeError:
+                raise ValidationError(
+                    f"Failed to load {json_field.name} as json"
+                )
+        elif isinstance(json_field, list):
+            json_field_list = json_field
+        else:
+            raise ValidationError(
+                f"Unknow type for {json_field.name}: \
+                    {type(json_field)}"
+            )
+
+        if json_field_list is None or not isinstance(json_field_list, list):
+            raise ValidationError(
+                "{{json_field.name}} is not well formated. \
+                    Make sure the field is a well formated json list."
+            )
+        return json_field_list
+
+    def _validate_json_dict_field(json_field):
+        """Validate a json field as a list.
+
+        raise:
+          json.JSONDecodeError
+          ValidationError
+        """
+        json_field_dict = {}
+        if isinstance(json_field, str):
+            try:
+                json_field_dict = json.loads(json_field)
+            except json.JSONDecodeError:
+                raise ValidationError(
+                    f"Failed to load {json_field.name} as json"
+                )
+        elif isinstance(json_field, dict):
+            json_field_dict = json_field
+        else:
+            raise ValidationError(
+                f"Unknow type for {json_field.name}: \
+                    {type(json_field)}"
+            )
+
+        if json_field_dict is None or not isinstance(json_field_dict, list):
+            raise ValidationError(
+                "{{json_field.name}} is not well formated. \
+                    Make sure the field is a well formated json dict."
+            )
+        return json_field_dict
+
     def clean(self):
         """Model clean overwritting.
 
@@ -54,25 +122,18 @@ class Device(models.Model):
           json.JSONDecodeError
           ValidationError
         """
-        # make sure the grafana_dashboards is containing an array of dashboards
-        dashboards = []
-        if isinstance(self.grafana_dashboards, str):
-            try:
-                dashboards = json.loads(self.grafana_dashboards)
-            except json.JSONDecodeError:
-                raise ValidationError(
-                    "Failed to load grafana_dashboards as json"
-                )
-        elif isinstance(self.grafana_dashboards, list):
-            dashboards = self.grafana_dashboards
-        else:
-            raise ValidationError(
-                f"Unknow type for grafana_dashboards: \
-                    {type(self.grafana_dashboards)}"
-            )
+        # TODO To validate the dashboards and
+        # layouts we might need json schema.
 
-        if dashboards is None or not isinstance(dashboards, list):
-            raise ValidationError(
-                'gafana_dashboards is not well formated. \
-                    Make sure all the dashboards are within "dashbords": [] '
-            )
+        # make sure the grafana_dashboards is containing an array of dashboards
+        self._validate_json_field_list(self.grafana_dashboards)
+
+        foxglove_layout_dict = self._validate_json_field_dict(
+            self.foxglove_layouts
+        )
+        for key, value in foxglove_layout_dict:
+            if not isinstance(key, str) or not isinstance(value, dict):
+                raise ValidationError(
+                    'Foxglove layouts should be passed with a name. \
+                        {"my_name": {foxglove_layout...}}'
+                )
