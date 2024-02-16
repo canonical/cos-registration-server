@@ -3,7 +3,11 @@ from os import mkdir, path
 from pathlib import Path
 from shutil import rmtree
 
-from devices.models import Device, default_dashboards_json_field
+from devices.models import (
+    Device,
+    default_dashboards_json_field,
+    default_layouts_json_field,
+)
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
@@ -28,6 +32,15 @@ class DevicesViewTests(APITestCase):
             "refresh": "25s",
         }
 
+        self.simple_foxglove_layouts = {
+            "simple_layout": {
+                "configById": {},
+                "globalVariables": {},
+                "userNodes": {},
+                "playbackConfig": {"speed": 1},
+            }
+        }
+
     def create_device(self, **fields):
         data = {}
         for field, value in fields.items():
@@ -48,6 +61,7 @@ class DevicesViewTests(APITestCase):
             uid=uid,
             address=address,
             grafana_dashboards=custom_grafana_dashboards,
+            foxglove_layouts=self.simple_foxglove_layouts,
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Device.objects.count(), 1)
@@ -70,6 +84,9 @@ class DevicesViewTests(APITestCase):
                 "title"
             ] = f'{uid}-{self.simple_grafana_dashboard["title"]}'
             self.assertEqual(dashboard_data, self.simple_grafana_dashboard)
+        self.assertEqual(
+            Device.objects.get().foxglove_layouts, self.simple_foxglove_layouts
+        )
 
     def test_create_multiple_devices(self):
         devices = [
@@ -138,6 +155,56 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
+    def test_foxglove_layouts_not_in_a_dict(self):
+        uid = "robot-1"
+        address = "192.168.0.1"
+        response = self.create_device(
+            uid=uid,
+            address=address,
+            foxglove_layouts=[self.simple_foxglove_layouts],
+        )
+        self.assertEqual(Device.objects.count(), 0)
+        self.assertContains(
+            response,
+            '{"foxglove_layouts": ["foxglove_layouts is not a supported '
+            "format (dict).",
+            status_code=400,
+        )
+
+    def test_foxglove_layouts_illformed_json(self):
+        uid = "robot-1"
+        address = "192.168.0.1"
+        response = self.create_device(
+            uid=uid,
+            address=address,
+            foxglove_layouts='{{"hello"=321}',
+        )
+        self.assertEqual(Device.objects.count(), 0)
+        self.assertContains(
+            response,
+            '{"foxglove_layouts": ["Failed to load foxglove_layouts '
+            "as json.",
+            status_code=400,
+        )
+
+    def test_foxglove_layouts_not_a_layout(self):
+        uid = "robot-1"
+        address = "192.168.0.1"
+        custom_foxglove_layouts = {"layout": "not a layout"}
+        response = self.create_device(
+            uid=uid,
+            address=address,
+            foxglove_layouts=custom_foxglove_layouts,
+        )
+        self.assertEqual(Device.objects.count(), 0)
+        self.assertContains(
+            response,
+            '{"foxglove_layouts": '
+            '["foxglove_layouts should be passed with a name. \
+                    {\\"my_name\\": {foxglove_layout...} }"]}',
+            status_code=400,
+        )
+
 
 class DeviceViewTests(APITestCase):
     def setUp(self):
@@ -152,6 +219,15 @@ class DeviceViewTests(APITestCase):
             "timezone": "browser",
             "schemaVersion": 16,
             "refresh": "25s",
+        }
+
+        self.simple_foxglove_layouts = {
+            "simple_layout": {
+                "configById": {},
+                "globalVariables": {},
+                "userNodes": {},
+                "playbackConfig": {"speed": 1},
+            }
         }
 
     def url(self, uid):
@@ -197,7 +273,7 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
 
-    def test_patch_dashboards(self):
+    def test_patch_grafana_dashboards(self):
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -220,6 +296,19 @@ class DeviceViewTests(APITestCase):
         ) as file:
             dashboard_data = json.load(file)
             self.assertEqual(dashboard_data, self.simple_grafana_dashboard)
+
+    def test_patch_foxglove_layouts(self):
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(uid=uid, address=address)
+        data = {"foxglove_layouts": self.simple_foxglove_layouts}
+        response = self.client.patch(self.url(uid), data, format="json")
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(
+            content_json["foxglove_layouts"],
+            self.simple_foxglove_layouts,
+        )
 
     def test_invalid_patch_device(self):
         uid = "robot-1"

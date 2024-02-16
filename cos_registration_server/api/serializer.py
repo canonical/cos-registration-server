@@ -16,6 +16,7 @@ class DeviceSerializer(serializers.Serializer):
     creation_date = serializers.DateTimeField(read_only=True)
     address = serializers.IPAddressField(required=True)
     grafana_dashboards = serializers.JSONField(required=False)
+    foxglove_layouts = serializers.JSONField(required=False)
 
     def create(self, validated_data):
         """Create Device object from data.
@@ -36,6 +37,10 @@ class DeviceSerializer(serializers.Serializer):
             "grafana_dashboards", instance.grafana_dashboards
         )
         instance.grafana_dashboards = grafana_dashboards
+        foxglove_layouts = validated_data.get(
+            "foxglove_layouts", instance.foxglove_layouts
+        )
+        instance.foxglove_layouts = foxglove_layouts
         instance.save()
         return instance
 
@@ -62,3 +67,35 @@ class DeviceSerializer(serializers.Serializer):
                 "gafana_dashboards is not a supported format (list)."
             )
         return dashboards
+
+    def validate_foxglove_layouts(self, value):
+        """Validate foxglove layouts data.
+
+        value: Foxglove layouts provided data.
+        return: Foxglove layouts as dict.
+        raise:
+          json.JSONDecodeError
+          serializers.ValidationError
+        """
+        if isinstance(value, str):
+            try:
+                layouts = json.loads(value)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError(
+                    "Failed to load foxglove_layouts as json."
+                )
+        else:
+            layouts = value
+        if not isinstance(layouts, dict):
+            raise serializers.ValidationError(
+                "foxglove_layouts is not a supported format (dict)."
+            )
+
+        for key, value in layouts.items():
+            if not isinstance(key, str) or not isinstance(value, dict):
+                raise serializers.ValidationError(
+                    'foxglove_layouts should be passed with a name. \
+                    {"my_name": {foxglove_layout...} }'
+                )
+
+        return layouts
