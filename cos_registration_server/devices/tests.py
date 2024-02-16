@@ -4,7 +4,11 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Device, default_dashboards_json_field
+from .models import (
+    Device,
+    default_dashboards_json_field,
+    default_layouts_json_field,
+)
 
 SIMPLE_GRAFANA_DASHBOARD = {
     "id": None,
@@ -14,6 +18,15 @@ SIMPLE_GRAFANA_DASHBOARD = {
     "timezone": "browser",
     "schemaVersion": 16,
     "refresh": "25s",
+}
+
+SIMPLE_FOXGLOVE_LAYOUTS = {
+    "simple_layout": {
+        "configById": {},
+        "globalVariables": {},
+        "userNodes": {},
+        "playbackConfig": {"speed": 1},
+    }
 }
 
 
@@ -30,6 +43,9 @@ class DeviceModelTests(TestCase):
         )
         self.assertEquals(
             device.grafana_dashboards, default_dashboards_json_field()
+        )
+        self.assertEquals(
+            device.foxglove_layouts, default_layouts_json_field()
         )
 
     def test_device_str(self):
@@ -50,6 +66,19 @@ class DeviceModelTests(TestCase):
         self.assertEqual(
             device.grafana_dashboards[0],
             SIMPLE_GRAFANA_DASHBOARD,
+        )
+
+    def test_device_foxglove_layouts(self):
+        custom_foxglove_layouts = SIMPLE_FOXGLOVE_LAYOUTS
+        device = Device(
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+            foxglove_layouts=custom_foxglove_layouts,
+        )
+        self.assertEqual(
+            device.foxglove_layouts,
+            SIMPLE_FOXGLOVE_LAYOUTS,
         )
 
 
