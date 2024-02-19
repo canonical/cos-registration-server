@@ -9,4 +9,9 @@ urlpatterns = [
     # make a version API url
     path("v1/devices", views.devices, name="devices"),
     path("v1/devices/<str:uid>", views.device, name="device"),
+    path(
+        "v1/devices/<str:uid>/foxglove_layouts/<str:layout_uid>",
+        views.foxglove_layout,
+        name="foxglove_layout",
+    ),
 ]

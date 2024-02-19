@@ -1,4 +1,6 @@
 """API views."""
+import json
+
 from api.serializer import DeviceSerializer
 from devices.models import Device
 from django.http import HttpResponse, JsonResponse
@@ -57,3 +59,27 @@ def device(request, uid):
         device.delete()
         delete_dashboards(device)
         return HttpResponse(status=204)
+
+
+def foxglove_layout(request, uid, layout_uid):
+    """Foxglove layout json file API.
+
+    request: Http request (GET).
+    uid: Device UID passed in the URL.
+    layout_uid: Foxglove layout uid.
+    return: Http JSON file response.
+    """
+    if request.method == "GET":
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            return HttpResponse(status=404)
+        if (layout := device.foxglove_layouts.get(layout_uid)) is None:
+            return HttpResponse(status=404)
+        response = HttpResponse(
+            json.dumps(layout), content_type="application/json"
+        )
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{layout_uid}.json"'
+        return response
