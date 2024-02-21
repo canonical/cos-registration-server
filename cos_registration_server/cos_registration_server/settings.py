@@ -146,3 +146,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
+
+# Where robot dashboards are written on disk
+GRAFANA_DASHBOARD_PATH = os.getenv(
+    "GRAFANA_DASHBOARD_PATH", "grafana_dashboards/"
+)

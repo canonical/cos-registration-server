@@ -41,4 +41,4 @@ class DeviceSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "gafana_dashboards is not a supported format (list)."
             )
-        return value
+        return dashboards
