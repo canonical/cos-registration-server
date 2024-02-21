@@ -136,6 +136,21 @@ requiring to access the device database.
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
+<details>
+ <summary><code>GET</code> <code><b>api/v1/device/&#60str:uid&#62;/foxglove_layouts/&#60str:layout_uid&#62;</b></code> <code>(Download the layout json)</code></summary>
+
+#### Parameters
+
+> None
+
+#### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json; Content-Disposition attachment; filename=layout_uid.json`        | Json file                                                   |
+> | `404`         | `text/html;charset=utf-8`        | None                                                         |
+</details>
+
 ## Installation
 First we must generate a secret key for our django to sign data.
 The secret key must be a large random value and it must be kept secret.
