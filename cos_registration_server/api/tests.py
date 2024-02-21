@@ -230,7 +230,7 @@ class DeviceViewTests(APITestCase):
             }
         }
 
-    def url(self, uid):
+    def url_device(self, uid):
         return reverse("api:device", args=(uid,))
 
     def create_device(self, **fields):
@@ -241,14 +241,14 @@ class DeviceViewTests(APITestCase):
         return self.client.post(url, data, format="json")
 
     def test_get_nonexistent_device(self):
-        response = self.client.get(self.url("future-robot"))
+        response = self.client.get(self.url_device("future-robot"))
         self.assertEqual(response.status_code, 404)
 
     def test_get_device(self):
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
-        response = self.client.get(self.url(uid))
+        response = self.client.get(self.url_device(uid))
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], uid)
@@ -267,7 +267,7 @@ class DeviceViewTests(APITestCase):
         self.create_device(uid=uid, address=address)
         address = "192.168.1.200"
         data = {"address": address}
-        response = self.client.patch(self.url(uid), data, format="json")
+        response = self.client.patch(self.url_device(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], uid)
@@ -278,7 +278,7 @@ class DeviceViewTests(APITestCase):
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
         data = {"grafana_dashboards": [self.simple_grafana_dashboard]}
-        response = self.client.patch(self.url(uid), data, format="json")
+        response = self.client.patch(self.url_device(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         # necessary since patching returns the modified title
@@ -302,7 +302,7 @@ class DeviceViewTests(APITestCase):
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
         data = {"foxglove_layouts": self.simple_foxglove_layouts}
-        response = self.client.patch(self.url(uid), data, format="json")
+        response = self.client.patch(self.url_device(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(
@@ -316,7 +316,7 @@ class DeviceViewTests(APITestCase):
         self.create_device(uid=uid, address=address)
         address = "192.168.1"  # invalid IP
         data = {"address": address}
-        response = self.client.patch(self.url(uid), data, format="json")
+        response = self.client.patch(self.url_device(uid), data, format="json")
         self.assertEqual(response.status_code, 400)
 
     def test_delete_device(self):
@@ -327,7 +327,7 @@ class DeviceViewTests(APITestCase):
             address=address,
             grafana_dashboards=[self.simple_grafana_dashboard],
         )
-        response = self.client.get(self.url(uid))
+        response = self.client.get(self.url_device(uid))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             path.isfile(
@@ -335,9 +335,9 @@ class DeviceViewTests(APITestCase):
                 / "robot-1-Production_Overview.json"
             )
         )
-        response = self.client.delete(self.url(uid))
+        response = self.client.delete(self.url_device(uid))
         self.assertEqual(response.status_code, 204)
-        response = self.client.get(self.url(uid))
+        response = self.client.get(self.url_device(uid))
         self.assertEqual(response.status_code, 404)
         self.assertFalse(
             path.isfile(
@@ -345,6 +345,36 @@ class DeviceViewTests(APITestCase):
                 / "robot-1-Production_Overview.json"
             )
         )
+
+    def test_get_foxglove_layout(self):
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(
+            uid=uid,
+            address=address,
+            foxglove_layouts=self.simple_foxglove_layouts,
+        )
+        response = self.client.get(
+            reverse("api:foxglove_layout", args=(uid, "simple_layout"))
+        )
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(
+            content_json, self.simple_foxglove_layouts["simple_layout"]
+        )
+
+    def test_get_wrong_foxglove_dashboard(self):
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(
+            uid=uid,
+            address=address,
+            foxglove_layouts=self.simple_foxglove_layouts,
+        )
+        response = self.client.get(
+            reverse("api:foxglove_layout", args=(uid, "wrong_layout"))
+        )
+        self.assertEqual(response.status_code, 404)
 
 
 class CommandsTestCase(TestCase):
