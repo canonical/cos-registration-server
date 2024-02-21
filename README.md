@@ -73,7 +73,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): "list(grafana_json_dashboards)"}   | Unique ID and IP address of the device. Grafana dashboards is an optional list of Grafana JSON dashboards |
+> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): "list(grafana_json_dashboards)", "foxglove_layouts"(optional): "dict( "layout_name": {grafana_json_layouts})"}   | Unique ID and IP address of the device. `grafana_dashboards` is an optional list of Grafana JSON dashboards. `foxglove_layouts` is an optional dict of layout names and the associated Foxlglove JSON layout. |
 
 
 ##### Responses
@@ -109,7 +109,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: address and grafana_dashboards |
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: address, grafana_dashboards or and foxglove_layouts  |
 
 
 ##### Responses
