@@ -3,7 +3,10 @@ from devices.models import Device
 from django.http import HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
 
-from .dashboards import add_dashboards, delete_dashboards
+from .grafana_dashboards import (
+    add_grafana_dashboards,
+    delete_grafana_dashboards,
+)
 
 
 def devices(request):
@@ -18,7 +21,7 @@ def devices(request):
         serialized = DeviceSerializer(data=data)
         if serialized.is_valid():
             serialized.save()
-            add_dashboards(serialized.instance)
+            add_grafana_dashboards(serialized.instance)
             return JsonResponse(serialized.data, status=201)
         return JsonResponse(serialized.errors, status=400)
 
@@ -37,11 +40,11 @@ def device(request, uid):
         serialized = DeviceSerializer(device, data=data, partial=True)
         if serialized.is_valid():
             serialized.save()
-            delete_dashboards(serialized.instance)
-            add_dashboards(serialized.instance)
+            delete_grafana_dashboards(serialized.instance)
+            add_grafana_dashboards(serialized.instance)
             return JsonResponse(serialized.data)
         return JsonResponse(serialized.errors, status=400)
     elif request.method == "DELETE":
         device.delete()
-        delete_dashboards(device)
+        delete_grafana_dashboards(device)
         return HttpResponse(status=204)
