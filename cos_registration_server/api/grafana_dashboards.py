@@ -8,8 +8,8 @@ from devices.models import Device
 from django.conf import settings
 
 
-def add_dashboards(device):
-    """Add dashboards of a device on disk.
+def add_grafana_dashboards(device):
+    """Add Grafana dashboards of a device on disk.
 
     device: A device saved in the DB.
     """
@@ -22,8 +22,8 @@ def add_dashboards(device):
             json.dump(dashboard, file)
 
 
-def delete_dashboards(device):
-    """Delete dashboards of a device on disk.
+def delete_grafana_dashboards(device):
+    """Delete Grafana dashboards of a device on disk.
 
     device: A device saved in the DB.
     """
@@ -38,8 +38,8 @@ def delete_dashboards(device):
         remove(dashboard)
 
 
-def update_all_dashboards():
-    """Update the dashboards of all devices.
+def update_all_grafana_dashboards():
+    """Update the Grafana dashboards of all devices.
 
     This makes sure all the dashboards stored in the DB
     and only them are written on the disk.
@@ -48,4 +48,4 @@ def update_all_dashboards():
     rmtree(dashboard_path, ignore_errors=True)
     mkdir(dashboard_path)
     for device in Device.objects.all():
-        add_dashboards(device)
+        add_grafana_dashboards(device)

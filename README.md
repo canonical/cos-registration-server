@@ -73,7 +73,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string"}   | Unique ID and IP address of the device  |
+> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): "list(grafana_json_dashboards)"}   | Unique ID and IP address of the device. Grafana dashboards is an optional list of Grafana JSON dashboards |
 
 
 ##### Responses
@@ -98,7 +98,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string"}                                                         |
+> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards": "list(grafana_json_dashboards)"}                                                         |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
@@ -109,7 +109,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"address": "string"}   | Address to modify.  |
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: address and grafana_dashboards |
 
 
 ##### Responses

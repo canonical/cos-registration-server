@@ -286,7 +286,7 @@ class CommandsTestCase(TestCase):
             grafana_dashboards=[self.simple_grafana_dashboard],
         )
         robot_2.save()
-        call_command("update_all_dashboards")
+        call_command("update_all_grafana_dashboards")
         self.assertTrue(
             path.isfile(
                 self.grafana_dashboards_path
