@@ -1,6 +1,7 @@
 """Devices views."""
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils.http import urlencode
 from django.views import generic
 
 from .models import Device
@@ -29,22 +30,70 @@ def device(request, uid):
         device = Device.objects.get(uid=uid)
     except Device.DoesNotExist:
         return HttpResponse(f"device {uid} not found")
+
+    class ApplicationLinks:
+        """Application links structure.
+
+        This class is holding the links of an application
+        so it can be passed to the html template.
+
+        params:
+            name: Name of the application.
+            main_link: Main link of the application.
+            additional_links: Additional links of the application
+                    (dashboards etc).
+        """
+
+        def __init__(self, name, main_link, additional_links={}) -> None:
+            self.name = name
+            self.main_link = main_link
+            self.additional_links = additional_links
+
     base_url = request.META["HTTP_HOST"]
-    grafana_folder = base_url + "/cos-grafana/f/" + uid + "/"
-    foxglove = (
-        base_url
-        + "/cos-foxglove-studio/?ds=foxglove-websocket&ds.url=ws%3A%2F%2F"
-        + device.address
-        + "%3A8765/"
+
+    grafana_param = {"query": uid}
+    grafana_main_link = (
+        f"{base_url}/cos-grafana/dashboards/?{urlencode(grafana_param)}/"
     )
-    bag_files = base_url + "/cos-ros2bag-fileserver/" + uid + "/"
-    links = {
-        "grafana folder": grafana_folder,
-        "foxglove": foxglove,
-        "bag_files": bag_files,
+    grafana_dashboards = {}
+    for dashboards in device.grafana_dashboards:
+        if dashboard_uid := dashboards.get("uid"):
+            title = dashboards.get("title", dashboard_uid)
+            grafana_dashboards[title] = (
+                base_url + "/cos-grafana/dashboards/" + dashboard_uid + "/"
+            )
+
+    foxglove_params = {
+        "ds": "foxglove-websocket",
+        "ds.url": f"ws://{device.address}:8765",
     }
+    foxglove_main_link = (
+        f"{base_url}/cos-foxglove-studio/?{urlencode(foxglove_params)}"
+    )
+    foxglove_layouts = {}
+    for name in device.foxglove_layouts.keys():
+        foxglove_params["layoutUrl"] = (
+            f"{base_url}/cos-cos-registration-server/api/v1/"
+            f"devices/{uid}/foxglove_layouts/{name}"
+        )
+        foxglove_layouts[
+            name
+        ] = f"{base_url}/cos-foxglove-studio/?{urlencode(foxglove_params)}"
+
+    bag_files = f"{base_url}/cos-ros2bag-fileserver/{uid}/"
+
+    links = []
+    links.append(
+        ApplicationLinks(
+            "Foxglove studio", foxglove_main_link, foxglove_layouts
+        )
+    )
+    links.append(
+        ApplicationLinks("Grafana", grafana_main_link, grafana_dashboards)
+    )
+    links.append(ApplicationLinks("Bag files", bag_files))
     context = {
         "device": device,
-        "links_dict": links,
+        "links_list": links,
     }
     return render(request, "devices/device.html", context)

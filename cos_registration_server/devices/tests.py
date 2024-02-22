@@ -147,7 +147,8 @@ class DeviceViewTests(TestCase):
             f" {device.creation_date.strftime('%b. %d, %Y, %-I')}",
         )
         self.assertContains(
-            response, self.base_url + "/cos-grafana/f/" + device.uid + "/"
+            response,
+            self.base_url + "/cos-grafana/dashboards/?query=" + device.uid,
         )
         self.assertContains(
             response,
@@ -155,5 +156,41 @@ class DeviceViewTests(TestCase):
             + "/cos-foxglove-studio/"
             + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
             + device.address
-            + "%3A8765/",
+            + "%3A8765",
+        )
+
+        self.assertContains(
+            response, self.base_url + "/cos-ros2bag-fileserver/" + device.uid
+        )
+
+    def test_listed_device_additional_links(self):
+        custom_grafana_dashboards = default_dashboards_json_field()
+        custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
+        custom_grafana_dashboards[0]["uid"] = "123"
+        device = Device(
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+            grafana_dashboards=custom_grafana_dashboards,
+            foxglove_layouts=SIMPLE_FOXGLOVE_LAYOUTS,
+        )
+        device.save()
+        url = reverse("devices:device", args=(device.uid,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            self.base_url
+            + "/cos-foxglove-studio/"
+            + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
+            + device.address
+            + "%3A8765"
+            + escape("&layoutUrl=")
+            + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
+            + "devices%2Fhello-123%2Ffoxglove_layouts%2Fsimple_layout",
+        )
+
+        self.assertContains(
+            response,
+            self.base_url + "/cos-grafana/dashboards/123",
         )
