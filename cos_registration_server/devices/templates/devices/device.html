@@ -1,6 +1,10 @@
 <p>Device {{device.uid}} with ip {{device.address}}, was created on the {{device.creation_date}}</p>
 <ul>
-{% for name, link in links_dict.items %}
-    <li><a href="{{request.scheme}}://{{link}}">{{ name }}</a></li>
+{% for application_link in links_list%}
+    <li><a href="{{request.scheme}}://{{application_link.main_link}}">{{ application_link.name }}</a>
+        {% for name, link in application_link.additional_links.items %}
+            <ul><a href="{{request.scheme}}://{{link}}">{{ name }}</a></ul>
+        {% endfor %}
+    </li>
 {% endfor %}
 </ul>

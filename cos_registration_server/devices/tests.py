@@ -209,7 +209,8 @@ class DeviceViewTests(TestCase):
             f" {device.creation_date.strftime('%B %d, %Y, %-I')}",
         )
         self.assertContains(
-            response, self.base_url + "/cos-grafana/f/" + device.uid + "/"
+            response,
+            self.base_url + "/cos-grafana/dashboards/?query=" + device.uid,
         )
         self.assertContains(
             response,
@@ -217,5 +218,47 @@ class DeviceViewTests(TestCase):
             + "/cos-foxglove-studio/"
             + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
             + device.address
-            + "%3A8765/",
+            + "%3A8765",
+        )
+
+        self.assertContains(
+            response, self.base_url + "/cos-ros2bag-fileserver/" + device.uid
+        )
+
+    def test_listed_device_additional_links(self) -> None:
+        grafana_dashboard = GrafanaDashboard(
+            uid="dashboard-1", dashboard=SIMPLE_GRAFANA_DASHBOARD
+        )
+        grafana_dashboard.save()
+        foxglove_dashboard = FoxgloveDashboard(
+            uid="layout-1", dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        foxglove_dashboard.save()
+        device = Device(
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+        )
+        device.save()
+        device.grafana_dashboards.add(grafana_dashboard)
+        device.foxglove_dashboards.add(foxglove_dashboard)
+        url = reverse("devices:device", args=(device.uid,))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            self.base_url
+            + "/cos-foxglove-studio/"
+            + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
+            + device.address
+            + "%3A8765"
+            + escape("&layoutUrl=")
+            + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
+            + "applications%2Ffoxglove%2Fdashboards%2Flayout-1",
+        )
+
+        self.assertContains(
+            response,
+            self.base_url
+            + "/cos-grafana/dashboards/dashboard-1/?instance=hello-123",
         )
