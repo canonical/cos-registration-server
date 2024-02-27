@@ -1,12 +1,11 @@
 """Device DB model."""
-import json
+from typing import Any, Dict, List
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.constraints import UniqueConstraint
 
 
-def default_dashboards_json_field():
+def default_dashboards_json_field() -> List[Any]:
     """Return default value for dashboards.
 
     Default json values are usually dict but
@@ -15,7 +14,7 @@ def default_dashboards_json_field():
     return []
 
 
-def default_layouts_json_field():
+def default_layouts_json_field() -> Dict[str, Any]:
     """Return default value for layouts."""
     return {}
 
@@ -48,6 +47,6 @@ class Device(models.Model):
             UniqueConstraint(fields=["uid"], name="unique_uid_blocking")
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Str representation of a device."""
         return self.uid

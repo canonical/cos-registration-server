@@ -1,12 +1,13 @@
 """API app serializer."""
 import json
+from typing import Any, Dict, List, Union
 
 from devices.models import Device
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 
-class DeviceSerializer(serializers.Serializer):
+class DeviceSerializer(serializers.Serializer):  # type: ignore[type-arg]
     """Device Serializer class."""
 
     uid = serializers.CharField(
@@ -18,14 +19,14 @@ class DeviceSerializer(serializers.Serializer):
     grafana_dashboards = serializers.JSONField(required=False)
     foxglove_layouts = serializers.JSONField(required=False)
 
-    def create(self, validated_data):
+    def create(self, validated_data: Any) -> Device:
         """Create Device object from data.
 
         validated_data: Dict of complete and validated data.
         """
         return Device.objects.create(**validated_data)
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Device, validated_data: Any) -> Device:
         """Update a Device from data.
 
         instance: Device instance.
@@ -44,7 +45,9 @@ class DeviceSerializer(serializers.Serializer):
         instance.save()
         return instance
 
-    def validate_grafana_dashboards(self, value):
+    def validate_grafana_dashboards(
+        self, value: Union[str, List[Any]]
+    ) -> List[Any]:
         """Validate grafana dashboards data.
 
         value: Grafana dashboards provided data.
@@ -68,7 +71,9 @@ class DeviceSerializer(serializers.Serializer):
             )
         return dashboards
 
-    def validate_foxglove_layouts(self, value):
+    def validate_foxglove_layouts(
+        self, value: Union[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Validate foxglove layouts data.
 
         value: Foxglove layouts provided data.

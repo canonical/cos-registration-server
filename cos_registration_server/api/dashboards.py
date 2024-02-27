@@ -3,12 +3,13 @@ import json
 from os import mkdir, remove
 from pathlib import Path
 from shutil import rmtree
+from typing import Any
 
 from devices.models import Device
 from django.conf import settings
 
 
-def add_dashboards(device):
+def add_dashboards(device: Any) -> None:
     """Add dashboards of a device on disk.
 
     device: A device saved in the DB.
@@ -22,7 +23,7 @@ def add_dashboards(device):
             json.dump(dashboard, file)
 
 
-def delete_dashboards(device):
+def delete_dashboards(device: Any) -> None:
     """Delete dashboards of a device on disk.
 
     device: A device saved in the DB.
@@ -38,7 +39,7 @@ def delete_dashboards(device):
         remove(dashboard)
 
 
-def update_all_dashboards():
+def update_all_dashboards() -> None:
     """Update the dashboards of all devices.
 
     This makes sure all the dashboards stored in the DB

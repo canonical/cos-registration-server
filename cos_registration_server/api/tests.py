@@ -1,14 +1,13 @@
 import json
+from datetime import datetime, timedelta
 from os import mkdir, path
 from pathlib import Path
 from shutil import rmtree
+from typing import Any, Dict, List, Union
 
-from devices.models import (
-    Device,
-    default_dashboards_json_field,
-    default_layouts_json_field,
-)
+from devices.models import Device, default_dashboards_json_field
 from django.core.management import call_command
+from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -16,7 +15,7 @@ from rest_framework.test import APITestCase
 
 
 class DevicesViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.url = reverse("api:devices")
         self.grafana_dashboards_path = Path("grafana_dashboards")
         rmtree(self.grafana_dashboards_path, ignore_errors=True)
@@ -41,18 +40,20 @@ class DevicesViewTests(APITestCase):
             }
         }
 
-    def create_device(self, **fields):
+    def create_device(
+        self, **fields: Union[str, Dict[str, Any], List[Any]]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         return self.client.post(self.url, data, format="json")
 
-    def test_get_nothing(self):
+    def test_get_nothing(self) -> None:
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(json.loads(response.content)), 0)
 
-    def test_create_device(self):
+    def test_create_device(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         custom_grafana_dashboards = default_dashboards_json_field()
@@ -70,7 +71,7 @@ class DevicesViewTests(APITestCase):
         self.assertAlmostEqual(
             Device.objects.get().creation_date,
             timezone.now(),
-            delta=timezone.timedelta(seconds=10),
+            delta=timedelta(seconds=10),
         )
         self.assertEqual(
             Device.objects.get().grafana_dashboards, custom_grafana_dashboards
@@ -88,7 +89,7 @@ class DevicesViewTests(APITestCase):
             Device.objects.get().foxglove_layouts, self.simple_foxglove_layouts
         )
 
-    def test_create_multiple_devices(self):
+    def test_create_multiple_devices(self) -> None:
         devices = [
             {"uid": "robot-1", "address": "192.168.0.1"},
             {"uid": "robot-2", "address": "192.168.0.2"},
@@ -106,7 +107,7 @@ class DevicesViewTests(APITestCase):
             self.assertEqual(devices[i]["uid"], device["uid"])
             self.assertEqual(devices[i]["address"], device["address"])
 
-    def test_create_already_present_uid(self):
+    def test_create_already_present_uid(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(uid=uid, address=address)
@@ -121,7 +122,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_grafana_dashboard_not_in_a_list(self):
+    def test_grafana_dashboard_not_in_a_list(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         # we try to create the same one
@@ -138,7 +139,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_grafana_dashboard_illformed_json(self):
+    def test_grafana_dashboard_illformed_json(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         # we try to create the same one
@@ -155,7 +156,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_foxglove_layouts_not_in_a_dict(self):
+    def test_foxglove_layouts_not_in_a_dict(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(
@@ -171,7 +172,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_foxglove_layouts_illformed_json(self):
+    def test_foxglove_layouts_illformed_json(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(
@@ -187,7 +188,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_foxglove_layouts_not_a_layout(self):
+    def test_foxglove_layouts_not_a_layout(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         custom_foxglove_layouts = {"layout": "not a layout"}
@@ -207,7 +208,7 @@ class DevicesViewTests(APITestCase):
 
 
 class DeviceViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.grafana_dashboards_path = Path("grafana_dashboards")
         rmtree(self.grafana_dashboards_path, ignore_errors=True)
         mkdir(self.grafana_dashboards_path)
@@ -230,21 +231,23 @@ class DeviceViewTests(APITestCase):
             }
         }
 
-    def url_device(self, uid):
+    def url_device(self, uid: str) -> str:
         return reverse("api:device", args=(uid,))
 
-    def create_device(self, **fields):
+    def create_device(
+        self, **fields: Union[str, Dict[str, Any], List[Any]]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         url = reverse("api:devices")
         return self.client.post(url, data, format="json")
 
-    def test_get_nonexistent_device(self):
+    def test_get_nonexistent_device(self) -> None:
         response = self.client.get(self.url_device("future-robot"))
         self.assertEqual(response.status_code, 404)
 
-    def test_get_device(self):
+    def test_get_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -254,14 +257,14 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
         self.assertAlmostEqual(
-            timezone.datetime.fromisoformat(
+            datetime.fromisoformat(
                 content_json["creation_date"].replace("Z", "+00:00")
             ),
             timezone.now(),
-            delta=timezone.timedelta(seconds=10),
+            delta=timedelta(seconds=10),
         )
 
-    def test_patch_device(self):
+    def test_patch_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -273,7 +276,7 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
 
-    def test_patch_grafana_dashboards(self):
+    def test_patch_grafana_dashboards(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -297,7 +300,7 @@ class DeviceViewTests(APITestCase):
             dashboard_data = json.load(file)
             self.assertEqual(dashboard_data, self.simple_grafana_dashboard)
 
-    def test_patch_foxglove_layouts(self):
+    def test_patch_foxglove_layouts(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -310,7 +313,7 @@ class DeviceViewTests(APITestCase):
             self.simple_foxglove_layouts,
         )
 
-    def test_invalid_patch_device(self):
+    def test_invalid_patch_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -319,7 +322,7 @@ class DeviceViewTests(APITestCase):
         response = self.client.patch(self.url_device(uid), data, format="json")
         self.assertEqual(response.status_code, 400)
 
-    def test_delete_device(self):
+    def test_delete_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
@@ -346,7 +349,7 @@ class DeviceViewTests(APITestCase):
             )
         )
 
-    def test_get_foxglove_layout(self):
+    def test_get_foxglove_layout(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
@@ -363,7 +366,7 @@ class DeviceViewTests(APITestCase):
             content_json, self.simple_foxglove_layouts["simple_layout"]
         )
 
-    def test_get_wrong_foxglove_dashboard(self):
+    def test_get_wrong_foxglove_dashboard(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
@@ -378,7 +381,7 @@ class DeviceViewTests(APITestCase):
 
 
 class CommandsTestCase(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.grafana_dashboards_path = Path("grafana_dashboards")
         rmtree(self.grafana_dashboards_path, ignore_errors=True)
         mkdir(self.grafana_dashboards_path)
@@ -392,7 +395,7 @@ class CommandsTestCase(TestCase):
             "refresh": "25s",
         }
 
-    def test_update_all_dashboards(self):
+    def test_update_all_dashboards(self) -> None:
         robot_1 = Device(
             uid="robot-1",
             address="127.0.0.1",

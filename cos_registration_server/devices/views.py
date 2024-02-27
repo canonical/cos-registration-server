@@ -1,5 +1,7 @@
 """Devices views."""
-from django.http import HttpResponse
+from typing import Any, Dict
+
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.http import urlencode
 from django.views import generic
@@ -7,18 +9,18 @@ from django.views import generic
 from .models import Device
 
 
-class devices(generic.ListView):
+class devices(generic.ListView):  # type: ignore[type-arg]
     """Devices list view."""
 
     template_name = "devices/devices.html"
     context_object_name = "devices_list"
 
-    def get_queryset(self):
+    def get_queryset(self) -> Any:
         """Return all devices on GET."""
         return Device.objects.all()
 
 
-def device(request, uid):
+def device(request: HttpRequest, uid: str) -> HttpResponse:
     """Device view.
 
     Representation of the device.
@@ -44,7 +46,12 @@ def device(request, uid):
                     (dashboards etc).
         """
 
-        def __init__(self, name, main_link, additional_links={}) -> None:
+        def __init__(
+            self,
+            name: str,
+            main_link: str,
+            additional_links: Dict[str, str] = {},
+        ) -> None:
             self.name = name
             self.main_link = main_link
             self.additional_links = additional_links

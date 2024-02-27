@@ -3,13 +3,13 @@ import json
 
 from api.serializer import DeviceSerializer
 from devices.models import Device
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
 
 from .dashboards import add_dashboards, delete_dashboards
 
 
-def devices(request):
+def devices(request: HttpRequest) -> HttpResponse:
     """Devices API view.
 
     request: Http request (GET,POST).
@@ -29,9 +29,10 @@ def devices(request):
             add_dashboards(serialized.instance)
             return JsonResponse(serialized.data, status=201)
         return JsonResponse(serialized.errors, status=400)
+    return HttpResponse(status=405)
 
 
-def device(request, uid):
+def device(request: HttpRequest, uid: str) -> HttpResponse:
     """Device API view.
 
     request: Http request (GET,PACH, DELETE).
@@ -59,9 +60,12 @@ def device(request, uid):
         device.delete()
         delete_dashboards(device)
         return HttpResponse(status=204)
+    return HttpResponse(status=405)
 
 
-def foxglove_layout(request, uid, layout_uid):
+def foxglove_layout(
+    request: HttpRequest, uid: str, layout_uid: str
+) -> HttpResponse:
     """Foxglove layout json file API.
 
     request: Http request (GET).
@@ -83,3 +87,4 @@ def foxglove_layout(request, uid, layout_uid):
             "Content-Disposition"
         ] = f'attachment; filename="{layout_uid}.json"'
         return response
+    return HttpResponse(status=405)

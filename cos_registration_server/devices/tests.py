@@ -1,3 +1,4 @@
+from datetime import timedelta
 from html import escape
 
 from django.test import Client, TestCase
@@ -31,7 +32,7 @@ SIMPLE_FOXGLOVE_LAYOUTS = {
 
 
 class DeviceModelTests(TestCase):
-    def test_creation_of_a_device(self):
+    def test_creation_of_a_device(self) -> None:
         device = Device(
             uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
         )
@@ -39,7 +40,7 @@ class DeviceModelTests(TestCase):
         self.assertEqual(str(device.address), "127.0.0.1")
         self.assertLessEqual(device.creation_date, timezone.now())
         self.assertGreater(
-            device.creation_date, timezone.now() - timezone.timedelta(hours=1)
+            device.creation_date, timezone.now() - timedelta(hours=1)
         )
         self.assertEquals(
             device.grafana_dashboards, default_dashboards_json_field()
@@ -48,13 +49,13 @@ class DeviceModelTests(TestCase):
             device.foxglove_layouts, default_layouts_json_field()
         )
 
-    def test_device_str(self):
+    def test_device_str(self) -> None:
         device = Device(
             uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
         )
         self.assertEqual(str(device), "hello-123")
 
-    def test_device_grafana_dashboards(self):
+    def test_device_grafana_dashboards(self) -> None:
         custom_grafana_dashboards = default_dashboards_json_field()
         custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
         device = Device(
@@ -68,7 +69,7 @@ class DeviceModelTests(TestCase):
             SIMPLE_GRAFANA_DASHBOARD,
         )
 
-    def test_device_foxglove_layouts(self):
+    def test_device_foxglove_layouts(self) -> None:
         custom_foxglove_layouts = SIMPLE_FOXGLOVE_LAYOUTS
         device = Device(
             uid="hello-123",
@@ -82,18 +83,18 @@ class DeviceModelTests(TestCase):
         )
 
 
-def create_device(uid, address):
+def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)
 
 
 class DevicesViewTests(TestCase):
-    def test_no_devices(self):
+    def test_no_devices(self) -> None:
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "No devices are available.")
         self.assertQuerySetEqual(response.context["devices_list"], [])
 
-    def test_two_devices(self):
+    def test_two_devices(self) -> None:
         device_1 = create_device("robot-1", "192.168.0.1")
         device_2 = create_device("robot-2", "192.168.0.2")
 
@@ -106,7 +107,7 @@ class DevicesViewTests(TestCase):
             list(response.context["devices_list"]), [device_1, device_2]
         )
 
-    def test_one_device_then_two(self):
+    def test_one_device_then_two(self) -> None:
         device_1 = create_device("robot-1", "192.168.0.1")
 
         response = self.client.get(reverse("devices:devices"))
@@ -125,18 +126,18 @@ class DevicesViewTests(TestCase):
 
 
 class DeviceViewTests(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # custom client with META HTTP_HOST specified
         self.base_url = "127.0.0.1:8080"
         self.client = Client(HTTP_HOST=self.base_url)
 
-    def test_unlisted_device(self):
+    def test_unlisted_device(self) -> None:
         url = reverse("devices:device", args=("future-robot",))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "device future-robot not found")
 
-    def test_listed_device(self):
+    def test_listed_device(self) -> None:
         device = create_device("robot-1", "192.168.0.23")
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
@@ -163,7 +164,7 @@ class DeviceViewTests(TestCase):
             response, self.base_url + "/cos-ros2bag-fileserver/" + device.uid
         )
 
-    def test_listed_device_additional_links(self):
+    def test_listed_device_additional_links(self) -> None:
         custom_grafana_dashboards = default_dashboards_json_field()
         custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
         custom_grafana_dashboards[0]["uid"] = "123"
