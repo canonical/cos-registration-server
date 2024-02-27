@@ -2,9 +2,10 @@
 import io
 import os
 from setuptools import find_packages, setup
+from typing import Optional, List
 
 
-def read(*paths, **kwargs):
+def read(*paths: str, **kwargs: Optional[str]) -> str:
     """Read the contents of a text file safely.
     >>> read("cos_registration_server", "VERSION")
     '0.1.0'
@@ -21,7 +22,7 @@ def read(*paths, **kwargs):
     return content
 
 
-def read_requirements(path):
+def read_requirements(path:str) -> List[str]:
     return [
         line.strip()
         for line in read(path).split("\n")
