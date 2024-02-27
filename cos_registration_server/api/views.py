@@ -17,7 +17,7 @@ def devices(request):
     """
     if request.method == "GET":
         devices = Device.objects.all().values(
-            "uid", "creation_date", "address"
+            "uid", "creation_date", "address", "public_ssh_key"
         )
         serialized = DeviceSerializer(devices, many=True)
         return JsonResponse(serialized.data, safe=False)

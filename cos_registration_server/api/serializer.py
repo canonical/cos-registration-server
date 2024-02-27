@@ -17,6 +17,7 @@ class DeviceSerializer(serializers.Serializer):
     address = serializers.IPAddressField(required=True)
     grafana_dashboards = serializers.JSONField(required=False)
     foxglove_layouts = serializers.JSONField(required=False)
+    public_ssh_key = serializers.CharField(required=True)
 
     def create(self, validated_data):
         """Create Device object from data.

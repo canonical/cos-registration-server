@@ -29,6 +29,7 @@ class Device(models.Model):
     creation_date: Creation date of the device.
     address: IP address of the device.
     grafana_dashboards: list of Grafana dashboards.
+    public_ssh_key: public ssh key.
     """
 
     uid = models.CharField(max_length=200)
@@ -40,6 +41,8 @@ class Device(models.Model):
     foxglove_layouts = models.JSONField(
         "Foxglove layouts json field", default=default_layouts_json_field
     )
+
+    public_ssh_key = models.CharField(max_length=2000)
 
     class Meta:
         """Model Meta class overwritting."""
