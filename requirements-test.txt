@@ -10,3 +10,7 @@ mkdocs
 mypy
 pytest
 pytest-cov
+# Types
+djangorestframework-stubs
+django-stubs
+types-setuptools
