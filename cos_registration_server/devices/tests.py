@@ -1,10 +1,12 @@
 from html import escape
 
+from applications.models import GrafanaDashboard
+from django.db.utils import IntegrityError
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Device, default_dashboards_json_field
+from .models import Device
 
 SIMPLE_GRAFANA_DASHBOARD = {
     "id": None,
@@ -22,15 +24,14 @@ class DeviceModelTests(TestCase):
         device = Device(
             uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
         )
+        device.save()
         self.assertEqual(device.uid, "hello-123")
         self.assertEqual(str(device.address), "127.0.0.1")
         self.assertLessEqual(device.creation_date, timezone.now())
         self.assertGreater(
             device.creation_date, timezone.now() - timezone.timedelta(hours=1)
         )
-        self.assertEquals(
-            device.grafana_dashboards, default_dashboards_json_field()
-        )
+        self.assertEqual(len(device.grafana_dashboards.all()), 0)
 
     def test_device_str(self):
         device = Device(
@@ -38,18 +39,63 @@ class DeviceModelTests(TestCase):
         )
         self.assertEqual(str(device), "hello-123")
 
-    def test_device_grafana_dashboards(self):
-        custom_grafana_dashboards = default_dashboards_json_field()
-        custom_grafana_dashboards.append(SIMPLE_GRAFANA_DASHBOARD)
+    def test_device_create_grafana_dashboards(self):
         device = Device(
-            uid="hello-123",
-            creation_date=timezone.now(),
-            address="127.0.0.1",
-            grafana_dashboards=custom_grafana_dashboards,
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.grafana_dashboards.create(
+            uid="first_dashboard", dashboard=SIMPLE_GRAFANA_DASHBOARD
         )
         self.assertEqual(
-            device.grafana_dashboards[0],
+            device.grafana_dashboards.all()[0].uid,
+            "first_dashboard",
+        )
+        self.assertEqual(
+            device.grafana_dashboards.all()[0].dashboard,
             SIMPLE_GRAFANA_DASHBOARD,
+        )
+
+    def test_device_create_grafana_dashboards_then_delete_device(self):
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.grafana_dashboards.create(
+            uid="first_dashboard", dashboard=SIMPLE_GRAFANA_DASHBOARD
+        )
+        device.delete()
+        self.assertEqual(
+            GrafanaDashboard.objects.all()[0].uid,
+            "first_dashboard",
+        )
+
+    def test_device_relate_grafana_dashboards(self):
+        grafana_dashboard = GrafanaDashboard(
+            uid="first_dashboard", dashboard=SIMPLE_GRAFANA_DASHBOARD
+        )
+        grafana_dashboard.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.grafana_dashboards.add(grafana_dashboard)
+        self.assertEqual(
+            device.grafana_dashboards.all()[0].uid,
+            "first_dashboard",
+        )
+        self.assertEqual(
+            device.grafana_dashboards.all()[0].dashboard,
+            SIMPLE_GRAFANA_DASHBOARD,
+        )
+
+    def test_device_uid_uniqueness(self):
+        uid = "123"
+        Device(uid=uid, address="127.0.0.1").save()
+
+        self.assertRaises(
+            IntegrityError,
+            Device(uid=uid, address="192.168.0.1").save,
         )
 
 
@@ -115,7 +161,7 @@ class DeviceViewTests(TestCase):
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%b. %d, %Y, %-I')}",
+            f" {device.creation_date.strftime('%B %d, %Y, %-I')}",
         )
         self.assertContains(
             response, self.base_url + "/cos-grafana/f/" + device.uid + "/"

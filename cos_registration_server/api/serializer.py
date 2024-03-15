@@ -1,28 +1,109 @@
 """API app serializer."""
+
 import json
 
+from applications.models import Dashboard, GrafanaDashboard
 from devices.models import Device
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 
-class DeviceSerializer(serializers.Serializer):
+class DashboardSerializer:
+    """Dashboard Serializer class."""
+
+    class Meta:
+        """DashboardSerializer Meta class."""
+
+        model = Dashboard
+        fields = ["uid", "dashboard"]
+
+    def update(self, instance, validated_data):
+        """Update a Dashboard from data.
+
+        instance: Device instance.
+        validated_data: Dict of partial and validated data.
+        """
+        dashboard = validated_data.get("dashboard", instance.dashboard)
+        instance.dashboard = dashboard
+        instance.save()
+        return instance
+
+    def validate_dashboard(self, value):
+        """Validate dashboards data.
+
+        value: dashboard provided data.
+        return: dashboard json.
+        raise:
+          json.JSONDecodeError
+          serializers.ValidationError
+        """
+        if isinstance(value, str):
+            try:
+                dashboard = json.loads(value)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError(
+                    "Failed to load dashboard as json."
+                )
+        else:
+            dashboard = value
+        if not isinstance(dashboard, dict):
+            raise serializers.ValidationError(
+                "Dashboard is not a supported format (dict)."
+            )
+        return dashboard
+
+
+class GrafanaDashboardSerializer(
+    DashboardSerializer, serializers.ModelSerializer
+):
+    """Grafana Dashboard Serializer class."""
+
+    class Meta(DashboardSerializer.Meta):
+        """DashboardSerializer Meta class."""
+
+        model = GrafanaDashboard
+
+    def create(self, validated_data):
+        """Create Grafana Dashboard object from data.
+
+        validated_data: Dict of complete and validated data.
+        """
+        return GrafanaDashboard.objects.create(**validated_data)
+
+
+class DeviceSerializer(serializers.ModelSerializer):
     """Device Serializer class."""
 
-    uid = serializers.CharField(
-        required=True,
-        validators=[UniqueValidator(queryset=Device.objects.all())],
+    grafana_dashboards = serializers.SlugRelatedField(
+        many=True,
+        queryset=GrafanaDashboard.objects.all(),
+        slug_field="uid",
+        required=False,
     )
-    creation_date = serializers.DateTimeField(read_only=True)
-    address = serializers.IPAddressField(required=True)
-    grafana_dashboards = serializers.JSONField(required=False)
+
+    class Meta:
+        """DeviceSerializer Meta class."""
+
+        model = Device
+        fields = ("uid", "creation_date", "address", "grafana_dashboards")
 
     def create(self, validated_data):
         """Create Device object from data.
 
         validated_data: Dict of complete and validated data.
         """
-        return Device.objects.create(**validated_data)
+        grafana_dashboards_data = validated_data.pop("grafana_dashboards", {})
+        device = Device.objects.create(**validated_data)
+
+        for dashboard_uid in grafana_dashboards_data:
+            try:
+                dashboard = GrafanaDashboard.objects.get(uid=dashboard_uid)
+                device.grafana_dashboards.add(dashboard)
+            except GrafanaDashboard.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"GrafanaDashboard with UID {dashboard_uid}"
+                    " does not exist."
+                )
+        return device
 
     def update(self, instance, validated_data):
         """Update a Device from data.
@@ -30,35 +111,31 @@ class DeviceSerializer(serializers.Serializer):
         instance: Device instance.
         validated_data: Dict of partial and validated data.
         """
-        address = validated_data.get("address", instance.address)
-        instance.address = address
-        grafana_dashboards = validated_data.get(
-            "grafana_dashboards", instance.grafana_dashboards
-        )
-        instance.grafana_dashboards = grafana_dashboards
+        # Update device fields (if any)
+        for field, value in validated_data.items():
+            if field != "grafana_dashboards":
+                setattr(instance, field, value)
         instance.save()
+
+        # Update Grafana dashboards
+        try:
+            grafana_dashboards_data = validated_data.pop("grafana_dashboards")
+            current_grafana_dashboards = instance.grafana_dashboards.all()
+            for dashboard in current_grafana_dashboards:
+                instance.grafana_dashboards.remove(dashboard)
+
+            for dashboard_uid in grafana_dashboards_data:
+                try:
+                    dashboard = GrafanaDashboard.objects.get(uid=dashboard_uid)
+                    instance.grafana_dashboards.add(dashboard)
+                except GrafanaDashboard.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"Grafana Dashboard with UID {dashboard_uid}"
+                        " does not exist."
+                    )
+        except KeyError:
+            # Handle partial updates without grafana_dashboards vs
+            # empty grafana_dashboards
+            pass
+
         return instance
-
-    def validate_grafana_dashboards(self, value):
-        """Validate grafana dashboards data.
-
-        value: Grafana dashboards provided data.
-        return: Grafana dashboards as list.
-        raise:
-          json.JSONDecodeError
-          serializers.ValidationError
-        """
-        if isinstance(value, str):
-            try:
-                dashboards = json.loads(value)
-            except json.JSONDecodeError:
-                raise serializers.ValidationError(
-                    "Failed to load grafana_dashboards as json."
-                )
-        else:
-            dashboards = value
-        if not isinstance(dashboards, list):
-            raise serializers.ValidationError(
-                "gafana_dashboards is not a supported format (list)."
-            )
-        return dashboards
