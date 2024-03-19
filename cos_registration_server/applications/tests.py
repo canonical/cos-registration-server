@@ -2,7 +2,7 @@ from devices.models import Device
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
-from .models import GrafanaDashboard
+from .models import FoxgloveDashboard, GrafanaDashboard
 
 SIMPLE_GRAFANA_DASHBOARD = {
     "id": None,
@@ -12,6 +12,13 @@ SIMPLE_GRAFANA_DASHBOARD = {
     "timezone": "browser",
     "schemaVersion": 16,
     "refresh": "25s",
+}
+
+SIMPLE_FOXGLOVE_DASHBOARD = {
+    "configById": {},
+    "globalVariables": {},
+    "userNodes": {},
+    "playbackConfig": {"speed": 1},
 }
 
 
@@ -55,3 +62,27 @@ class GrafanaDashboardModelTests(TestCase):
         device.grafana_dashboards.add(grafana_dashboard)
 
         self.assertEqual(grafana_dashboard.devices.all()[0].uid, "robot")
+
+
+class FoxgloveDashboardModelTests(TestCase):
+    def test_creation_of_a_dashboard(self) -> None:
+        dashboard_name = "first_dashboard"
+        foxglove_dashboard = FoxgloveDashboard(
+            uid=dashboard_name, dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        self.assertEqual(foxglove_dashboard.uid, dashboard_name)
+        self.assertEqual(
+            foxglove_dashboard.dashboard, SIMPLE_FOXGLOVE_DASHBOARD
+        )
+
+    def test_device_from_a_dashboard(self) -> None:
+        dashboard_name = "first_dashboard"
+        foxglove_dashboard = FoxgloveDashboard(
+            uid=dashboard_name, dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        foxglove_dashboard.save()
+        device = Device(uid="robot", address="127.0.0.1")
+        device.save()
+        device.foxglove_dashboards.add(foxglove_dashboard)
+
+        self.assertEqual(foxglove_dashboard.devices.all()[0].uid, "robot")

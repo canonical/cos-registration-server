@@ -28,6 +28,8 @@ It consists of:
 - UID: Unique ID per device. Typically, the name of the instance or the serial number.
 - Creation date: DateTime of the device creation in the server.
 - Address: IP address or hostname of the device.
+- Grafana dashboards: Grafana dashboards used by this device.
+- Foxglove dashboards: Foxglove dashboards used by this device.
 
 #### View: `devices/`
 
@@ -73,7 +75,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): "list(grafana_json_dashboards)"}   | Unique ID and IP address of the device. Grafana dashboards is an optional list of Grafana JSON dashboards |
+> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): ["DashboardUID", "DashboardUID"], "foxglove_dashboards"(optional): ["DashboardUID", "Dashboard2"]}   | Unique ID and IP address of the device. Grafana dashboards and Foxglove are optional list of applications specific dashboards UID. |
 
 
 ##### Responses
@@ -109,7 +111,7 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: address and grafana_dashboards |
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: address, grafana_dashboards, foxglove_dashboards |
 
 
 ##### Responses

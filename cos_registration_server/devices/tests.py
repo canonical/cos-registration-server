@@ -1,7 +1,7 @@
 from datetime import timedelta
 from html import escape
 
-from applications.models import GrafanaDashboard
+from applications.models import FoxgloveDashboard, GrafanaDashboard
 from django.db.utils import IntegrityError
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -19,6 +19,13 @@ SIMPLE_GRAFANA_DASHBOARD = {
     "refresh": "25s",
 }
 
+SIMPLE_FOXGLOVE_DASHBOARD = {
+    "configById": {},
+    "globalVariables": {},
+    "userNodes": {},
+    "playbackConfig": {"speed": 1},
+}
+
 
 class DeviceModelTests(TestCase):
     def test_creation_of_a_device(self) -> None:
@@ -33,6 +40,7 @@ class DeviceModelTests(TestCase):
             device.creation_date, timezone.now() - timedelta(hours=1)
         )
         self.assertEqual(len(device.grafana_dashboards.all()), 0)
+        self.assertEqual(len(device.foxglove_dashboards.all()), 0)
 
     def test_device_str(self) -> None:
         device = Device(
@@ -55,6 +63,23 @@ class DeviceModelTests(TestCase):
         self.assertEqual(
             device.grafana_dashboards.all()[0].dashboard,
             SIMPLE_GRAFANA_DASHBOARD,
+        )
+
+    def test_device_create_foxglove_dashboards(self) -> None:
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.foxglove_dashboards.create(
+            uid="first_dashboard", dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        self.assertEqual(
+            device.foxglove_dashboards.all()[0].uid,
+            "first_dashboard",
+        )
+        self.assertEqual(
+            device.foxglove_dashboards.all()[0].dashboard,
+            SIMPLE_FOXGLOVE_DASHBOARD,
         )
 
     def test_device_create_grafana_dashboards_then_delete_device(self) -> None:
@@ -88,6 +113,25 @@ class DeviceModelTests(TestCase):
         self.assertEqual(
             device.grafana_dashboards.all()[0].dashboard,
             SIMPLE_GRAFANA_DASHBOARD,
+        )
+
+    def test_device_relate_foxglove_dashboards(self) -> None:
+        foxglove_dashboard = FoxgloveDashboard(
+            uid="first_dashboard", dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        foxglove_dashboard.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.foxglove_dashboards.add(foxglove_dashboard)
+        self.assertEqual(
+            device.foxglove_dashboards.all()[0].uid,
+            "first_dashboard",
+        )
+        self.assertEqual(
+            device.foxglove_dashboards.all()[0].dashboard,
+            SIMPLE_FOXGLOVE_DASHBOARD,
         )
 
     def test_device_uid_uniqueness(self) -> None:
