@@ -45,7 +45,7 @@ lint:             ## Run pep8, black, mypy linters.
 
 .PHONY: test
 test: lint        ## Run tests and generate coverage report.
-	$(ENV_PREFIX)coverage run --source='.' cos_registration_server/manage.py test api devices
+	$(ENV_PREFIX)coverage run --source='.' cos_registration_server/manage.py test api devices applications
 	$(ENV_PREFIX)coverage xml
 	$(ENV_PREFIX)coverage html
 
