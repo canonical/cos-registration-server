@@ -1,7 +1,11 @@
 """API views."""
 
-from api.serializer import DeviceSerializer, GrafanaDashboardSerializer
-from applications.models import GrafanaDashboard
+from api.serializer import (
+    DeviceSerializer,
+    FoxgloveDashboardSerializer,
+    GrafanaDashboardSerializer,
+)
+from applications.models import FoxgloveDashboard, GrafanaDashboard
 from devices.models import Device
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from rest_framework.parsers import JSONParser
@@ -95,6 +99,56 @@ def grafana_dashboard(request: HttpRequest, uid: str) -> HttpResponse:
     if request.method == "PATCH":
         data = JSONParser().parse(request)
         serialized = GrafanaDashboardSerializer(
+            dashboard, data=data, partial=True
+        )
+        if serialized.is_valid():
+            serialized.save()
+            return JsonResponse(serialized.data)
+        return JsonResponse(serialized.errors, status=400)
+    elif request.method == "DELETE":
+        dashboard.delete()
+        return HttpResponse(status=204)
+    return HttpResponse(status=405)
+
+
+def foxglove_dashboards(request: HttpRequest) -> HttpResponse:
+    """Foxglove dashboards API view.
+
+    request: Http request (GET,POST).
+    return: Http JSON response.
+    """
+    if request.method == "GET":
+        dashboards = FoxgloveDashboard.objects.all()
+        serialized = FoxgloveDashboardSerializer(dashboards, many=True)
+        return JsonResponse(serialized.data, safe=False)
+    elif request.method == "POST":
+        data = JSONParser().parse(request)
+        serialized = FoxgloveDashboardSerializer(data=data)
+        if serialized.is_valid():
+            serialized.save()
+            return JsonResponse(serialized.data, status=201)
+        return JsonResponse(serialized.errors, status=400)
+    return HttpResponse(status=405)
+
+
+def foxglove_dashboard(request: HttpRequest, uid: str) -> HttpResponse:
+    """Foxglove dashboard API view.
+
+    request: Http request (GET,PACH, DELETE).
+    uid: FoxgloveDashboard UID passed in the URL.
+    return: Http JSON response.
+    """
+    try:
+        dashboard = FoxgloveDashboard.objects.get(uid=uid)
+    except FoxgloveDashboard.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if request.method == "GET":
+        serialized = FoxgloveDashboardSerializer(dashboard)
+        return JsonResponse(serialized.data)
+    if request.method == "PATCH":
+        data = JSONParser().parse(request)
+        serialized = FoxgloveDashboardSerializer(
             dashboard, data=data, partial=True
         )
         if serialized.is_valid():
