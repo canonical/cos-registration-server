@@ -33,3 +33,13 @@ class GrafanaDashboard(Dashboard):  # noqa: DJ08
     uid: Unique ID of the dashboard.
     dashboard: Dashboard JSON.
     """
+
+
+class FoxgloveDashboard(Dashboard):  # noqa: DJ08
+    """Foxglove dashboard.
+
+    This class represent a Foxglove dashboard in the DB.
+
+    uid: Unique ID of the dashboard.
+    dashboard: Dashboard JSON.
+    """

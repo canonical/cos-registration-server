@@ -20,4 +20,14 @@ urlpatterns = [
         views.grafana_dashboard,
         name="grafana_dashboard",
     ),
+    path(
+        "v1/applications/foxglove/dashboards",
+        views.foxglove_dashboards,
+        name="foxglove_dashboards",
+    ),
+    path(
+        "v1/applications/foxglove/dashboards/<str:uid>",
+        views.foxglove_dashboard,
+        name="foxglove_dashboard",
+    ),
 ]
