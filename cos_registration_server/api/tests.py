@@ -521,10 +521,7 @@ class GrafanaDashboardViewTests(APITestCase):
         response = self.client.get(self.url(dashboard_uid))
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-        self.assertEqual(content_json["uid"], dashboard_uid)
-        self.assertEqual(
-            content_json["dashboard"], self.simple_grafana_dashboard
-        )
+        self.assertEqual(content_json, self.simple_grafana_dashboard)
 
     def test_patch_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
@@ -700,10 +697,7 @@ class FoxgloveDashboardViewTests(APITestCase):
         response = self.client.get(self.url(dashboard_uid))
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-        self.assertEqual(content_json["uid"], dashboard_uid)
-        self.assertEqual(
-            content_json["dashboard"], self.simple_foxglove_dashboard
-        )
+        self.assertEqual(content_json, self.simple_foxglove_dashboard)
 
     def test_patch_dashboard(self) -> None:
         dashboard_uid = "layout-1"

@@ -199,7 +199,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "dashboard": JSON} |
+> | `200`         | `application/json; Content-Disposition attachment; filename=dashboard_uid.json`        | JSON file |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
@@ -282,7 +282,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "dashboard": JSON} |
+> | `200`         | `application/json; Content-Disposition attachment; filename=dashboard_uid.json`        | JSON file |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 

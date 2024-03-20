@@ -1,5 +1,7 @@
 """API views."""
 
+import json
+
 from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
@@ -95,7 +97,14 @@ def grafana_dashboard(request: HttpRequest, uid: str) -> HttpResponse:
 
     if request.method == "GET":
         serialized = GrafanaDashboardSerializer(dashboard)
-        return JsonResponse(serialized.data)
+        response = HttpResponse(
+            json.dumps(serialized.data["dashboard"]),
+            content_type="application/json",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{serialized.data["uid"]}.json"'
+        )
+        return response
     if request.method == "PATCH":
         data = JSONParser().parse(request)
         serialized = GrafanaDashboardSerializer(
@@ -145,7 +154,14 @@ def foxglove_dashboard(request: HttpRequest, uid: str) -> HttpResponse:
 
     if request.method == "GET":
         serialized = FoxgloveDashboardSerializer(dashboard)
-        return JsonResponse(serialized.data)
+        response = HttpResponse(
+            json.dumps(serialized.data["dashboard"]),
+            content_type="application/json",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{serialized.data["uid"]}.json"'
+        )
+        return response
     if request.method == "PATCH":
         data = JSONParser().parse(request)
         serialized = FoxgloveDashboardSerializer(
