@@ -20,7 +20,7 @@ class Dashboard(models.Model):
 
         abstract = True
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Str representation of a dashboard."""
         return self.uid
 

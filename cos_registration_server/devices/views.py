@@ -1,24 +1,26 @@
 """Devices views."""
 
-from django.http import HttpResponse
+from typing import Any
+
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.views import generic
 
 from .models import Device
 
 
-class devices(generic.ListView):
+class devices(generic.ListView):  # type: ignore[type-arg]
     """Devices list view."""
 
     template_name = "devices/devices.html"
     context_object_name = "devices_list"
 
-    def get_queryset(self):
+    def get_queryset(self) -> Any:
         """Return all devices on GET."""
         return Device.objects.all()
 
 
-def device(request, uid):
+def device(request: HttpRequest, uid: str) -> HttpResponse:
     """Device view.
 
     Representation of the device.

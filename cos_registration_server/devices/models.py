@@ -22,6 +22,6 @@ class Device(models.Model):
         GrafanaDashboard, related_name="devices"
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Str representation of a device."""
         return self.uid

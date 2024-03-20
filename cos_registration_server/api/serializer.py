@@ -1,6 +1,7 @@
 """API app serializer."""
 
 import json
+from typing import Any, Dict, Union
 
 from applications.models import Dashboard, GrafanaDashboard
 from devices.models import Device
@@ -16,7 +17,9 @@ class DashboardSerializer:
         model = Dashboard
         fields = ["uid", "dashboard"]
 
-    def update(self, instance, validated_data):
+    def update(
+        self, instance: Dashboard, validated_data: Dict[str, Any]
+    ) -> Dashboard:
         """Update a Dashboard from data.
 
         instance: Device instance.
@@ -27,7 +30,9 @@ class DashboardSerializer:
         instance.save()
         return instance
 
-    def validate_dashboard(self, value):
+    def validate_dashboard(
+        self, value: Union[str, Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Validate dashboards data.
 
         value: dashboard provided data.
@@ -53,7 +58,7 @@ class DashboardSerializer:
 
 
 class GrafanaDashboardSerializer(
-    DashboardSerializer, serializers.ModelSerializer
+    DashboardSerializer, serializers.ModelSerializer  # type: ignore[type-arg]
 ):
     """Grafana Dashboard Serializer class."""
 
@@ -62,7 +67,7 @@ class GrafanaDashboardSerializer(
 
         model = GrafanaDashboard
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> GrafanaDashboard:
         """Create Grafana Dashboard object from data.
 
         validated_data: Dict of complete and validated data.
@@ -70,7 +75,7 @@ class GrafanaDashboardSerializer(
         return GrafanaDashboard.objects.create(**validated_data)
 
 
-class DeviceSerializer(serializers.ModelSerializer):
+class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     """Device Serializer class."""
 
     grafana_dashboards = serializers.SlugRelatedField(
@@ -86,7 +91,7 @@ class DeviceSerializer(serializers.ModelSerializer):
         model = Device
         fields = ("uid", "creation_date", "address", "grafana_dashboards")
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> Device:
         """Create Device object from data.
 
         validated_data: Dict of complete and validated data.
@@ -105,7 +110,9 @@ class DeviceSerializer(serializers.ModelSerializer):
                 )
         return device
 
-    def update(self, instance, validated_data):
+    def update(
+        self, instance: Device, validated_data: Dict[str, Any]
+    ) -> Device:
         """Update a Device from data.
 
         instance: Device instance.

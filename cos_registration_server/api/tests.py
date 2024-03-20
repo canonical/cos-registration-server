@@ -1,14 +1,18 @@
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, Set, Union
 
 from applications.models import GrafanaDashboard
 from devices.models import Device
+from django.db import models
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 
 class DevicesViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.url = reverse("api:devices")
 
         self.simple_grafana_dashboard = {
@@ -21,23 +25,25 @@ class DevicesViewTests(APITestCase):
             "refresh": "25s",
         }
 
-    def create_device(self, **fields):
+    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         return self.client.post(self.url, data, format="json")
 
-    def add_grafana_dashboard(self, uid, dashboard):
-        dashboard = GrafanaDashboard(uid=uid, dashboard=dashboard)
-        dashboard.save()
-        return dashboard
+    def add_grafana_dashboard(
+        self, uid: str, dashboard: Dict[str, Any]
+    ) -> GrafanaDashboard:
+        grafana_dashboard = GrafanaDashboard(uid=uid, dashboard=dashboard)
+        grafana_dashboard.save()
+        return grafana_dashboard
 
-    def test_get_nothing(self):
+    def test_get_nothing(self) -> None:
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(json.loads(response.content)), 0)
 
-    def test_create_device(self):
+    def test_create_device(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         grafana_dashboard_uid = "dashboard-1"
@@ -56,7 +62,7 @@ class DevicesViewTests(APITestCase):
         self.assertAlmostEqual(
             Device.objects.get().creation_date,
             timezone.now(),
-            delta=timezone.timedelta(seconds=10),
+            delta=timedelta(seconds=10),
         )
         self.assertEqual(
             Device.objects.get().grafana_dashboards.get().uid,
@@ -67,7 +73,7 @@ class DevicesViewTests(APITestCase):
             self.simple_grafana_dashboard,
         )
 
-    def test_create_multiple_devices(self):
+    def test_create_multiple_devices(self) -> None:
         devices = [
             {"uid": "robot-1", "address": "192.168.0.1"},
             {"uid": "robot-2", "address": "192.168.0.2"},
@@ -85,7 +91,7 @@ class DevicesViewTests(APITestCase):
             self.assertEqual(devices[i]["uid"], device["uid"])
             self.assertEqual(devices[i]["address"], device["address"])
 
-    def test_create_already_present_uid(self):
+    def test_create_already_present_uid(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(uid=uid, address=address)
@@ -100,7 +106,9 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_assiciate_device_with_non_existant_grafana_dashboard(self):
+    def test_assiciate_device_with_non_existant_grafana_dashboard(
+        self,
+    ) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(
@@ -113,7 +121,7 @@ class DevicesViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_grafana_dashboards_not_in_a_list(self):
+    def test_grafana_dashboards_not_in_a_list(self) -> None:
         uid = "robot-1"
         address = "192.168.0.1"
         # we try to create the same one
@@ -131,7 +139,7 @@ class DevicesViewTests(APITestCase):
 
 
 class DeviceViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.simple_grafana_dashboard_json = {
             "id": None,
             "uid": None,
@@ -146,21 +154,21 @@ class DeviceViewTests(APITestCase):
         )
         self.grafana_dashboard.save()
 
-    def url(self, uid):
+    def url(self, uid: str) -> str:
         return reverse("api:device", args=(uid,))
 
-    def create_device(self, **fields):
+    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         url = reverse("api:devices")
         return self.client.post(url, data, format="json")
 
-    def test_get_nonexistent_device(self):
+    def test_get_nonexistent_device(self) -> None:
         response = self.client.get(self.url("future-robot"))
         self.assertEqual(response.status_code, 404)
 
-    def test_get_device(self):
+    def test_get_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
@@ -174,17 +182,17 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
         self.assertAlmostEqual(
-            timezone.datetime.fromisoformat(
+            datetime.fromisoformat(
                 content_json["creation_date"].replace("Z", "+00:00")
             ),
             timezone.now(),
-            delta=timezone.timedelta(seconds=10),
+            delta=timedelta(seconds=10),
         )
         self.assertEqual(
             content_json["grafana_dashboards"], [self.grafana_dashboard.uid]
         )
 
-    def test_patch_device(self):
+    def test_patch_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -196,7 +204,7 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
 
-    def test_patch_grafana_dashboards(self):
+    def test_patch_grafana_dashboards(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -209,12 +217,13 @@ class DeviceViewTests(APITestCase):
             content_json["grafana_dashboards"][0],
             self.grafana_dashboard.uid,
         )
+
         self.assertEqual(
             Device.objects.get().grafana_dashboards.get().uid,
             self.grafana_dashboard.uid,
         )
 
-    def test_partial_patch_with_existing_grafana_dashboards(self):
+    def test_partial_patch_with_existing_grafana_dashboards(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
@@ -233,7 +242,7 @@ class DeviceViewTests(APITestCase):
         )
         self.assertEqual(Device.objects.get().grafana_dashboards.count(), 1)
 
-    def test_invalid_patch_device(self):
+    def test_invalid_patch_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
@@ -242,13 +251,13 @@ class DeviceViewTests(APITestCase):
         response = self.client.patch(self.url(uid), data, format="json")
         self.assertEqual(response.status_code, 400)
 
-    def test_delete_device(self):
+    def test_delete_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(
             uid=uid,
             address=address,
-            grafana_dashboards=[self.grafana_dashboard.uid],
+            grafana_dashboards={self.grafana_dashboard.uid},
         )
         response = self.client.get(self.url(uid))
         self.assertEqual(response.status_code, 200)
@@ -259,7 +268,7 @@ class DeviceViewTests(APITestCase):
 
 
 class GrafanaDashboardsViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.url = reverse("api:grafana_dashboards")
 
         self.simple_grafana_dashboard = {
@@ -272,23 +281,25 @@ class GrafanaDashboardsViewTests(APITestCase):
             "refresh": "25s",
         }
 
-    def create_dashboard(self, **fields):
+    def create_dashboard(
+        self, **fields: Union[str, Dict[str, Any]]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         return self.client.post(self.url, data, format="json")
 
-    def add_device(self, uid):
+    def add_device(self, uid: str) -> Device:
         device = Device(uid=uid, address="127.0.0.1")
         device.save()
         return device
 
-    def test_get_nothing(self):
+    def test_get_nothing(self) -> None:
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(json.loads(response.content)), 0)
 
-    def test_create_dashboard(self):
+    def test_create_dashboard(self) -> None:
         grafana_dashboard_uid = "dashboard-1"
         response = self.create_dashboard(
             uid=grafana_dashboard_uid, dashboard=self.simple_grafana_dashboard
@@ -303,7 +314,7 @@ class GrafanaDashboardsViewTests(APITestCase):
             self.simple_grafana_dashboard,
         )
 
-    def test_create_multiple_dashboards(self):
+    def test_create_multiple_dashboards(self) -> None:
         dashboards = [
             {"uid": "d-1", "dashboard": '{"test1": "value"}'},
             {"uid": "d-2", "dashboard": '{"test2": "value"}'},
@@ -326,7 +337,7 @@ class GrafanaDashboardsViewTests(APITestCase):
                 json.loads(dashboards[i]["dashboard"]), dashboard["dashboard"]
             )
 
-    def test_create_already_present_uid(self):
+    def test_create_already_present_uid(self) -> None:
         grafana_dashboard_uid = "dashboard-1"
         response = self.create_dashboard(
             uid=grafana_dashboard_uid, dashboard=self.simple_grafana_dashboard
@@ -344,7 +355,7 @@ class GrafanaDashboardsViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_create_dashboard_with_illformed_json(self):
+    def test_create_dashboard_with_illformed_json(self) -> None:
         grafana_dashboard_uid = "dashboard-1"
         response = self.create_dashboard(
             uid=grafana_dashboard_uid, dashboard='{"hello": {"test"sdsa"}}'
@@ -357,7 +368,7 @@ class GrafanaDashboardsViewTests(APITestCase):
             status_code=400,
         )
 
-    def test_get_dashboards_associated_with_device(self):
+    def test_get_dashboards_associated_with_device(self) -> None:
         grafana_dashboard_uid = "dashboard-1"
         self.create_dashboard(
             uid=grafana_dashboard_uid, dashboard=self.simple_grafana_dashboard
@@ -381,7 +392,7 @@ class GrafanaDashboardsViewTests(APITestCase):
 
 
 class GrafanaDashboardViewTests(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.simple_grafana_dashboard = {
             "id": None,
             "uid": None,
@@ -392,26 +403,28 @@ class GrafanaDashboardViewTests(APITestCase):
             "refresh": "25s",
         }
 
-    def url(self, uid):
+    def url(self, uid: str) -> str:
         return reverse("api:grafana_dashboard", args=(uid,))
 
-    def create_dashboard(self, **fields):
+    def create_dashboard(
+        self, **fields: Union[str, Dict[str, Any]]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
         url = reverse("api:grafana_dashboards")
         return self.client.post(url, data, format="json")
 
-    def add_device(self, uid):
+    def add_device(self, uid: str) -> Device:
         device = Device(uid=uid, address="127.0.0.1")
         device.save()
         return device
 
-    def test_get_nonexistent_dashboard(self):
+    def test_get_nonexistent_dashboard(self) -> None:
         response = self.client.get(self.url("future-dashboard"))
         self.assertEqual(response.status_code, 404)
 
-    def test_get_dashboard(self):
+    def test_get_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
         self.create_dashboard(
             uid=dashboard_uid,
@@ -425,7 +438,7 @@ class GrafanaDashboardViewTests(APITestCase):
             content_json["dashboard"], self.simple_grafana_dashboard
         )
 
-    def test_patch_dashboard(self):
+    def test_patch_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
         self.create_dashboard(
             uid=dashboard_uid,
@@ -442,7 +455,7 @@ class GrafanaDashboardViewTests(APITestCase):
             content_json["dashboard"], json.loads(data["dashboard"])
         )
 
-    def test_invalid_patch_dashboard(self):
+    def test_invalid_patch_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
         self.create_dashboard(
             uid=dashboard_uid,
@@ -454,7 +467,7 @@ class GrafanaDashboardViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_delete_dashboard(self):
+    def test_delete_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
         self.create_dashboard(
             uid=dashboard_uid,
