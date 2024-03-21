@@ -71,7 +71,7 @@ requiring to access the device database.
 
 #### Devices
 <details>
- <summary><code>GET</code> <code><b>api/v1/devices</b></code> <code>(Get the list of all the devices)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/devices/</b></code> <code>(Get the list of all the devices)</code></summary>
 
 ##### Parameters
 
@@ -85,7 +85,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>POST</code> <code><b>api/v1/devices</b></code> <code>(Add a device to the database)</code></summary>
+ <summary><code>POST</code> <code><b>api/v1/devices/</b></code> <code>(Add a device to the database)</code></summary>
 
 ##### Parameters
 
@@ -104,7 +104,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>GET</code> <code><b>api/v1/device/&#60str:uid&#62;</b></code> <code>(Get the details of a device)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Get the details of a device)</code></summary>
 
 ##### Parameters
 
@@ -119,7 +119,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>PATCH</code> <code><b>api/v1/device/&#60str:uid&#62;</b></code> <code>(Modify the attribute of a device)</code></summary>
+ <summary><code>PATCH</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a device)</code></summary>
 
 ##### Parameters
 
@@ -138,7 +138,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>DELETE</code> <code><b>api/v1/device/&#60str:uid&#62;</b></code> <code>(Delete a device from the database)</code></summary>
+ <summary><code>DELETE</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Delete a device from the database)</code></summary>
 
 ##### Parameters
 
@@ -155,7 +155,7 @@ requiring to access the device database.
 #### Applications
 
 <details>
- <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards</b></code> <code>(Get the details of a Grafana dashboards)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards/</b></code> <code>(Get the details of a Grafana dashboards)</code></summary>
 
 ##### Parameters
 
@@ -170,7 +170,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>POST</code> <code><b>api/v1/applications/grafana/dashboards</b></code> <code>(Add a Grafana dashboard to the database)</code></summary>
+ <summary><code>POST</code> <code><b>api/v1/applications/grafana/dashboards/</b></code> <code>(Add a Grafana dashboard to the database)</code></summary>
 
 ##### Parameters
 
@@ -189,7 +189,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;</b></code> <code>(Get the details of a Grafana dashboard)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Get the details of a Grafana dashboard)</code></summary>
 
 ##### Parameters
 
@@ -204,7 +204,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>PATCH</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;</b></code> <code>(Modify the attribute of a GrafanaDashboard)</code></summary>
+ <summary><code>PATCH</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a GrafanaDashboard)</code></summary>
 
 ##### Parameters
 
@@ -223,7 +223,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>DELETE</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;</b></code> <code>(Delete a Grafana dashboard from the database)</code></summary>
+ <summary><code>DELETE</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Delete a Grafana dashboard from the database)</code></summary>
 
 ##### Parameters
 
@@ -238,7 +238,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards</b></code> <code>(Get the details of a Foxglove dashboards)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards/</b></code> <code>(Get the details of a Foxglove dashboards)</code></summary>
 
 ##### Parameters
 
@@ -253,7 +253,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>POST</code> <code><b>api/v1/applications/foxglove/dashboards</b></code> <code>(Add a Foxglove dashboard to the database)</code></summary>
+ <summary><code>POST</code> <code><b>api/v1/applications/foxglove/dashboards/</b></code> <code>(Add a Foxglove dashboard to the database)</code></summary>
 
 ##### Parameters
 
@@ -272,7 +272,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;</b></code> <code>(Get the details of a Foxglove dashboard)</code></summary>
+ <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Get the details of a Foxglove dashboard)</code></summary>
 
 ##### Parameters
 
@@ -287,7 +287,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>PATCH</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;</b></code> <code>(Modify the attribute of a FoxgloveDashboard)</code></summary>
+ <summary><code>PATCH</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a FoxgloveDashboard)</code></summary>
 
 ##### Parameters
 
@@ -306,7 +306,7 @@ requiring to access the device database.
 </details>
 
 <details>
- <summary><code>DELETE</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;</b></code> <code>(Delete a Foxglove dashboard from the database)</code></summary>
+ <summary><code>DELETE</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Delete a Foxglove dashboard from the database)</code></summary>
 
 ##### Parameters
 
