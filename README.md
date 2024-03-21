@@ -75,7 +75,7 @@ requiring to access the device database.
 
 ##### Parameters
 
-> None
+> fields: comma seperated fields selection to get. Default to all.
 
 ##### Responses
 
@@ -108,13 +108,13 @@ requiring to access the device database.
 
 ##### Parameters
 
-> None
+> fields: comma seperated fields selection to get. Default to all.
 
 ##### Responses
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards": "list(grafana_dashboards_uid" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
+> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 

@@ -122,6 +122,29 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "foxglove_dashboards",
         )
 
+    def to_representation(self, instance: Device) -> Dict[str, Any]:
+        """Repesent filter by fields serialized data.
+
+        Overrides the default behavior to return a
+        dictionary containing only the fields
+        specified in the URL parameter 'fields' (comma-separated list).
+        If no 'fields' parameter is provided,
+        returns the entire serialized data.
+
+        instance: The Device model instance to be serialized.
+
+        Returns a dictionary containing the requested or
+        all fields of the serialized data.
+        """
+        data = super().to_representation(instance)
+        if request := self.context.get("request"):
+            if requested_fields := request.query_params.get("fields"):
+                return {
+                    field: data[field] for field in requested_fields.split(",")
+                }
+
+        return data
+
     def create(self, validated_data: Dict[str, Any]) -> Device:
         """Create Device object from data.
 
