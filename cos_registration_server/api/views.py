@@ -17,6 +17,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
+class HealthView(APIView):
+    """Health API view."""
+
+    def get(self, request: Request) -> Response:
+        """Health get view.
+
+        request: Http GET request.
+        return: Http JSON response.
+        """
+        return Response()
+
+
 class DevicesView(APIView):
     """Devices API view."""
 
