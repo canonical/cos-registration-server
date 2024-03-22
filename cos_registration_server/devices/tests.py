@@ -26,15 +26,27 @@ SIMPLE_FOXGLOVE_DASHBOARD = {
     "playbackConfig": {"speed": 1},
 }
 
+PUBLIC_RSA_KEY = """"ssh-rsa \
+AAAAB3NzaC1yc2EAAAADAQABAAABAQCr53T3FlR201z70sjGiJqDUvTMiX3AJog3OuiYMUT\
+26EnlJ8mA13VaBWb9VCCaY8ZF6pSyMYWcSyMhs2It5KvOUS9qJq8/xxZxhGKmtKRPFYTFjI\
+EYn2qdU5C7GsIiwmFpgGCFkBE1bAwjepQar6NTBC3Blc1zjy6dCMdgQHjHhw26UIG3kmKTS\
+I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
+kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
+YkkbhmeJAiNclXL6H"""
+
 
 class DeviceModelTests(TestCase):
     def test_creation_of_a_device(self) -> None:
         device = Device(
-            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+            public_ssh_key=PUBLIC_RSA_KEY,
         )
         device.save()
         self.assertEqual(device.uid, "hello-123")
         self.assertEqual(str(device.address), "127.0.0.1")
+        self.assertEqual(str(device.public_ssh_key), PUBLIC_RSA_KEY)
         self.assertLessEqual(device.creation_date, timezone.now())
         self.assertGreater(
             device.creation_date, timezone.now() - timedelta(hours=1)
@@ -44,7 +56,10 @@ class DeviceModelTests(TestCase):
 
     def test_device_str(self) -> None:
         device = Device(
-            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+            public_ssh_key=PUBLIC_RSA_KEY,
         )
         self.assertEqual(str(device), "hello-123")
 

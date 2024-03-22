@@ -32,6 +32,8 @@ class DevicesViewTests(APITestCase):
             "playbackConfig": {"speed": 1},
         }
 
+        self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
+
     def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
@@ -72,6 +74,7 @@ class DevicesViewTests(APITestCase):
         response = self.create_device(
             uid=uid,
             address=address,
+            public_ssh_key=self.public_ssh_key,
             grafana_dashboards={grafana_dashboard_uid},
             foxglove_dashboards={foxglove_dashboard_uid},
         )
@@ -79,6 +82,9 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 1)
         self.assertEqual(Device.objects.get().uid, uid)
         self.assertEqual(Device.objects.get().address, address)
+        self.assertEqual(
+            Device.objects.get().public_ssh_key, self.public_ssh_key
+        )
         self.assertAlmostEqual(
             Device.objects.get().creation_date,
             timezone.now(),
@@ -103,12 +109,24 @@ class DevicesViewTests(APITestCase):
 
     def test_create_multiple_devices(self) -> None:
         devices = [
-            {"uid": "robot-1", "address": "192.168.0.1"},
-            {"uid": "robot-2", "address": "192.168.0.2"},
-            {"uid": "robot-3", "address": "192.168.0.3"},
+            {
+                "uid": "robot-1",
+                "address": "192.168.0.1",
+                "public_ssh_key": "ssh-add ABC-1",
+            },
+            {
+                "uid": "robot-2",
+                "address": "192.168.0.2",
+                "public_ssh_key": "ssh-add ABC-2",
+            },
+            {
+                "uid": "robot-3",
+                "address": "192.168.0.3",
+                "public_ssh_key": "ssh-add ABC-3",
+            },
         ]
         for device in devices:
-            self.create_device(uid=device["uid"], address=device["address"])
+            self.client.post(self.url, device, format="json")
         self.assertEqual(Device.objects.count(), 3)
 
         response = self.client.get(self.url)
@@ -118,18 +136,33 @@ class DevicesViewTests(APITestCase):
         for i, device in enumerate(content_json):
             self.assertEqual(devices[i]["uid"], device["uid"])
             self.assertEqual(devices[i]["address"], device["address"])
+            self.assertEqual(
+                devices[i]["public_ssh_key"], device["public_ssh_key"]
+            )
             self.assertIsNotNone(device.get("creation_date"))
             self.assertEqual(device.get("grafana_dashboards"), [])
             self.assertEqual(device.get("foxglove_dashboards"), [])
 
     def test_get_devices_with_filtered_fields(self) -> None:
         devices = [
-            {"uid": "robot-1", "address": "192.168.0.1"},
-            {"uid": "robot-2", "address": "192.168.0.2"},
-            {"uid": "robot-3", "address": "192.168.0.3"},
+            {
+                "uid": "robot-1",
+                "address": "192.168.0.1",
+                "public_ssh_key": "ssh-add ABC-1",
+            },
+            {
+                "uid": "robot-2",
+                "address": "192.168.0.2",
+                "public_ssh_key": "ssh-add ABC-2",
+            },
+            {
+                "uid": "robot-3",
+                "address": "192.168.0.3",
+                "public_ssh_key": "ssh-add ABC-3",
+            },
         ]
         for device in devices:
-            self.create_device(uid=device["uid"], address=device["address"])
+            self.client.post(self.url, device, format="json")
         self.assertEqual(Device.objects.count(), 3)
 
         params = {"fields": "creation_date,address"}
@@ -237,6 +270,8 @@ class DeviceViewTests(APITestCase):
         )
         self.foxglove_dashboard.save()
 
+        self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
+
     def url(self, uid: str) -> str:
         return reverse("api:device", args=(uid,))
 
@@ -257,6 +292,7 @@ class DeviceViewTests(APITestCase):
         self.create_device(
             uid=uid,
             address=address,
+            public_ssh_key=self.public_ssh_key,
             grafana_dashboards={self.grafana_dashboard.uid},
             foxglove_dashboards={self.foxglove_dashboard.uid},
         )
@@ -265,6 +301,7 @@ class DeviceViewTests(APITestCase):
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
+        self.assertEqual(content_json["public_ssh_key"], self.public_ssh_key)
         self.assertAlmostEqual(
             datetime.fromisoformat(
                 content_json["creation_date"].replace("Z", "+00:00")
@@ -283,14 +320,17 @@ class DeviceViewTests(APITestCase):
     def test_patch_device(self) -> None:
         uid = "robot-1"
         address = "192.168.1.2"
-        self.create_device(uid=uid, address=address)
+        response = self.create_device(uid=uid, address=address)
+        content_json = json.loads(response.content)
+        self.assertEqual(content_json["public_ssh_key"], "")
         address = "192.168.1.200"
-        data = {"address": address}
+        data = {"address": address, "public_ssh_key": self.public_ssh_key}
         response = self.client.patch(self.url(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], uid)
         self.assertEqual(content_json["address"], address)
+        self.assertEqual(content_json["public_ssh_key"], self.public_ssh_key)
 
     def test_patch_grafana_dashboards(self) -> None:
         uid = "robot-1"

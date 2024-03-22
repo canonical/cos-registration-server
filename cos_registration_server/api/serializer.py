@@ -118,6 +118,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "uid",
             "creation_date",
             "address",
+            "public_ssh_key",
             "grafana_dashboards",
             "foxglove_dashboards",
         )

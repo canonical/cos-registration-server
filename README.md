@@ -28,6 +28,7 @@ It consists of:
 - UID: Unique ID per device. Typically, the name of the instance or the serial number.
 - Creation date: DateTime of the device creation in the server.
 - Address: IP address or hostname of the device.
+- Public SSH key: public SSH key for the device.
 - Grafana dashboards: Grafana dashboards used by this device.
 - Foxglove dashboards: Foxglove dashboards used by this device.
 
@@ -91,14 +92,14 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}   | Unique ID and IP address of the device. Grafana dashboards and Foxglove are optional list of applications specific dashboards UID. |
+> | None      |  required | {"uid": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}   | Unique ID and IP address of the device. Grafana dashboards and Foxglove are optional list of applications specific dashboards UID. |
 
 
 ##### Responses
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
+> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
 > | `400`         | `application/json`                | {"field": "error details"}                            |
 > | `409`         | `application/json`         | {"error": "Device uid already exists"}                                                                |
 </details>
@@ -114,7 +115,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
+> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
@@ -132,7 +133,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
+> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
 > | `400`         | `application/json`                | {"field": "error details"}                            |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
