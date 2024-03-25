@@ -118,6 +118,29 @@ class DevicesViewTests(APITestCase):
         for i, device in enumerate(content_json):
             self.assertEqual(devices[i]["uid"], device["uid"])
             self.assertEqual(devices[i]["address"], device["address"])
+            self.assertIsNotNone(device.get("creation_date"))
+            self.assertEqual(device.get("grafana_dashboards"), [])
+            self.assertEqual(device.get("foxglove_dashboards"), [])
+
+    def test_get_devices_with_filtered_fields(self) -> None:
+        devices = [
+            {"uid": "robot-1", "address": "192.168.0.1"},
+            {"uid": "robot-2", "address": "192.168.0.2"},
+            {"uid": "robot-3", "address": "192.168.0.3"},
+        ]
+        for device in devices:
+            self.create_device(uid=device["uid"], address=device["address"])
+        self.assertEqual(Device.objects.count(), 3)
+
+        params = {"fields": "creation_date,address"}
+        response = self.client.get(self.url, data=params)
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(len(content_json), 3)
+        for i, device in enumerate(content_json):
+            self.assertIsNone(device.get("uid"))
+            self.assertEqual(devices[i]["address"], device["address"])
+            self.assertIsNotNone(device.get("creation_date"))
 
     def test_create_already_present_uid(self) -> None:
         uid = "robot-1"
@@ -130,7 +153,7 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 1)
         self.assertContains(
             response,
-            '{"uid": ["device with this uid already exists."]}',
+            '{"uid":["device with this uid already exists."]}',
             status_code=400,
         )
 
@@ -145,7 +168,7 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 0)
         self.assertContains(
             response,
-            '{"grafana_dashboards": ["Object with uid=dashboard-1 does not exist."]}',
+            '{"grafana_dashboards":["Object with uid=dashboard-1 does not exist."]}',
             status_code=400,
         )
 
@@ -155,7 +178,7 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 0)
         self.assertContains(
             response,
-            '{"foxglove_dashboards": ["Object with uid=dashboard-1 does not exist."]}',
+            '{"foxglove_dashboards":["Object with uid=dashboard-1 does not exist."]}',
             status_code=400,
         )
 
@@ -171,7 +194,7 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 0)
         self.assertContains(
             response,
-            '{"grafana_dashboards": ["Expected a list of items but got type \\"str\\".',
+            '{"grafana_dashboards":["Expected a list of items but got type \\"str\\".',
             status_code=400,
         )
 
@@ -183,7 +206,7 @@ class DevicesViewTests(APITestCase):
         self.assertEqual(Device.objects.count(), 0)
         self.assertContains(
             response,
-            '{"foxglove_dashboards": ["Expected a list of items but got type \\"str\\".',
+            '{"foxglove_dashboards":["Expected a list of items but got type \\"str\\".',
             status_code=400,
         )
 
@@ -439,7 +462,7 @@ class GrafanaDashboardsViewTests(APITestCase):
         self.assertEqual(GrafanaDashboard.objects.count(), 1)
         self.assertContains(
             response,
-            '{"uid": ["grafana dashboard with this uid already exists."]}',
+            '{"uid":["grafana dashboard with this uid already exists."]}',
             status_code=400,
         )
 
@@ -452,7 +475,7 @@ class GrafanaDashboardsViewTests(APITestCase):
         self.assertEqual(GrafanaDashboard.objects.count(), 0)
         self.assertContains(
             response,
-            '{"dashboard": ["Failed to load dashboard as json."]}',
+            '{"dashboard":["Failed to load dashboard as json."]}',
             status_code=400,
         )
 
