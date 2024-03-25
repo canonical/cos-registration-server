@@ -70,6 +70,21 @@ It consists of:
 The API can be used by the COS registration agent but also by any service
 requiring to access the device database.
 
+#### Health
+<details>
+ <summary><code>GET</code> <code><b>api/v1/health/</b></code> <code>(Get wether or not the app is alive)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | | |
+</details>
+
 #### Devices
 <details>
  <summary><code>GET</code> <code><b>api/v1/devices/</b></code> <code>(Get the list of all the devices)</code></summary>

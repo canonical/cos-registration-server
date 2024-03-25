@@ -11,6 +11,15 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 
+class HealthViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("api:health")
+
+    def test_health_ok(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+
 class DevicesViewTests(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("api:devices")
