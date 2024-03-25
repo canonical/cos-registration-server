@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 # to be able to add the webserver address
 try:
     additional_host = os.environ["ALLOWED_HOST_DJANGO"]
-    ALLOWED_HOSTS.append(additional_host)
+    ALLOWED_HOSTS.extend(additional_host.split(','))
 except KeyError:
     pass
 
