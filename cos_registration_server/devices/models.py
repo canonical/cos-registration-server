@@ -12,6 +12,7 @@ class Device(models.Model):
     uid: Unique ID of the device.
     creation_date: Creation date of the device.
     address: IP address of the device.
+    public_ssh_key: device public SSH key.
     grafana_dashboards: Grafana dashboards relations.
     foxglove_dashboards: Foxglove dashboards relations.
     """
@@ -19,6 +20,7 @@ class Device(models.Model):
     uid = models.CharField(max_length=200, unique=True)
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
     address = models.GenericIPAddressField("device IP")
+    public_ssh_key = models.TextField("device public SSH key", default="")
     grafana_dashboards = models.ManyToManyField(
         GrafanaDashboard, related_name="devices"
     )
