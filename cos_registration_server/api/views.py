@@ -11,7 +11,6 @@ from applications.models import FoxgloveDashboard, GrafanaDashboard
 from devices.models import Device
 from django.http import HttpResponse
 from rest_framework.exceptions import NotFound
-from rest_framework.parsers import JSONParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -38,8 +37,7 @@ class DevicesView(APIView):
         request: Http GET request.
         return: Http JSON response.
         """
-        data = JSONParser().parse(request)
-        serialized = DeviceSerializer(data=data)
+        serialized = DeviceSerializer(data=request.data)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data, status=201)
@@ -75,8 +73,7 @@ class DeviceView(APIView):
         return: Http JSON response.
         """
         device = self._get_device(uid)
-        data = JSONParser().parse(request)
-        serialized = DeviceSerializer(device, data=data, partial=True)
+        serialized = DeviceSerializer(device, data=request.data, partial=True)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data)
@@ -113,8 +110,7 @@ class GrafanaDashboardsView(APIView):
         request: Http POST request.
         return: Http JSON response.
         """
-        data = JSONParser().parse(request)
-        serialized = GrafanaDashboardSerializer(data=data)
+        serialized = GrafanaDashboardSerializer(data=request.data)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data, status=201)
@@ -155,9 +151,8 @@ class GrafanaDashboardView(APIView):
         return: Http JSON response.
         """
         dashboard = self._get_dashboard(uid)
-        data = JSONParser().parse(request)
         serialized = GrafanaDashboardSerializer(
-            dashboard, data=data, partial=True
+            dashboard, data=request.data, partial=True
         )
         if serialized.is_valid():
             serialized.save()
@@ -194,8 +189,7 @@ class FoxgloveDashboardsView(APIView):
         request: Http POST request.
         return: Http JSON response.
         """
-        data = JSONParser().parse(request)
-        serialized = FoxgloveDashboardSerializer(data=data)
+        serialized = FoxgloveDashboardSerializer(data=request.data)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data, status=201)
@@ -236,9 +230,8 @@ class FoxgloveDashboardView(APIView):
         return: Http JSON response.
         """
         dashboard = self._get_dashboard(uid)
-        data = JSONParser().parse(request)
         serialized = FoxgloveDashboardSerializer(
-            dashboard, data=data, partial=True
+            dashboard, data=request.data, partial=True
         )
         if serialized.is_valid():
             serialized.save()
