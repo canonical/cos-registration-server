@@ -3,7 +3,7 @@ from html import escape
 
 from applications.models import FoxgloveDashboard, GrafanaDashboard
 from django.db.utils import IntegrityError
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -201,6 +201,7 @@ class DevicesViewTests(TestCase):
         )
 
 
+@override_settings(COS_MODEL_NAME="cos")
 class DeviceViewTests(TestCase):
     def setUp(self) -> None:
         # custom client with META HTTP_HOST specified
