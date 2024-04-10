@@ -2,6 +2,7 @@
 
 from typing import Any, Dict
 
+from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 from django.utils.http import urlencode
@@ -59,15 +60,21 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
 
     base_url = request.META["HTTP_HOST"]
 
+    cos_model_name = settings.COS_MODEL_NAME
+
     grafana_param = {"query": uid}
     grafana_main_link = (
-        f"{base_url}/cos-grafana/dashboards/?{urlencode(grafana_param)}/"
+        f"{base_url}/{cos_model_name}-grafana/"
+        f"dashboards/?{urlencode(grafana_param)}/"
     )
     grafana_dashboards = {}
     grafana_param = {"instance": uid}
     for grafana_dashboard in device.grafana_dashboards.all():
         grafana_dashboards[grafana_dashboard.uid] = (
-            base_url + "/cos-grafana/dashboards/" + grafana_dashboard.uid + "/"
+            base_url
+            + f"/{cos_model_name}-grafana/dashboards/"
+            + grafana_dashboard.uid
+            + "/"
             f"?{urlencode(grafana_param)}/"
         )
 
@@ -76,19 +83,21 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
         "ds.url": f"ws://{device.address}:8765",
     }
     foxglove_main_link = (
-        f"{base_url}/cos-foxglove-studio/?{urlencode(foxglove_params)}"
+        f"{base_url}/"
+        f"{cos_model_name}-foxglove-studio/?{urlencode(foxglove_params)}"
     )
     foxglove_layouts = {}
     for foxglove_dashboard in device.foxglove_dashboards.all():
         foxglove_params["layoutUrl"] = (
-            f"{base_url}/cos-cos-registration-server/api/v1/"
+            f"{base_url}/{cos_model_name}-cos-registration-server/api/v1/"
             f"applications/foxglove/dashboards/{foxglove_dashboard.uid}"
         )
         foxglove_layouts[foxglove_dashboard.uid] = (
-            f"{base_url}/cos-foxglove-studio/?{urlencode(foxglove_params)}"
+            f"{base_url}/{cos_model_name}-foxglove-studio/"
+            f"?{urlencode(foxglove_params)}"
         )
 
-    bag_files = f"{base_url}/cos-ros2bag-fileserver/{uid}/"
+    bag_files = f"{base_url}/{cos_model_name}-ros2bag-fileserver/{uid}/"
 
     links = []
     links.append(

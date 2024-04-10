@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 # to be able to add the webserver address
 try:
     additional_host = os.environ["ALLOWED_HOST_DJANGO"]
-    ALLOWED_HOSTS.extend(additional_host.split(','))
+    ALLOWED_HOSTS.extend(additional_host.split(","))
 except KeyError:
     pass
 
@@ -156,7 +156,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # To keep the reverse proxy prefix when forwarding.
 USE_X_FORWARDED_HOST = True
 
-# Where robot dashboards are written on disk
-GRAFANA_DASHBOARD_PATH = os.getenv(
-    "GRAFANA_DASHBOARD_PATH", "grafana_dashboards/"
-)
+# COS model name used to generate URLs.
+COS_MODEL_NAME = os.getenv("COS_MODEL_NAME", "")
