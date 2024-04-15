@@ -62,17 +62,16 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
 
     cos_model_name = settings.COS_MODEL_NAME
 
-    grafana_param = {"query": uid}
     grafana_main_link = (
         f"{base_url}/{cos_model_name}-grafana/"
-        f"dashboards/?{urlencode(grafana_param)}/"
+        f"dashboards/"
     )
     grafana_dashboards = {}
-    grafana_param = {"instance": uid}
+    grafana_param = {"var-Host": uid}
     for grafana_dashboard in device.grafana_dashboards.all():
         grafana_dashboards[grafana_dashboard.uid] = (
             base_url
-            + f"/{cos_model_name}-grafana/dashboards/"
+            + f"/{cos_model_name}-grafana/d/"
             + grafana_dashboard.uid
             + "/"
             f"?{urlencode(grafana_param)}/"
