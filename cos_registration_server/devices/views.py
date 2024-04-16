@@ -74,7 +74,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
             + f"/{cos_model_name}-grafana/d/"
             + grafana_dashboard.uid
             + "/"
-            f"?{urlencode(grafana_param)}/"
+            f"?{urlencode(grafana_param)}"
         )
 
     foxglove_params = {
