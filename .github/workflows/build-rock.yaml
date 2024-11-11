@@ -21,7 +21,7 @@ jobs:
 
     - name: Setup LXD
       if: steps.changed-files.outputs.any_changed
-      uses: canonical/setup-lxd@v0.1.1
+      uses: canonical/setup-lxd@v0.1.2
       with:
         channel: latest/stable
 
