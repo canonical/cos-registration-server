@@ -48,7 +48,7 @@ jobs:
           TAG=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
           TAG=$(echo $TAG | sed "s|\/|\_|")
         fi
-        sudo skopeo --insecure-policy copy oci-archive:$(realpath ${{ steps.rockcraft.outputs.rock }}) docker://ghcr.io/ubuntu-robotics/cos-registration-server:$TAG --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+        sudo skopeo --insecure-policy copy oci-archive:$(realpath ${{ steps.rockcraft.outputs.rock }}) docker://ghcr.io/canonical/cos-registration-server:$TAG --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
     - name: Generate digest
       run: |
         digest=$(skopeo inspect oci-archive:$(realpath ${{ steps.rockcraft.outputs.rock }}) --format '{{.Digest}}')

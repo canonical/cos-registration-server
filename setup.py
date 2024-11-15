@@ -34,7 +34,7 @@ setup(
     name="cos_registration_server",
     version=read("cos_registration_server/cos_registration_server", "VERSION"),
     description="Awesome cos_registration_server created by ubuntu-robotics",
-    url="https://github.com/ubuntu-robotics/cos-registration-server/",
+    url="https://github.com/canonical/cos-registration-server/",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     author="ubuntu-robotics",
