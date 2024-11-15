@@ -9,8 +9,8 @@ its informations.
 A user can also visualize the registered devices as well as discovering
 customized device applications.
 
-[![codecov](https://codecov.io/gh/ubuntu-robotics/cos-registration-server/branch/main/graph/badge.svg?token=cos-registration-server_token_here)](https://codecov.io/gh/ubuntu-robotics/cos-registration-server)
-[![CI](https://github.com/ubuntu-robotics/cos-registration-server/actions/workflows/main.yml/badge.svg)](https://github.com/ubuntu-robotics/cos-registration-server/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/canonical/cos-registration-server/branch/main/graph/badge.svg?token=cos-registration-server_token_here)](https://codecov.io/gh/canonical/cos-registration-server)
+[![CI](https://github.com/canonical/cos-registration-server/actions/workflows/main.yml/badge.svg)](https://github.com/canonical/cos-registration-server/actions/workflows/main.yml)
 
 
 ## Features

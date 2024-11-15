@@ -10,7 +10,7 @@ This instructions are for linux base systems. (Linux, MacOS, BSD, etc.)
 - On github interface click on `Fork` button.
 - Clone your fork of this repo. `git clone git@github.com:YOUR_GIT_USERNAME/cos-registration-server.git`
 - Enter the directory `cd cos-registration-server`
-- Add upstream repo `git remote add upstream https://github.com/ubuntu-robotics/cos-registration-server`
+- Add upstream repo `git remote add upstream https://github.com/canonical/cos-registration-server`
 
 ## Setting up your own virtual environment
 
