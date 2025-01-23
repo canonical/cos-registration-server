@@ -6,8 +6,14 @@ from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
+    PrometheusAlertRuleSerializer,
 )
-from applications.models import FoxgloveDashboard, GrafanaDashboard
+from applications.models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    PrometheusAlertRule,
+    LokiAlertRule,
+)
 from devices.models import Device
 from django.http import HttpResponse
 from rest_framework.exceptions import NotFound
@@ -258,4 +264,84 @@ class FoxgloveDashboardView(APIView):
         """
         dashboard = self._get_dashboard(uid)
         dashboard.delete()
+        return Response(status=204)
+
+class PrometheusAlertRulesView(APIView):
+    """PrometheusAlertRules API view."""
+
+    def get(self, request: Request) -> Response:
+        """Prometheus Alert Rules get view.
+
+        request: Http GET request.
+        return: Http JSON response.
+        """
+        ## TODO: here all the rules must be returned, rendered and not rendered
+        ## the rendered one must be rendered per device_uid.
+
+        alert_rules = PrometheusAlertRule.objects.all()
+        serialized = PrometheusAlertRuleSerializer(alert_rules, many=True)
+        return Response(serialized.data)
+
+    def post(self, request: Request) -> Response:
+        """Prometheus Alert Rules post view.
+
+        request: Http POST request.
+        return: Http JSON response.
+        """
+        serialized = PrometheusAlertRuleSerializer(data=request.data)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data, status=201)
+        return Response(serialized.errors, status=400)
+
+class PrometheusAlertRuleView(APIView):
+    """PrometheusAlertRule API view."""
+    def _get_alert_rule(self, uid: str) -> PrometheusAlertRule:
+        try:
+            alert_rule = PrometheusAlertRule.objects.get(uid=uid)
+            return alert_rule
+        except PrometheusAlertRule.DoesNotExist:
+            raise NotFound("Object does not exist")
+
+    def get(self, request: Request, uid: str) -> HttpResponse:
+        """Prometheus alert rule get view.
+
+        request: Http GET request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        serialized = FoxgloveDashboardSerializer(alert_rule)
+        response = HttpResponse(
+            json.dumps(serialized.data["rules"]),
+            content_type="application/json",
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{serialized.data["uid"]}.json"'
+        )
+        return response
+
+    def patch(self, request: Request, uid: str) -> Response:
+        """Prometheus alert rule patch view.
+
+        request: Http PATCH request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        serialized = FoxgloveDashboardSerializer(
+            alert_rule, data=request.data, partial=True
+        )
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data)
+        return Response(serialized.errors, status=400)
+
+    def delete(self, request: Request, uid: str) -> Response:
+        """Prometheus alert rule delete view.
+
+        request: Http DELETE request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        alert_rule.delete()
         return Response(status=204)

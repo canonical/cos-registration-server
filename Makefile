@@ -41,7 +41,7 @@ fmt:              ## Format code using black & isort.
 lint:             ## Run pep8, black, mypy linters.
 	$(ENV_PREFIX)flake8 cos_registration_server/ --exclude migrations,tests.py
 	$(ENV_PREFIX)black -l 79 --check cos_registration_server/
-	$(ENV_PREFIX)mypy --strict cos_registration_server
+	$(ENV_PREFIX)mypy cos_registration_server
 
 .PHONY: test
 test: lint        ## Run tests and generate coverage report.

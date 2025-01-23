@@ -1,9 +1,20 @@
 """API app serializer."""
 
 import json
-from typing import Any, Dict, Union
+import yaml
+from typing import (
+    Any,
+    Dict,
+    Union,
+)
 
-from applications.models import Dashboard, FoxgloveDashboard, GrafanaDashboard
+from applications.models import (
+    Dashboard,
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    AlertRule,
+    PrometheusAlertRule,
+)
 from devices.models import Device
 from rest_framework import serializers
 
@@ -244,3 +255,79 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             pass
 
         return instance
+
+
+class AlertRuleSerializer:
+    """Alert rules Serializer class."""
+
+    class Meta:
+        """AlertRuleSerializer Meta class."""
+
+        model = AlertRule
+        fields = ["uid", "rules"]
+
+    def update(
+        self, instance: AlertRule, validated_data: Dict[str, Any]
+    ) -> AlertRule:
+        """Update an AlertRule from data.
+
+        instance: Device instance.
+        validated_data: Dict of partial and validated data.
+        """
+        rules = validated_data.get("rules", instance.rules)
+        instance.rules = rules
+        instance.save()
+        return instance
+
+    def validate_rules(self, value: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate alert rules YAML rules.
+
+        This validate function is called on is_valid()
+        and validates the rules before saving them
+        database and sending them.
+
+        value: YAML rules provided in python object format.
+        return: dashboard json.
+        raise:
+          yaml.YAMLError
+          serializers.ValidationError
+        """
+        if not isinstance(value, str):
+            raise serializers.ValidationError(
+                "Alert rule is not a supported format (str)."
+            )
+        try:
+            alert_rule = yaml.safe_load(value)
+        except yaml.YAMLError as e:
+            raise serializers.ValidationError(
+                f"Failed to load alert rule as a yaml: {e}"
+            )
+        return alert_rule
+
+
+class PrometheusAlertRuleSerializer(
+    AlertRuleSerializer, serializers.ModelSerializer  # type: ignore[type-arg]
+):
+    """Prometheus Alert Rule Serializer class."""
+
+    class Meta(AlertRuleSerializer.Meta):
+        """AlertRuleSerializer Meta class."""
+
+        model = PrometheusAlertRule
+
+    # here we get the FUll JSON from request
+    def create(self, validated_data: Dict[str, Any]) -> PrometheusAlertRule:
+        """Create PrometheusAlertRule object from data.
+
+        validated_data: Dict of complete JSON validated data
+        provided by the request.
+        In the alert rule case a valid data request is:
+            json = {
+            uid = "rule_uid"
+            rules = file(rules.rule)
+            }
+        """
+        # TODO: here we do the rendering of the incoming jinja rules
+        # template_bool = jinja_render(validated_data["rules"])
+        # validated_data["template_bool"] = template_bool
+        return PrometheusAlertRule.objects.create(**validated_data)

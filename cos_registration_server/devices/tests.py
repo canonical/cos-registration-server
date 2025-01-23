@@ -1,7 +1,12 @@
 from datetime import timedelta
 from html import escape
-
-from applications.models import FoxgloveDashboard, GrafanaDashboard
+import yaml
+from applications.models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    PrometheusAlertRule,
+    LokiAlertRule,
+)
 from django.db.utils import IntegrityError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -34,6 +39,18 @@ I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
 kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
 YkkbhmeJAiNclXL6H"""
 
+SIMPLE_ALERT_RULE = """
+    groups:
+    - name: cos-robotics-model_robot_test_{{ $cos.device.uid }} # robot specific alert
+    rules:
+    - alert: MyRobotTest_{{ $cos.instance }}
+    annotations:
+    description: "The very custom description"
+    summary: Not enough memory alert (instance {{ $labels.instance }})
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+    for: 5m
+    severity: critical
+"""
 
 class DeviceModelTests(TestCase):
     def test_creation_of_a_device(self) -> None:
@@ -158,6 +175,27 @@ class DeviceModelTests(TestCase):
             Device(uid=uid, address="192.168.0.1").save,
         )
 
+    def test_device_create_prometheus_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRule(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE
+        )
+        prometheus_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.prometheus_alert_rules.add(prometheus_alert_rule)
+        self.assertEqual(
+            device.prometheus_alert_rules.all()[0].uid,
+            "first_alert",
+        )
+        self.assertEqual(
+            device.prometheus_alert_rules.all()[0].rules,
+            yaml.safe_load(SIMPLE_ALERT_RULE),
+        )
+
+    ## TODO: add more tests
 
 def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)
