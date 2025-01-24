@@ -15,6 +15,7 @@ from applications.models import (
     AlertRule,
     PrometheusAlertRule,
 )
+from applications.utils import is_alert_rule_a_jinja_template
 from devices.models import Device
 from rest_framework import serializers
 
@@ -284,7 +285,7 @@ class AlertRuleSerializer:
 
         This validate function is called on is_valid()
         and validates the rules before saving them
-        database and sending them.
+        to database.
 
         value: YAML rules provided in python object format.
         return: dashboard json.
@@ -315,7 +316,6 @@ class PrometheusAlertRuleSerializer(
 
         model = PrometheusAlertRule
 
-    # here we get the FUll JSON from request
     def create(self, validated_data: Dict[str, Any]) -> PrometheusAlertRule:
         """Create PrometheusAlertRule object from data.
 
@@ -323,11 +323,13 @@ class PrometheusAlertRuleSerializer(
         provided by the request.
         In the alert rule case a valid data request is:
             json = {
-            uid = "rule_uid"
-            rules = file(rules.rule)
+              uid = "rule_uid"
+              rules = file(rules.rule)
             }
         """
-        # TODO: here we do the rendering of the incoming jinja rules
-        # template_bool = jinja_render(validated_data["rules"])
-        # validated_data["template_bool"] = template_bool
+        is_template = is_alert_rule_a_jinja_template(validated_data["rules"])
+
+        # Add template key to the validated_data, this is available
+        # in the model but not exposed in the API
+        validated_data["template"] = is_template
         return PrometheusAlertRule.objects.create(**validated_data)

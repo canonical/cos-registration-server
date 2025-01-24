@@ -1,8 +1,14 @@
 import json
+import yaml
 from datetime import datetime, timedelta
 from typing import Any, Dict, Set, Union
 
-from applications.models import FoxgloveDashboard, GrafanaDashboard
+from applications.models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    PrometheusAlertRule,
+    LokiAlertRule,
+)
 from devices.models import Device
 from django.db import models
 from django.http import HttpResponse
@@ -800,3 +806,77 @@ class FoxgloveDashboardViewTests(APITestCase):
         self.assertEqual(response.status_code, 204)
         response = self.client.get(self.url(dashboard_uid))
         self.assertEqual(response.status_code, 404)
+
+class PrometheusAlertRulesViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("api:prometheus_alert_rules")
+
+        self.simple_prometheus_alert_rule_template = """
+            groups:
+              name: cos-robotics-model_robot_test_{{ cos.uid }}
+              rules:
+              alert: MyRobotTest_{{ '{{ $label.instace }}' }}
+        """
+
+        self.simple_prometheus_alert_rule = """
+            groups:
+              name: cos-robotics-model_robot_test
+              rules:
+              alert: MyRobotTest_{{ $label.instance }}
+        """
+
+    def create_alert_rule(
+        self, **fields: Union[str, str]
+    ) -> HttpResponse:
+        data = {}
+        for field, value in fields.items():
+            data[field] = value
+        return self.client.post(self.url, data, format="json")
+
+    def add_device(self, uid: str) -> Device:
+        device = Device(uid=uid, address="127.0.0.1")
+        device.save()
+        return device
+
+    def test_get_nothing(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)), 0)
+
+    def test_create_alert_rule_template(self) -> None:
+        prometheus_alert_rule_uid = "first_rule"
+        response = self.create_alert_rule(
+            uid=prometheus_alert_rule_uid,
+            rules=self.simple_prometheus_alert_rule_template,
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(PrometheusAlertRule.objects.count(), 1)
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().uid, prometheus_alert_rule_uid
+        )
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().rules,
+            yaml.safe_load(self.simple_prometheus_alert_rule_template),
+        )
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().template, True
+        )
+
+    def test_create_alert_rule(self) -> None:
+        prometheus_alert_rule_uid = "first_rule"
+        response = self.create_alert_rule(
+            uid=prometheus_alert_rule_uid,
+            rules=self.simple_prometheus_alert_rule,
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(PrometheusAlertRule.objects.count(), 1)
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().uid, prometheus_alert_rule_uid
+        )
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().rules,
+            yaml.safe_load(self.simple_prometheus_alert_rule),
+        )
+        self.assertEqual(
+            PrometheusAlertRule.objects.get().template, False
+        )
