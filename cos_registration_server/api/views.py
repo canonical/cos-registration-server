@@ -1,6 +1,7 @@
 """API views."""
 
 import json
+import yaml
 
 from api.serializer import (
     DeviceSerializer,
@@ -20,7 +21,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from jinja2 import Environment
 
 class HealthView(APIView):
     """Health API view."""
@@ -275,12 +276,29 @@ class PrometheusAlertRulesView(APIView):
         request: Http GET request.
         return: Http JSON response.
         """
-        ## TODO: here all the rules must be returned, rendered and not rendered
-        ## the rendered one must be rendered per device_uid.
-
         alert_rules = PrometheusAlertRule.objects.all()
+        devices = Device.objects.all()
+        device_uids = [device.uid for device in devices]
+        rendered_rules = []
+        for rule in alert_rules:
+            if rule.template == True:
+                for uid in device_uids:
+                    env = Environment(
+                        variable_start_string="%%",
+                        variable_end_string="%%",
+                    )
+                    rule_string = yaml.dump(rule.rules)
+                    template = env.from_string(rule_string)
+                    context = {"juju_device_uuid": f"{uid}"}
+                    rendered_rule = template.render(context)
+                    rendered_rules.append({
+                        "uid": rule.uid + "_" + uid,
+                        "rules": rendered_rule,
+                    })
         serialized = PrometheusAlertRuleSerializer(alert_rules, many=True)
-        return Response(serialized.data)
+        serialized_list = list(serialized.data)
+        serialized_list.extend(rendered_rules)
+        return Response(serialized_list)
 
     def post(self, request: Request) -> Response:
         """Prometheus Alert Rules post view.
@@ -296,6 +314,7 @@ class PrometheusAlertRulesView(APIView):
 
 class PrometheusAlertRuleView(APIView):
     """PrometheusAlertRule API view."""
+
     def _get_alert_rule(self, uid: str) -> PrometheusAlertRule:
         try:
             alert_rule = PrometheusAlertRule.objects.get(uid=uid)
@@ -310,14 +329,15 @@ class PrometheusAlertRuleView(APIView):
         return: Http JSON response.
         """
         alert_rule = self._get_alert_rule(uid)
-        serialized = FoxgloveDashboardSerializer(alert_rule)
+        serialized = PrometheusAlertRuleSerializer(alert_rule)
+
         response = HttpResponse(
-            json.dumps(serialized.data["rules"]),
-            content_type="application/json",
+            serialized.data["rules"],
+            content_type="application/yaml",
         )
 
         response["Content-Disposition"] = (
-            f'attachment; filename="{serialized.data["uid"]}.json"'
+            f'attachment; filename="{serialized.data["uid"]}.rule"'
         )
         return response
 
@@ -328,7 +348,7 @@ class PrometheusAlertRuleView(APIView):
         return: Http JSON response.
         """
         alert_rule = self._get_alert_rule(uid)
-        serialized = FoxgloveDashboardSerializer(
+        serialized = PrometheusAlertRuleSerializer(
             alert_rule, data=request.data, partial=True
         )
         if serialized.is_valid():

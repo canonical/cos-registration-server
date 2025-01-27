@@ -1,5 +1,5 @@
 import yaml
-from jinja2 import Environment, TemplateSyntaxError
+from jinja2 import Environment, UndefinedError, StrictUndefined
 from typing import (
     Any,
     Dict,
@@ -23,17 +23,21 @@ def is_alert_rule_a_jinja_template(yaml_dict: Dict[str, Any], context=None) -> b
         bool: True if the YAML contains Jinja syntax, False otherwise.
     """
     if context is None:
-        context = {"cos": "robot1"}
+        context = {}
     
-    env = Environment()
+    env = Environment(
+        variable_start_string="%%",
+        variable_end_string="%%",
+        undefined=StrictUndefined,
+    )
 
     # Dump the yaml since jinja can only render strings
     yaml_string = yaml.dump(yaml_dict)
     try:
         template = env.from_string(yaml_string)
         rendered_output = template.render(context)
-    except TemplateSyntaxError:
-        return False
+    except UndefinedError:
+        return True
     except Exception as e:
         raise RuntimeError(f"Error rendering template: {e}")
-    return True
+    return False
