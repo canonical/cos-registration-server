@@ -7,17 +7,16 @@ help:             ## Show the help.
 
 .PHONY: install
 install:          ## Install the project in dev mode.
-	@if [ "$(USING_POETRY)" ]; then poetry install && exit; fi
 	@echo "Don't forget to run 'make virtualenv' if you got errors."
 	pip install -e .[test]
 
 .PHONY: runserver
 runserver:          ## Django run server.
-	$(ENV_PREFIX)python3 cos_registration_server/manage.py runserver
+	python3 cos_registration_server/manage.py runserver
 
 .PHONY: secretkey
 secretkey:          ## Generate the django secret key.
-	$(ENV_PREFIX)python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+	python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 
 
 .PHONY: fmt

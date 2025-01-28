@@ -286,7 +286,7 @@ class PrometheusAlertRulesView(APIView):
         devices = Device.objects.all()
 
         for device in devices:
-            for rule in device.prometheus_alert_rules.all():
+            for rule in device.prometheus_rules_files.all():
                 if rule in template_alert_rules:
                     env = Environment(
                         variable_start_string="%%",
@@ -298,7 +298,7 @@ class PrometheusAlertRulesView(APIView):
                     rendered_rule = template.render(context)
                     rendered_rules.append(
                         {
-                            "uid": rule.uid + "_" + device.uid,
+                            "uid": rule.uid + "/" + device.uid,
                             "rules": rendered_rule,
                         }
                     )
@@ -344,9 +344,6 @@ class PrometheusAlertRuleView(APIView):
             content_type="application/yaml",
         )
 
-        response["Content-Disposition"] = (
-            f'attachment; filename="{serialized.data["uid"]}.rule"'
-        )
         return response
 
     def patch(self, request: Request, uid: str) -> Response:

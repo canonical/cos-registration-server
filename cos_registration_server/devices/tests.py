@@ -188,17 +188,17 @@ class DeviceModelTests(TestCase):
             uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
         )
         device.save()
-        device.prometheus_alert_rules.add(prometheus_alert_rule)
+        device.prometheus_rules_files.add(prometheus_alert_rule)
         self.assertEqual(
-            device.prometheus_alert_rules.all()[0].uid,
+            device.prometheus_rules_files.all()[0].uid,
             "first_alert",
         )
         self.assertEqual(
-            device.prometheus_alert_rules.all()[0].rules,
+            device.prometheus_rules_files.all()[0].rules,
             yaml.safe_load(SIMPLE_ALERT_RULE_TEMPLATE),
         )
 
-    ## TODO: add more tests for prometheus alert rules
+    # TODO: add more tests for prometheus alert rules
 
 
 def create_device(uid: str, address: str) -> Device:
@@ -261,10 +261,12 @@ class DeviceViewTests(TestCase):
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        print("RESPONSE: ", response.content)
+        print("TIME: ", device.creation_date.strftime('%b. %d, %Y, %-I:%M'))
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%B %d, %Y, %-I')}",
+            f" {device.creation_date.strftime('%b. %d, %Y, %-I:%M')}",
         )
         self.assertContains(
             response,

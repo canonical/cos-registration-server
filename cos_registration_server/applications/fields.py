@@ -1,4 +1,8 @@
-"""Custom YAML field."""
+"""Custom YAML field.
+
+TODO: add a license, this code was taken from
+https://github.com/palewire/django-yamlfield
+"""
 
 from typing import Any, Dict
 

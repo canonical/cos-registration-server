@@ -32,7 +32,7 @@ class Device(models.Model):
     foxglove_dashboards = models.ManyToManyField(
         FoxgloveDashboard, related_name="devices"
     )
-    prometheus_alert_rules = models.ManyToManyField(
+    prometheus_rules_files = models.ManyToManyField(
         PrometheusAlertRule, related_name="devices"
     )
 

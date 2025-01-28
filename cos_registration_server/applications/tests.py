@@ -123,7 +123,7 @@ class PrometheusAlertRuleModelTests(TestCase):
         prometheus_alert_rule.save()
         device = Device(uid="robot", address="127.0.0.1")
         device.save()
-        device.prometheus_alert_rules.add(prometheus_alert_rule)
+        device.prometheus_rules_files.add(prometheus_alert_rule)
 
         self.assertEqual(prometheus_alert_rule.devices.all()[0].uid, "robot")
 

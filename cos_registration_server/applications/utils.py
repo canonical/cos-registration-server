@@ -15,10 +15,10 @@ def is_alert_rule_a_jinja_template(
     Jinja fails to render $ because it is a special character.
     The pattern we are using to render jinja is %%key_to_render%% to
     follow the juju observability team pattern.
-    In this way we also avoid rendering the alert rules go template.
-    This function tries to render an alert rule without any context,
-    if the rule returns an UndefinedError it infers that it is trying to
-    render a jinja template.
+    In this way, we also avoid rendering the alert rules go template.
+    This function renders an alert rule with a dummy context,
+    then compares the rendered rule with the original yaml string,
+    if they are different it infers that the provided yaml is a template.
 
     Args:
         yaml_string (str): The YAML content as a string.
@@ -28,7 +28,7 @@ def is_alert_rule_a_jinja_template(
         bool: True if the YAML contains Jinja syntax, False otherwise.
     """
     if context is None:
-        context = {}
+        context = {"juju_device_uuid": "dummy"}
 
     env = Environment(
         variable_start_string="%%",
@@ -40,9 +40,9 @@ def is_alert_rule_a_jinja_template(
     yaml_string = yaml.dump(yaml_dict)
     try:
         template = env.from_string(yaml_string)
-        template.render(context)
-    except UndefinedError:
-        return True
+        rendered = template.render(context)
+        return rendered.strip() != yaml_string.strip()
+    except UndefinedError as e:
+        raise RuntimeError(f"Invalid jinja file template: {e}")
     except Exception as e:
         raise RuntimeError(f"Error rendering template: {e}")
-    return False

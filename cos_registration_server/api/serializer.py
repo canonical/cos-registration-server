@@ -118,7 +118,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
-    prometheus_alert_rules = serializers.SlugRelatedField(
+    prometheus_rules_files = serializers.SlugRelatedField(
         many=True,
         queryset=PrometheusAlertRule.objects.all(),
         slug_field="uid",
@@ -136,7 +136,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "public_ssh_key",
             "grafana_dashboards",
             "foxglove_dashboards",
-            "prometheus_alert_rules",
+            "prometheus_rules_files",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:
@@ -172,7 +172,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "foxglove_dashboards", {}
         )
         prometheus_alert_rules_data = validated_data.pop(
-            "prometheus_alert_rules", {}
+            "prometheus_rules_files", {}
         )
 
         device = Device.objects.create(**validated_data)
@@ -206,7 +206,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                 promethues_alert_rule = PrometheusAlertRule.objects.get(
                     uid=rule_uid
                 )
-                device.prometheus_alert_rules.add(promethues_alert_rule)
+                device.prometheus_rules_files.add(promethues_alert_rule)
             except PrometheusAlertRule.DoesNotExist:
                 raise serializers.ValidationError(
                     f"PrometheusAlertRule with UID {dashboard_uid}"
@@ -227,7 +227,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             if field not in {
                 "grafana_dashboards",
                 "foxglove_dashboards",
-                "prometheus_alert_rules",
+                "prometheus_rules_files",
             }:
                 setattr(instance, field, value)
         instance.save()
@@ -283,28 +283,28 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         # Update Prometheus alert rules
         try:
             prometheus_alert_rules_data = validated_data.pop(
-                "prometheus_alert_rules", {}
+                "prometheus_rules_files", {}
             )
-            current_prometheus_alert_rules = (
-                instance.prometheus_alert_rules.all()
+            current_prometheus_rules_files = (
+                instance.prometheus_rules_files.all()
             )
-            for prometheus_alert_rule in current_prometheus_alert_rules:
-                instance.prometheus_alert_rules.remove(prometheus_alert_rule)
+            for prometheus_alert_rule in current_prometheus_rules_files:
+                instance.prometheus_rules_files.remove(prometheus_alert_rule)
 
             for alert_rule_uid in prometheus_alert_rules_data:
                 try:
                     prometheus_alert_rule = PrometheusAlertRule.objects.get(
                         uid=alert_rule_uid
                     )
-                    instance.prometheus_alert_rules.add(prometheus_alert_rule)
+                    instance.prometheus_rules_files.add(prometheus_alert_rule)
                 except PrometheusAlertRule.DoesNotExist:
                     raise serializers.ValidationError(
                         f"Prometheus Alert Rule with UID {alert_rule_uid}"
                         " does not exist."
                     )
         except KeyError:
-            # Handle partial updates without foxglove_dashboards vs
-            # empty foxglove_dashboards
+            # Handle partial updates without prometheus_rules_files vs
+            # empty prometheus_rules_files
             pass
         return instance
 

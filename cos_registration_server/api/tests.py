@@ -821,7 +821,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
 
         self.simple_prometheus_alert_rule = """
             groups:
-              name: cos-robotics-model_robot
+              name: cos-robotics-model_robot_NO_TEMPLATE
               rules:
               alert: MyRobotTest_{{ $label.instance }}
         """
@@ -904,7 +904,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
             uid=prometheus_alert_rule_uid,
             rules=self.simple_prometheus_alert_rule_template,
         )
-        self.add_device(uid="robot-1").prometheus_alert_rules.add(
+        self.add_device(uid="robot-1").prometheus_rules_files.add(
             PrometheusAlertRule.objects.get()
         )
 
