@@ -1,19 +1,24 @@
-import yaml
-from typing import Any, Dict
-from django.db import models
+"""Custom YAML field."""
 
+from typing import Any, Dict
+
+import yaml
 from django.core.serializers.pyyaml import DjangoSafeDumper
+from django.db import models
 from rest_framework import serializers
 
+
 class YAMLField(models.TextField):
-    def from_db_value(self, value: str, expression: Any, connection: Any, context=None) -> Dict[str, Any]:
+    """A Django database field for storing YAML data."""
+
+    def from_db_value(
+        self, value: str, expression: Any, connection: Any, context=None
+    ) -> Dict[str, Any]:
+        """Retrieve python object from database."""
         return self.to_python(value)
 
     def to_python(self, value: str) -> Dict[str, Any]:
-        """
-        Convert our YAML string to a Python object
-        after we load it from the DB.
-        """
+        """Convert YAML string to a Python object."""
         if value == "":
             return {}
         try:
@@ -23,23 +28,25 @@ class YAMLField(models.TextField):
             raise serializers.ValidationError("Provided YAML is invalid")
 
     def get_prep_value(self, value: Any) -> str:
-        """
-        Convert our Python object to a string of YAML before we save.
-        """
+        """Convert Python object to string of YAML."""
         if not value or value == "":
             return ""
         if isinstance(value, (dict, list)):
-            value = yaml.dump(value, Dumper=DjangoSafeDumper, default_flow_style=False)
+            value = yaml.dump(
+                value, Dumper=DjangoSafeDumper, default_flow_style=False
+            )
         return value
 
     def value_from_object(self, obj) -> str:
-        """
-        Returns the value of this field in the given model instance.
+        """Return yaml str from python object.
 
-        We need to override this so that the YAML comes out properly formatted
+        This must be override from the TextField,
+        so that the YAML comes out properly formatted
         in the admin widget.
         """
         value = getattr(obj, self.attname)
         if not value or value == "":
             return value
-        return yaml.dump(value, Dumper=DjangoSafeDumper, default_flow_style=False)
+        return yaml.dump(
+            value, Dumper=DjangoSafeDumper, default_flow_style=False
+        )

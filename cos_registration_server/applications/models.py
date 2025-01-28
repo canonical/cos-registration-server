@@ -1,7 +1,9 @@
 """Applications DB model."""
 
 from django.db import models
+
 from .fields import YAMLField
+
 
 class Dashboard(models.Model):
     """Application dashboard.
@@ -54,12 +56,16 @@ class AlertRule(models.Model):
     rules: the rules in YAML format.
     template = boolean stating whether the rule file is \
                a template and must be rendered.
+
     """
+
     uid = models.CharField(max_length=200, unique=True)
     rules = YAMLField()
-    template = models.BooleanField("Whether this rules file is \
+    template = models.BooleanField(
+        "Whether this rules file is \
                                    a template and must be rendered",
-                                   default=False)
+        default=False,
+    )
 
     class Meta:
         """Model Meta class overwritting."""

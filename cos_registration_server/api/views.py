@@ -1,8 +1,8 @@
 """API views."""
 
 import json
-import yaml
 
+import yaml
 from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
@@ -13,15 +13,15 @@ from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
     PrometheusAlertRule,
-    LokiAlertRule,
 )
 from devices.models import Device
 from django.http import HttpResponse
+from jinja2 import Environment
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from jinja2 import Environment
+
 
 class HealthView(APIView):
     """Health API view."""
@@ -267,6 +267,7 @@ class FoxgloveDashboardView(APIView):
         dashboard.delete()
         return Response(status=204)
 
+
 class PrometheusAlertRulesView(APIView):
     """PrometheusAlertRules API view."""
 
@@ -277,24 +278,30 @@ class PrometheusAlertRulesView(APIView):
         return: Http JSON response.
         """
         alert_rules = PrometheusAlertRule.objects.all()
-        devices = Device.objects.all()
-        device_uids = [device.uid for device in devices]
         rendered_rules = []
-        for rule in alert_rules:
-            if rule.template == True:
-                for uid in device_uids:
+
+        template_alert_rules = PrometheusAlertRule.objects.filter(
+            template=True
+        )
+        devices = Device.objects.all()
+
+        for device in devices:
+            for rule in device.prometheus_alert_rules.all():
+                if rule in template_alert_rules:
                     env = Environment(
                         variable_start_string="%%",
                         variable_end_string="%%",
                     )
                     rule_string = yaml.dump(rule.rules)
                     template = env.from_string(rule_string)
-                    context = {"juju_device_uuid": f"{uid}"}
+                    context = {"juju_device_uuid": f"{device.uid}"}
                     rendered_rule = template.render(context)
-                    rendered_rules.append({
-                        "uid": rule.uid + "_" + uid,
-                        "rules": rendered_rule,
-                    })
+                    rendered_rules.append(
+                        {
+                            "uid": rule.uid + "_" + device.uid,
+                            "rules": rendered_rule,
+                        }
+                    )
         serialized = PrometheusAlertRuleSerializer(alert_rules, many=True)
         serialized_list = list(serialized.data)
         serialized_list.extend(rendered_rules)
@@ -311,6 +318,7 @@ class PrometheusAlertRulesView(APIView):
             serialized.save()
             return Response(serialized.data, status=201)
         return Response(serialized.errors, status=400)
+
 
 class PrometheusAlertRuleView(APIView):
     """PrometheusAlertRule API view."""

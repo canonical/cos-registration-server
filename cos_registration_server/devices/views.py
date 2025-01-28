@@ -62,10 +62,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
 
     cos_model_name = settings.COS_MODEL_NAME
 
-    grafana_main_link = (
-        f"{base_url}/{cos_model_name}-grafana/"
-        f"dashboards/"
-    )
+    grafana_main_link = f"{base_url}/{cos_model_name}-grafana/" f"dashboards/"
     grafana_dashboards = {}
     grafana_param = {"var-Host": uid}
     for grafana_dashboard in device.grafana_dashboards.all():
@@ -88,7 +85,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
     foxglove_layouts = {}
     for foxglove_dashboard in device.foxglove_dashboards.all():
         foxglove_params["layoutUrl"] = (
-            f"http://{base_url}/{cos_model_name}-cos-registration-server/api/v1/"
+            f"http://{base_url}/{cos_model_name}-cos-registration-server/api/v1/"  # noqa: E501
             f"applications/foxglove/dashboards/{foxglove_dashboard.uid}"
         )
         foxglove_layouts[foxglove_dashboard.uid] = (

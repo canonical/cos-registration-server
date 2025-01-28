@@ -5,10 +5,9 @@ from django.contrib import admin
 from .models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    PrometheusAlertRule,
     LokiAlertRule,
+    PrometheusAlertRule,
 )
-
 
 admin.site.register(FoxgloveDashboard)
 admin.site.register(GrafanaDashboard)

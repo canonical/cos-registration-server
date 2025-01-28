@@ -1,11 +1,12 @@
 from datetime import timedelta
 from html import escape
+
 import yaml
 from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    PrometheusAlertRule,
     LokiAlertRule,
+    PrometheusAlertRule,
 )
 from django.db.utils import IntegrityError
 from django.test import Client, TestCase, override_settings
@@ -39,18 +40,20 @@ I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
 kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
 YkkbhmeJAiNclXL6H"""
 
+SIMPLE_ALERT_RULE_TEMPLATE = """
+    groups:
+        name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+        alert: MyRobotTest_{{ $label.instace }}
+"""
+
 SIMPLE_ALERT_RULE = """
     groups:
-    - name: cos-robotics-model_robot_test_{{ $cos.device.uid }} # robot specific alert
-    rules:
-    - alert: MyRobotTest_{{ $cos.instance }}
-    annotations:
-    description: "The very custom description"
-    summary: Not enough memory alert (instance {{ $labels.instance }})
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
-    for: 5m
-    severity: critical
+        name: cos-robotics-model_robot
+        rules:
+        alert: MyRobotTest_{{ $label.instance }}
 """
+
 
 class DeviceModelTests(TestCase):
     def test_creation_of_a_device(self) -> None:
@@ -178,7 +181,7 @@ class DeviceModelTests(TestCase):
     def test_device_create_prometheus_alert_rule(self) -> None:
         alert_name = "first_alert"
         prometheus_alert_rule = PrometheusAlertRule(
-            uid=alert_name, rules=SIMPLE_ALERT_RULE
+            uid=alert_name, rules=SIMPLE_ALERT_RULE_TEMPLATE
         )
         prometheus_alert_rule.save()
         device = Device(
@@ -192,10 +195,11 @@ class DeviceModelTests(TestCase):
         )
         self.assertEqual(
             device.prometheus_alert_rules.all()[0].rules,
-            yaml.safe_load(SIMPLE_ALERT_RULE),
+            yaml.safe_load(SIMPLE_ALERT_RULE_TEMPLATE),
         )
 
-    ## TODO: add more tests
+    ## TODO: add more tests for prometheus alert rules
+
 
 def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)

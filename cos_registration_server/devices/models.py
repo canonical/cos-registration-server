@@ -4,7 +4,6 @@ from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
     PrometheusAlertRule,
-    LokiAlertRule,
 )
 from django.db import models
 

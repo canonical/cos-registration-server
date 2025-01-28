@@ -1,13 +1,13 @@
 import json
-import yaml
 from datetime import datetime, timedelta
 from typing import Any, Dict, Set, Union
 
+import yaml
 from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    PrometheusAlertRule,
     LokiAlertRule,
+    PrometheusAlertRule,
 )
 from devices.models import Device
 from django.db import models
@@ -807,6 +807,7 @@ class FoxgloveDashboardViewTests(APITestCase):
         response = self.client.get(self.url(dashboard_uid))
         self.assertEqual(response.status_code, 404)
 
+
 class PrometheusAlertRulesViewTests(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("api:prometheus_alert_rules")
@@ -825,9 +826,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
               alert: MyRobotTest_{{ $label.instance }}
         """
 
-    def create_alert_rule(
-        self, **fields: Union[str, str]
-    ) -> HttpResponse:
+    def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -859,10 +858,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
             PrometheusAlertRule.objects.get().rules,
             yaml.safe_load(self.simple_prometheus_alert_rule_template),
         )
-        print(PrometheusAlertRule.objects.get().rules)
-        self.assertEqual(
-            PrometheusAlertRule.objects.get().template, True
-        )
+        self.assertEqual(PrometheusAlertRule.objects.get().template, True)
 
     def test_create_alert_rule(self) -> None:
         prometheus_alert_rule_uid = "first_rule"
@@ -879,9 +875,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
             PrometheusAlertRule.objects.get().rules,
             yaml.safe_load(self.simple_prometheus_alert_rule),
         )
-        self.assertEqual(
-            PrometheusAlertRule.objects.get().template, False
-        )
+        self.assertEqual(PrometheusAlertRule.objects.get().template, False)
 
     def test_create_multiple_alert_rules(self) -> None:
         alert_rules = [
@@ -902,9 +896,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
         self.assertEqual(len(content_json), 3)
         for i, alert_rule in enumerate(content_json):
             self.assertEqual(alert_rules[i]["uid"], alert_rule["uid"])
-            self.assertEqual(
-                alert_rules[i]["rules"], alert_rule["rules"]
-            )
+            self.assertEqual(alert_rules[i]["rules"], alert_rule["rules"])
 
     def test_get_alert_rule_associated_with_device(self) -> None:
         prometheus_alert_rule_uid = "first_rule"
@@ -919,9 +911,9 @@ class PrometheusAlertRulesViewTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-
         ## check that it returns both rendered rule and template
         self.assertEqual(len(content_json), 2)
+
 
 class PrometheusAlertRuleViewTests(APITestCase):
     def setUp(self) -> None:
@@ -962,7 +954,10 @@ class PrometheusAlertRuleViewTests(APITestCase):
         response = self.client.get(self.url(alert_rule_uid))
         self.assertEqual(response.status_code, 200)
         content_yaml = yaml.safe_load(response.content)
-        self.assertEqual(content_yaml, yaml.safe_load(self.simple_prometheus_alert_rule_template))
+        self.assertEqual(
+            content_yaml,
+            yaml.safe_load(self.simple_prometheus_alert_rule_template),
+        )
 
     def test_patch_alert_rule(self) -> None:
         alert_rule_uid = "alert-rule-1"
@@ -977,9 +972,7 @@ class PrometheusAlertRuleViewTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         content_yaml = yaml.safe_load(response.content)
         self.assertEqual(content_yaml["uid"], alert_rule_uid)
-        self.assertEqual(
-            content_yaml["rules"], data["rules"]
-        )
+        self.assertEqual(content_yaml["rules"], data["rules"])
 
     def test_delete_alert_rule(self) -> None:
         alert_rule_uid = "alert-rule-1"

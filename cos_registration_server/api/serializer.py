@@ -1,18 +1,14 @@
 """API app serializer."""
 
 import json
-import yaml
-from typing import (
-    Any,
-    Dict,
-    Union,
-)
+from typing import Any, Dict, Union
 
+import yaml
 from applications.models import (
+    AlertRule,
     Dashboard,
     FoxgloveDashboard,
     GrafanaDashboard,
-    AlertRule,
     PrometheusAlertRule,
 )
 from applications.utils import is_alert_rule_a_jinja_template
@@ -122,6 +118,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
+    prometheus_alert_rules = serializers.SlugRelatedField(
+        many=True,
+        queryset=PrometheusAlertRule.objects.all(),
+        slug_field="uid",
+        required=False,
+    )
+
     class Meta:
         """DeviceSerializer Meta class."""
 
@@ -133,6 +136,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "public_ssh_key",
             "grafana_dashboards",
             "foxglove_dashboards",
+            "prometheus_alert_rules",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:
@@ -167,6 +171,10 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         foxglove_dashboards_data = validated_data.pop(
             "foxglove_dashboards", {}
         )
+        prometheus_alert_rules_data = validated_data.pop(
+            "prometheus_alert_rules", {}
+        )
+
         device = Device.objects.create(**validated_data)
 
         for dashboard_uid in grafana_dashboards_data:
@@ -180,6 +188,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                     f"GrafanaDashboard with UID {dashboard_uid}"
                     " does not exist."
                 )
+
         for dashboard_uid in foxglove_dashboards_data:
             try:
                 foxglove_dashboard = FoxgloveDashboard.objects.get(
@@ -189,6 +198,18 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             except FoxgloveDashboard.DoesNotExist:
                 raise serializers.ValidationError(
                     f"FoxgloveDashboard with UID {dashboard_uid}"
+                    " does not exist."
+                )
+
+        for rule_uid in prometheus_alert_rules_data:
+            try:
+                promethues_alert_rule = PrometheusAlertRule.objects.get(
+                    uid=rule_uid
+                )
+                device.prometheus_alert_rules.add(promethues_alert_rule)
+            except PrometheusAlertRule.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"PrometheusAlertRule with UID {dashboard_uid}"
                     " does not exist."
                 )
         return device
@@ -203,7 +224,11 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         """
         # Update device fields (if any)
         for field, value in validated_data.items():
-            if field not in {"grafana_dashboards", "foxglove_dashboards"}:
+            if field not in {
+                "grafana_dashboards",
+                "foxglove_dashboards",
+                "prometheus_alert_rules",
+            }:
                 setattr(instance, field, value)
         instance.save()
 
@@ -255,6 +280,32 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             # empty foxglove_dashboards
             pass
 
+        # Update Prometheus alert rules
+        try:
+            prometheus_alert_rules_data = validated_data.pop(
+                "prometheus_alert_rules", {}
+            )
+            current_prometheus_alert_rules = (
+                instance.prometheus_alert_rules.all()
+            )
+            for prometheus_alert_rule in current_prometheus_alert_rules:
+                instance.prometheus_alert_rules.remove(prometheus_alert_rule)
+
+            for alert_rule_uid in prometheus_alert_rules_data:
+                try:
+                    prometheus_alert_rule = PrometheusAlertRule.objects.get(
+                        uid=alert_rule_uid
+                    )
+                    instance.prometheus_alert_rules.add(prometheus_alert_rule)
+                except PrometheusAlertRule.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"Prometheus Alert Rule with UID {alert_rule_uid}"
+                        " does not exist."
+                    )
+        except KeyError:
+            # Handle partial updates without foxglove_dashboards vs
+            # empty foxglove_dashboards
+            pass
         return instance
 
 
