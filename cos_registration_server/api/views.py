@@ -277,7 +277,16 @@ class PrometheusAlertRulesView(APIView):
         request: Http GET request.
         return: Http JSON response.
         """
-        alert_rules = PrometheusAlertRule.objects.all()
+        # retrieve alert rules that are not a template and serialize them
+        no_template_alert_rules = PrometheusAlertRule.objects.filter(
+            template=False
+        )
+        serialized = PrometheusAlertRuleSerializer(
+            no_template_alert_rules,
+            many=True
+        )
+
+        # retrieve template alert rules and render them
         rendered_rules = []
 
         template_alert_rules = PrometheusAlertRule.objects.filter(
@@ -302,7 +311,8 @@ class PrometheusAlertRulesView(APIView):
                             "rules": rendered_rule,
                         }
                     )
-        serialized = PrometheusAlertRuleSerializer(alert_rules, many=True)
+
+        # extend serialized list of rules with rendered rules
         serialized_list = list(serialized.data)
         serialized_list.extend(rendered_rules)
         return Response(serialized_list)
@@ -341,7 +351,7 @@ class PrometheusAlertRuleView(APIView):
 
         response = HttpResponse(
             serialized.data["rules"],
-            content_type="application/yaml",
+            content_type="application/json",
         )
 
         return response
