@@ -816,14 +816,14 @@ class PrometheusAlertRulesViewTests(APITestCase):
             groups:
               name: cos-robotics-model_robot_test_%%juju_device_uuid%%
               rules:
-              alert: MyRobotTest_{{ $label.instace }}
+                alert: MyRobotTest_{{ $label.instace }}
         """
 
         self.simple_prometheus_alert_rule = """
             groups:
               name: cos-robotics-model_robot_NO_TEMPLATE
               rules:
-              alert: MyRobotTest_{{ $label.instance }}
+                alert: MyRobotTest_{{ $label.instance }}
         """
 
     def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
@@ -904,15 +904,24 @@ class PrometheusAlertRulesViewTests(APITestCase):
             uid=prometheus_alert_rule_uid,
             rules=self.simple_prometheus_alert_rule_template,
         )
-        self.add_device(uid="robot-1").prometheus_rules_files.add(
+        self.add_device(uid="robot1").prometheus_rules_files.add(
             PrometheusAlertRule.objects.get()
         )
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-        ## check that it returns both rendered rule and template
-        self.assertEqual(len(content_json), 2)
+        self.simple_prometheus_alert_rule_rendered = """
+            groups:
+              name: cos-robotics-model_robot_test_robot1
+              rules:
+                alert: MyRobotTest_{{ $label.instace }}
+        """
+
+        self.assertEqual(
+            content_json[0]["rules"],
+            str(yaml.safe_load(self.simple_prometheus_alert_rule_rendered))
+        )
 
 
 class PrometheusAlertRuleViewTests(APITestCase):
@@ -953,10 +962,11 @@ class PrometheusAlertRuleViewTests(APITestCase):
         )
         response = self.client.get(self.url(alert_rule_uid))
         self.assertEqual(response.status_code, 200)
-        content_yaml = yaml.safe_load(response.content)
+        content_json = json.loads(response.content)
+        self.assertEqual(content_json["uid"], alert_rule_uid)
         self.assertEqual(
-            content_yaml,
-            yaml.safe_load(self.simple_prometheus_alert_rule_template),
+            content_json["rules"],
+            str(yaml.safe_load(self.simple_prometheus_alert_rule_template))
         )
 
     def test_patch_alert_rule(self) -> None:
@@ -970,9 +980,9 @@ class PrometheusAlertRuleViewTests(APITestCase):
             self.url(alert_rule_uid), data, format="json"
         )
         self.assertEqual(response.status_code, 200)
-        content_yaml = yaml.safe_load(response.content)
-        self.assertEqual(content_yaml["uid"], alert_rule_uid)
-        self.assertEqual(content_yaml["rules"], data["rules"])
+        content_json = json.loads(response.content)
+        self.assertEqual(content_json["uid"], alert_rule_uid)
+        self.assertEqual(content_json["rules"], data["rules"])
 
     def test_delete_alert_rule(self) -> None:
         alert_rule_uid = "alert-rule-1"

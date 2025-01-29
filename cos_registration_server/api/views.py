@@ -281,6 +281,7 @@ class PrometheusAlertRulesView(APIView):
         no_template_alert_rules = PrometheusAlertRule.objects.filter(
             template=False
         )
+
         serialized = PrometheusAlertRuleSerializer(
             no_template_alert_rules,
             many=True
@@ -305,16 +306,17 @@ class PrometheusAlertRulesView(APIView):
                     template = env.from_string(rule_string)
                     context = {"juju_device_uuid": f"{device.uid}"}
                     rendered_rule = template.render(context)
+                    rendered_rule = yaml.safe_load(rendered_rule)
                     rendered_rules.append(
                         {
                             "uid": rule.uid + "/" + device.uid,
                             "rules": rendered_rule,
                         }
                     )
-
-        # extend serialized list of rules with rendered rules
-        serialized_list = list(serialized.data)
-        serialized_list.extend(rendered_rules)
+        serialized_rendered_rules = PrometheusAlertRuleSerializer(
+            rendered_rules, many=True)
+        serialized_list = list(serialized.data) + \
+            list(serialized_rendered_rules.data)
         return Response(serialized_list)
 
     def post(self, request: Request) -> Response:
@@ -350,7 +352,7 @@ class PrometheusAlertRuleView(APIView):
         serialized = PrometheusAlertRuleSerializer(alert_rule)
 
         response = HttpResponse(
-            serialized.data["rules"],
+            json.dumps(serialized.data),
             content_type="application/json",
         )
 
