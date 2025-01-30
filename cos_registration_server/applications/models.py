@@ -73,7 +73,7 @@ class AlertRule(models.Model):
         abstract = True
 
     def __str__(self) -> str:
-        """Str representation of a dashboard."""
+        """Str representation of an alert rule."""
         return self.uid
 
 

@@ -11,7 +11,6 @@ from django.core.serializers.pyyaml import DjangoSafeDumper
 from django.db import models
 from rest_framework import serializers
 
-
 class YAMLField(models.TextField):
     """A Django database field for storing YAML data."""
 

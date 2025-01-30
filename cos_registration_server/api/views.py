@@ -302,21 +302,22 @@ class PrometheusAlertRulesView(APIView):
                         variable_start_string="%%",
                         variable_end_string="%%",
                     )
-                    rule_string = yaml.dump(rule.rules)
+                    rule_string = yaml.dump(rule.rules,
+                                            default_flow_style=False)
                     template = env.from_string(rule_string)
                     context = {"juju_device_uuid": f"{device.uid}"}
                     rendered_rule = template.render(context)
-                    rendered_rule = yaml.safe_load(rendered_rule)
                     rendered_rules.append(
                         {
                             "uid": rule.uid + "/" + device.uid,
                             "rules": rendered_rule,
                         }
                     )
-        serialized_rendered_rules = PrometheusAlertRuleSerializer(
-            rendered_rules, many=True)
+
+        # rendered rules are already dumped to get them rendered via jinja
+        # hence they are already serialized as strings.
         serialized_list = list(serialized.data) + \
-            list(serialized_rendered_rules.data)
+            rendered_rules
         return Response(serialized_list)
 
     def post(self, request: Request) -> Response:

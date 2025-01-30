@@ -318,6 +318,13 @@ class AlertRuleSerializer:
         model = AlertRule
         fields = ["uid", "rules"]
 
+    def to_representation(self, instance: AlertRule):
+        """Ensure that YAML data is properly serialized as a string."""
+        data = super().to_representation(instance)
+        yaml_data = getattr(instance, "rules", {})
+        data["rules"] = yaml.dump(yaml_data, default_flow_style=False).strip()
+        return data
+
     def update(
         self, instance: AlertRule, validated_data: Dict[str, Any]
     ) -> AlertRule:
@@ -331,14 +338,14 @@ class AlertRuleSerializer:
         instance.save()
         return instance
 
-    def validate_rules(self, value: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_rules(self, value: str) -> Dict[str, Any]:
         """Validate alert rules YAML rules.
 
         This validate function is called on is_valid()
         and validates the rules before saving them
         to database.
 
-        value: YAML rules provided in python object format.
+        value: YAML rules provided in string format.
         return: dashboard json.
         raise:
           yaml.YAMLError
@@ -350,7 +357,7 @@ class AlertRuleSerializer:
             )
         try:
             alert_rule = yaml.safe_load(value)
-        except yaml.YAMLError as e:
+        except ValueError as e:
             raise serializers.ValidationError(
                 f"Failed to load alert rule as a yaml: {e}"
             )

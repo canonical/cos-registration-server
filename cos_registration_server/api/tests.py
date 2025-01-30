@@ -812,18 +812,16 @@ class PrometheusAlertRulesViewTests(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("api:prometheus_alert_rules")
 
-        self.simple_prometheus_alert_rule_template = """
-            groups:
-              name: cos-robotics-model_robot_test_%%juju_device_uuid%%
-              rules:
-                alert: MyRobotTest_{{ $label.instace }}
+        self.simple_prometheus_alert_rule_template = """groups:
+  name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+  rules:
+    alert: MyRobotTest_{{ $label.instace }}
         """
 
-        self.simple_prometheus_alert_rule = """
-            groups:
-              name: cos-robotics-model_robot_NO_TEMPLATE
-              rules:
-                alert: MyRobotTest_{{ $label.instance }}
+        self.simple_prometheus_alert_rule = """groups:
+  name: cos-robotics-model_robot_NO_TEMPLATE
+  rules:
+    alert: MyRobotTest_{{ $label.instance }}
         """
 
     def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
@@ -879,9 +877,9 @@ class PrometheusAlertRulesViewTests(APITestCase):
 
     def test_create_multiple_alert_rules(self) -> None:
         alert_rules = [
-            {"uid": "ar-1", "rules": "{'name': 'test1'}"},
-            {"uid": "ar-2", "rules": "{'name': 'test2'}"},
-            {"uid": "ar-3", "rules": "{'name': 'test3'}"},
+            {"uid": "ar-1", "rules": "name: test1"},
+            {"uid": "ar-2", "rules": "name: test2"},
+            {"uid": "ar-3", "rules": "name: test3"},
         ]
         for alert_rule in alert_rules:
             self.create_alert_rule(
@@ -911,27 +909,22 @@ class PrometheusAlertRulesViewTests(APITestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-        self.simple_prometheus_alert_rule_rendered = """
-            groups:
-              name: cos-robotics-model_robot_test_robot1
-              rules:
-                alert: MyRobotTest_{{ $label.instace }}
-        """
-
+        self.simple_prometheus_alert_rule_rendered = """groups:
+  name: cos-robotics-model_robot_test_robot1
+  rules:
+    alert: MyRobotTest_{{ $label.instace }}"""
         self.assertEqual(
             content_json[0]["rules"],
-            str(yaml.safe_load(self.simple_prometheus_alert_rule_rendered))
+            self.simple_prometheus_alert_rule_rendered
         )
 
 
 class PrometheusAlertRuleViewTests(APITestCase):
     def setUp(self) -> None:
-        self.simple_prometheus_alert_rule_template = """
-            groups:
-              name: cos-robotics-model_robot_test_%%juju_device_uuid%%
-              rules:
-                alert: MyRobotTest_{{ $label.instace }}
-        """
+        self.simple_prometheus_alert_rule_template = """groups:
+  name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+  rules:
+    alert: MyRobotTest_{{ $label.instace }}"""
 
     def url(self, uid: str) -> str:
         return reverse("api:prometheus_alert_rule", args=(uid,))
@@ -963,10 +956,11 @@ class PrometheusAlertRuleViewTests(APITestCase):
         response = self.client.get(self.url(alert_rule_uid))
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
+
         self.assertEqual(content_json["uid"], alert_rule_uid)
         self.assertEqual(
             content_json["rules"],
-            str(yaml.safe_load(self.simple_prometheus_alert_rule_template))
+            self.simple_prometheus_alert_rule_template
         )
 
     def test_patch_alert_rule(self) -> None:
@@ -975,7 +969,9 @@ class PrometheusAlertRuleViewTests(APITestCase):
             uid=alert_rule_uid,
             rules=self.simple_prometheus_alert_rule_template,
         )
-        data = {"rules": "{'name': 'test'}"}
+
+        data = {"rules": "name: test"}
+
         response = self.client.patch(
             self.url(alert_rule_uid), data, format="json"
         )
