@@ -315,7 +315,9 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         return instance
 
 
-class AlertRuleFileSerializer(serializers.ModelSerializer):
+class AlertRuleFileSerializer(
+    serializers.ModelSerializer  # type: ignore[type-arg]
+):
     """Alert rules file serializer class."""
 
     class Meta:
@@ -374,6 +376,8 @@ class AlertRuleFileSerializer(serializers.ModelSerializer):
             )
         try:
             alert_rule = yaml.safe_load(value)
+            if not isinstance(alert_rule, dict):
+                raise ValueError("YAML safe load must be a dictionary")
         except ValueError as e:
             raise serializers.ValidationError(
                 f"Failed to load alert rule as a yaml: {e}"
@@ -382,7 +386,7 @@ class AlertRuleFileSerializer(serializers.ModelSerializer):
 
 
 class PrometheusAlertRuleFileSerializer(
-    AlertRuleFileSerializer,   # type: ignore[type-arg]
+    AlertRuleFileSerializer,
 ):
     """Prometheus Alert Rule Serializer class."""
 

@@ -1,13 +1,13 @@
 """Application utils functions."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import yaml
 from jinja2 import Environment, StrictUndefined, UndefinedError
 
 
 def is_alert_rule_a_jinja_template(
-    yaml_dict: Dict[str, Any], context=None
+    yaml_dict: Dict[str, Any], context: Optional[Any] = None
 ) -> bool:
     """Determine if the given alert rule YAML is a Jinja template.
 

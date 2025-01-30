@@ -27,7 +27,7 @@ fmt:              ## Format code using black & isort.
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
 	flake8 cos_registration_server/ --exclude migrations,tests.py
-	mypy  cos_registration_server
+	mypy --strict cos_registration_server
 
 .PHONY: test
 test: lint        ## Run tests and generate coverage report.
