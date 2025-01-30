@@ -6,8 +6,8 @@ import yaml
 from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    LokiAlertRule,
-    PrometheusAlertRule,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
 )
 from devices.models import Device
 from django.db import models
@@ -808,9 +808,9 @@ class FoxgloveDashboardViewTests(APITestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class PrometheusAlertRulesViewTests(APITestCase):
+class PrometheusAlertRuleFileFilesViewTests(APITestCase):
     def setUp(self) -> None:
-        self.url = reverse("api:prometheus_alert_rules")
+        self.url = reverse("api:prometheus_alert_rule_files")
 
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
@@ -848,15 +848,15 @@ class PrometheusAlertRulesViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
 
-        self.assertEqual(PrometheusAlertRule.objects.count(), 1)
+        self.assertEqual(PrometheusAlertRuleFile.objects.count(), 1)
         self.assertEqual(
-            PrometheusAlertRule.objects.get().uid, prometheus_alert_rule_uid
+            PrometheusAlertRuleFile.objects.get().uid, prometheus_alert_rule_uid
         )
         self.assertEqual(
-            PrometheusAlertRule.objects.get().rules,
+            PrometheusAlertRuleFile.objects.get().rules,
             yaml.safe_load(self.simple_prometheus_alert_rule_template),
         )
-        self.assertEqual(PrometheusAlertRule.objects.get().template, True)
+        self.assertEqual(PrometheusAlertRuleFile.objects.get().template, True)
 
     def test_create_alert_rule(self) -> None:
         prometheus_alert_rule_uid = "first_rule"
@@ -865,15 +865,15 @@ class PrometheusAlertRulesViewTests(APITestCase):
             rules=self.simple_prometheus_alert_rule,
         )
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(PrometheusAlertRule.objects.count(), 1)
+        self.assertEqual(PrometheusAlertRuleFile.objects.count(), 1)
         self.assertEqual(
-            PrometheusAlertRule.objects.get().uid, prometheus_alert_rule_uid
+            PrometheusAlertRuleFile.objects.get().uid, prometheus_alert_rule_uid
         )
         self.assertEqual(
-            PrometheusAlertRule.objects.get().rules,
+            PrometheusAlertRuleFile.objects.get().rules,
             yaml.safe_load(self.simple_prometheus_alert_rule),
         )
-        self.assertEqual(PrometheusAlertRule.objects.get().template, False)
+        self.assertEqual(PrometheusAlertRuleFile.objects.get().template, False)
 
     def test_create_multiple_alert_rules(self) -> None:
         alert_rules = [
@@ -886,7 +886,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
                 uid=alert_rule["uid"], rules=alert_rule["rules"]
             )
 
-        self.assertEqual(PrometheusAlertRule.objects.count(), 3)
+        self.assertEqual(PrometheusAlertRuleFile.objects.count(), 3)
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -902,8 +902,8 @@ class PrometheusAlertRulesViewTests(APITestCase):
             uid=prometheus_alert_rule_uid,
             rules=self.simple_prometheus_alert_rule_template,
         )
-        self.add_device(uid="robot1").prometheus_rules_files.add(
-            PrometheusAlertRule.objects.get()
+        self.add_device(uid="robot1").prometheus_alert_rule_files.add(
+            PrometheusAlertRuleFile.objects.get()
         )
 
         response = self.client.get(self.url)
@@ -919,7 +919,7 @@ class PrometheusAlertRulesViewTests(APITestCase):
         )
 
 
-class PrometheusAlertRuleViewTests(APITestCase):
+class PrometheusAlertRuleFileFileViewTests(APITestCase):
     def setUp(self) -> None:
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
@@ -927,7 +927,7 @@ class PrometheusAlertRuleViewTests(APITestCase):
     alert: MyRobotTest_{{ $label.instace }}"""
 
     def url(self, uid: str) -> str:
-        return reverse("api:prometheus_alert_rule", args=(uid,))
+        return reverse("api:prometheus_alert_rule_file", args=(uid,))
 
     def create_alert_rule(
         self, **fields: Union[str, Dict[str, Any]]
@@ -935,7 +935,7 @@ class PrometheusAlertRuleViewTests(APITestCase):
         data = {}
         for field, value in fields.items():
             data[field] = value
-        url = reverse("api:prometheus_alert_rules")
+        url = reverse("api:prometheus_alert_rule_files")
         return self.client.post(url, data, format="json")
 
     def add_device(self, uid: str) -> Device:

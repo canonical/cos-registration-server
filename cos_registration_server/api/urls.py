@@ -33,12 +33,12 @@ urlpatterns = [
     ),
     path(
         "v1/applications/prometheus/alert_rules/",
-        views.PrometheusAlertRulesView.as_view(),
-        name="prometheus_alert_rules",
+        views.PrometheusAlertRuleFilesView.as_view(),
+        name="prometheus_alert_rule_files",
     ),
     path(
         "v1/applications/prometheus/alert_rules/<str:uid>/",
-        views.PrometheusAlertRuleView.as_view(),
-        name="prometheus_alert_rule",
+        views.PrometheusAlertRuleFileView.as_view(),
+        name="prometheus_alert_rule_file",
     ),
 ]

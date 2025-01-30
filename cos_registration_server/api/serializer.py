@@ -5,15 +5,16 @@ from typing import Any, Dict, Union
 
 import yaml
 from applications.models import (
-    AlertRule,
+    AlertRuleFile,
     Dashboard,
     FoxgloveDashboard,
     GrafanaDashboard,
-    PrometheusAlertRule,
+    PrometheusAlertRuleFile,
 )
 from applications.utils import is_alert_rule_a_jinja_template
 from devices.models import Device
 from rest_framework import serializers
+from django.core.serializers.pyyaml import DjangoSafeDumper
 
 
 class DashboardSerializer:
@@ -118,9 +119,9 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
-    prometheus_rules_files = serializers.SlugRelatedField(
+    prometheus_alert_rule_files = serializers.SlugRelatedField(
         many=True,
-        queryset=PrometheusAlertRule.objects.all(),
+        queryset=PrometheusAlertRuleFile.objects.all(),
         slug_field="uid",
         required=False,
     )
@@ -136,7 +137,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "public_ssh_key",
             "grafana_dashboards",
             "foxglove_dashboards",
-            "prometheus_rules_files",
+            "prometheus_alert_rule_files",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:
@@ -172,7 +173,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "foxglove_dashboards", {}
         )
         prometheus_alert_rules_data = validated_data.pop(
-            "prometheus_rules_files", {}
+            "prometheus_alert_rule_files", {}
         )
 
         device = Device.objects.create(**validated_data)
@@ -203,13 +204,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
 
         for rule_uid in prometheus_alert_rules_data:
             try:
-                promethues_alert_rule = PrometheusAlertRule.objects.get(
+                promethues_alert_rule = PrometheusAlertRuleFile.objects.get(
                     uid=rule_uid
                 )
-                device.prometheus_rules_files.add(promethues_alert_rule)
-            except PrometheusAlertRule.DoesNotExist:
+                device.prometheus_alert_rule_files.add(promethues_alert_rule)
+            except PrometheusAlertRuleFile.DoesNotExist:
                 raise serializers.ValidationError(
-                    f"PrometheusAlertRule with UID {dashboard_uid}"
+                    f"PrometheusAlertRuleFile with UID {dashboard_uid}"
                     " does not exist."
                 )
         return device
@@ -227,7 +228,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             if field not in {
                 "grafana_dashboards",
                 "foxglove_dashboards",
-                "prometheus_rules_files",
+                "prometheus_alert_rule_files",
             }:
                 setattr(instance, field, value)
         instance.save()
@@ -283,52 +284,68 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         # Update Prometheus alert rules
         try:
             prometheus_alert_rules_data = validated_data.pop(
-                "prometheus_rules_files", {}
+                "prometheus_alert_rule_files", {}
             )
-            current_prometheus_rules_files = (
-                instance.prometheus_rules_files.all()
+            current_prometheus_alert_rule_files = (
+                instance.prometheus_alert_rule_files.all()
             )
-            for prometheus_alert_rule in current_prometheus_rules_files:
-                instance.prometheus_rules_files.remove(prometheus_alert_rule)
+            for prometheus_alert_rule in current_prometheus_alert_rule_files:
+                instance.prometheus_alert_rule_files.remove(
+                    prometheus_alert_rule
+                )
 
             for alert_rule_uid in prometheus_alert_rules_data:
                 try:
-                    prometheus_alert_rule = PrometheusAlertRule.objects.get(
-                        uid=alert_rule_uid
+                    prometheus_alert_rule = \
+                        PrometheusAlertRuleFile.objects.get(
+                            uid=alert_rule_uid
+                        )
+                    instance.prometheus_alert_rule_files.add(
+                        prometheus_alert_rule
                     )
-                    instance.prometheus_rules_files.add(prometheus_alert_rule)
-                except PrometheusAlertRule.DoesNotExist:
+                except PrometheusAlertRuleFile.DoesNotExist:
                     raise serializers.ValidationError(
                         f"Prometheus Alert Rule with UID {alert_rule_uid}"
                         " does not exist."
                     )
         except KeyError:
-            # Handle partial updates without prometheus_rules_files vs
-            # empty prometheus_rules_files
+            # Handle partial updates without prometheus_alert_rule_files vs
+            # empty prometheus_alert_rule_files
             pass
         return instance
 
 
-class AlertRuleSerializer:
-    """Alert rules Serializer class."""
+class AlertRuleFileSerializer(serializers.ModelSerializer):
+    """Alert rules file serializer class."""
 
     class Meta:
-        """AlertRuleSerializer Meta class."""
+        """AlertRuleFileSerializer Meta class."""
 
-        model = AlertRule
+        model = AlertRuleFile
         fields = ["uid", "rules"]
 
-    def to_representation(self, instance: AlertRule):
-        """Ensure that YAML data is properly serialized as a string."""
+    def to_representation(self, instance: AlertRuleFile) -> Dict[str, Any]:
+        """Ensure that YAML data is properly serialized as a string.
+
+        Overrides the default behavior to return the
+        rules data correctly dumped as strings.
+
+        instance: The AlertRuleFile model instance to be serialized.
+
+        Returns a dictionary containing the serialized data
+        with the rules dumped as strings.
+        """
         data = super().to_representation(instance)
         yaml_data = getattr(instance, "rules", {})
-        data["rules"] = yaml.dump(yaml_data, default_flow_style=False).strip()
+        data["rules"] = yaml.dump(yaml_data,
+                                  Dumper=DjangoSafeDumper,
+                                  default_flow_style=False).rstrip('\n')
         return data
 
     def update(
-        self, instance: AlertRule, validated_data: Dict[str, Any]
-    ) -> AlertRule:
-        """Update an AlertRule from data.
+        self, instance: AlertRuleFile, validated_data: Dict[str, Any]
+    ) -> AlertRuleFile:
+        """Update an AlertRuleFile from data.
 
         instance: Device instance.
         validated_data: Dict of partial and validated data.
@@ -364,18 +381,20 @@ class AlertRuleSerializer:
         return alert_rule
 
 
-class PrometheusAlertRuleSerializer(
-    AlertRuleSerializer, serializers.ModelSerializer  # type: ignore[type-arg]
+class PrometheusAlertRuleFileSerializer(
+    AlertRuleFileSerializer,   # type: ignore[type-arg]
 ):
     """Prometheus Alert Rule Serializer class."""
 
-    class Meta(AlertRuleSerializer.Meta):
+    class Meta(AlertRuleFileSerializer.Meta):
         """AlertRuleSerializer Meta class."""
 
-        model = PrometheusAlertRule
+        model = PrometheusAlertRuleFile
 
-    def create(self, validated_data: Dict[str, Any]) -> PrometheusAlertRule:
-        """Create PrometheusAlertRule object from data.
+    def create(
+        self, validated_data: Dict[str, Any]
+    ) -> PrometheusAlertRuleFile:
+        """Create PrometheusAlertRuleFile object from data.
 
         validated_data: Dict of complete JSON validated data
         provided by the request.
@@ -390,4 +409,4 @@ class PrometheusAlertRuleSerializer(
         # Add template key to the validated_data, this is available
         # in the model but not exposed in the API
         validated_data["template"] = is_template
-        return PrometheusAlertRule.objects.create(**validated_data)
+        return PrometheusAlertRuleFile.objects.create(**validated_data)

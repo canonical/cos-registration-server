@@ -5,8 +5,8 @@ from django.test import TestCase
 from .models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    LokiAlertRule,
-    PrometheusAlertRule,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
 )
 
 SIMPLE_GRAFANA_DASHBOARD = {
@@ -106,10 +106,10 @@ class FoxgloveDashboardModelTests(TestCase):
         self.assertEqual(foxglove_dashboard.devices.all()[0].uid, "robot")
 
 
-class PrometheusAlertRuleModelTests(TestCase):
+class PrometheusAlertRuleFileModelTests(TestCase):
     def test_creation_of_alert_rule(self) -> None:
         alert_name = "first_alert"
-        prometheus_alert_rule = PrometheusAlertRule(
+        prometheus_alert_rule = PrometheusAlertRuleFile(
             uid=alert_name, rules=SIMPLE_ALERT_RULE
         )
         self.assertEqual(prometheus_alert_rule.uid, alert_name)
@@ -117,21 +117,21 @@ class PrometheusAlertRuleModelTests(TestCase):
 
     def test_alert_rule_from_a_dashboard(self) -> None:
         alert_name = "first_alert"
-        prometheus_alert_rule = PrometheusAlertRule(
+        prometheus_alert_rule = PrometheusAlertRuleFile(
             uid=alert_name, rules=SIMPLE_ALERT_RULE
         )
         prometheus_alert_rule.save()
         device = Device(uid="robot", address="127.0.0.1")
         device.save()
-        device.prometheus_rules_files.add(prometheus_alert_rule)
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
 
         self.assertEqual(prometheus_alert_rule.devices.all()[0].uid, "robot")
 
 
-class LokiAlertRuleModelTests(TestCase):
+class LokiAlertRuleFileModelTests(TestCase):
     def test_creation_of_alert_rule(self) -> None:
         alert_name = "first_alert"
-        loki_alert_rule = LokiAlertRule(
+        loki_alert_rule = LokiAlertRuleFile(
             uid=alert_name, rules=SIMPLE_ALERT_RULE
         )
         self.assertEqual(loki_alert_rule.uid, alert_name)

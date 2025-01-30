@@ -47,12 +47,12 @@ class FoxgloveDashboard(Dashboard):  # noqa: DJ08
     """
 
 
-class AlertRule(models.Model):
-    """Application alert rule.
+class AlertRuleFile(models.Model):
+    """Application alert rule file.
 
-    This class represent an application alert rule in the DB.
+    This class represent an application alert rule file in the DB.
 
-    uid: Unique ID of the alert rule.
+    uid: Unique ID of the alert rule file.
     rules: the rules in YAML format.
     template = boolean stating whether the rule file is \
                a template and must be rendered.
@@ -77,22 +77,22 @@ class AlertRule(models.Model):
         return self.uid
 
 
-class PrometheusAlertRule(AlertRule):  # noqa: DJ08
+class PrometheusAlertRuleFile(AlertRuleFile):  # noqa: DJ08
     """
-    This class represent a Prometheus Alert Rule in the DB.
+    This class represent a Prometheus alert rule file in the DB.
 
-    uid: Unique ID of the alert rule.
+    uid: Unique ID of the alert rule file.
     rules: the rules in YAML format.
     template = boolean stating whether the rule file is \
                a template and must be rendered.
     """
 
 
-class LokiAlertRule(AlertRule):  # noqa: DJ08
+class LokiAlertRuleFile(AlertRuleFile):  # noqa: DJ08
     """
-    This class represent a Loki Alert Rule in the DB.
+    This class represent a Loki alert rule file in the DB.
 
-    uid: Unique ID of the alert rule.
+    uid: Unique ID of the alert rule file.
     rules: the rules in YAML format.
     template = boolean stating whether the rule file is \
                a template and must be rendered.

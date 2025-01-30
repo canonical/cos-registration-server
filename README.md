@@ -31,6 +31,7 @@ It consists of:
 - Public SSH key: public SSH key for the device.
 - Grafana dashboards: Grafana dashboards used by this device.
 - Foxglove dashboards: Foxglove dashboards used by this device.
+- Prometheus alert rule files: Prometheus alert rule files used by this device.
 
 #### View: `devices/`
 
@@ -65,6 +66,13 @@ The FoxgloveDashboard model represent a Foxglove dashboard (called layouts in th
 It consists of:
 - UID: Unique ID per dashboard. Typically, the name of the data it represents.
 - Dashboard: JSON data representing the dashboard.
+
+#### PrometheusAlertRuleFile model
+The PrometheusAlertRuleFile model represents a Prometheus Alert Rule file stored in the database.
+It consists of:
+- UID: Unique ID of the alert rule file.
+- Rules: the rules in YAML format.
+- Template: boolean stating whether the rule file is a template and must be rendered.
 
 ### API
 The API can be used by the COS registration agent but also by any service
@@ -107,14 +115,14 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}   | Unique ID and IP address of the device. Grafana dashboards and Foxglove are optional list of applications specific dashboards UID. |
+> | None      |  required | {"uid": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}, "prometheus_alert_rule_files"(optional): list(alert_rule_file_uid)   | Unique ID and IP address of the device. Grafana dashboards, Foxglove and Prometheus alert rule files are optional list of applications specific dashboards/rule files UID. |
 
 
 ##### Responses
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
+> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid), "prometheus_alert_rule_files"(optional): list(alert_rule_file_uid)}                                |
 > | `400`         | `application/json`                | {"field": "error details"}                            |
 > | `409`         | `application/json`         | {"error": "Device uid already exists"}                                                                |
 </details>
@@ -130,7 +138,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
+> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid), "prometheus_alert_rule_files": "list(alert_rule_file_uid)"}                                                         |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
@@ -141,14 +149,14 @@ requiring to access the device database.
 
 > | name      |  type     | data type               | description                                                           |
 > |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: address, grafana_dashboards, foxglove_dashboards |
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: address, grafana_dashboards, foxglove_dashboards, prometheus_alert_rule_files |
 
 
 ##### Responses
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
+> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid), "prometheus_alert_rule_files": "list(alert_rule_file_uid)"}                                |
 > | `400`         | `application/json`                | {"field": "error details"}                            |
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
@@ -323,6 +331,89 @@ requiring to access the device database.
 
 <details>
  <summary><code>DELETE</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Delete a Foxglove dashboard from the database)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `204`         | `text/html;charset=utf-8`        | None                                                         |
+> | `404`         | `text/html;charset=utf-8`        | None                                                         |
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>api/v1/applications/prometheus/alert_rules/</b></code> <code>(Get the details of Prometheus alert rule files)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`        | list({"uid": string, "rules": yaml_string})                                                        |
+> | `404`         | `text/html;charset=utf-8`        | None                                                         |
+</details>
+
+<details>
+ <summary><code>POST</code> <code><b>api/v1/applications/prometheus/alert_rules/</b></code> <code>(Add a Prometheus alert rule file to the database)</code></summary>
+
+##### Parameters
+
+> | name      |  type     | data type               | description                                                           |
+> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | None      |  required | {"uid": "string", "rules": yaml_string} | Unique ID and Alert Rule File content. |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `201`         | `application/json`        | {"uid": "string", "rules": yaml_string}                                |
+> | `400`         | `application/json`                | {"field": "error details"}                            |
+> | `409`         | `application/json`         | {"error": "PrometheusAlertRuleFile uid already exists"} |
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>api/v1/applications/prometheus/alert_rules/&#60str:uid&#62;/</b></code> <code>(Get the details of a Prometheus Alert Rule file)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json; `              | {"uid": "string", "rules": yaml_string}                                                         |
+> | `404`         | `text/html;charset=utf-8`         | None                                                                |
+</details>
+
+<details>
+ <summary><code>PATCH</code> <code><b>api/v1/applications/prometheus/alert_rules/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a Prometheus Alert Rule file)</code></summary>
+
+##### Parameters
+
+> | name      |  type     | data type               | description                                                           |
+> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: rules. |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `201`         | `application/json`                | {"uid": "string", "rules": yaml_string}                             |
+> | `400`         | `application/json`                | {"field": "error details"}                                          |
+> | `404`         | `text/html;charset=utf-8`         | None                                                                |
+</details>
+
+<details>
+ <summary><code>DELETE</code> <code><b>api/v1/applications/prometheus/alert_rules/&#60str:uid&#62;/</b></code> <code>(Delete a Prometheus Alert Rule file from the database)</code></summary>
 
 ##### Parameters
 

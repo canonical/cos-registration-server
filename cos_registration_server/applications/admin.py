@@ -5,11 +5,11 @@ from django.contrib import admin
 from .models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    LokiAlertRule,
-    PrometheusAlertRule,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
 )
 
 admin.site.register(FoxgloveDashboard)
 admin.site.register(GrafanaDashboard)
-admin.site.register(PrometheusAlertRule)
-admin.site.register(LokiAlertRule)
+admin.site.register(PrometheusAlertRuleFile)
+admin.site.register(LokiAlertRuleFile)

@@ -7,12 +7,12 @@ from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
-    PrometheusAlertRuleSerializer,
+    PrometheusAlertRuleFileSerializer,
 )
 from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
-    PrometheusAlertRule,
+    PrometheusAlertRuleFile,
 )
 from devices.models import Device
 from django.http import HttpResponse
@@ -268,8 +268,8 @@ class FoxgloveDashboardView(APIView):
         return Response(status=204)
 
 
-class PrometheusAlertRulesView(APIView):
-    """PrometheusAlertRules API view."""
+class PrometheusAlertRuleFilesView(APIView):
+    """PrometheusAlertRuleFiles API view."""
 
     def get(self, request: Request) -> Response:
         """Prometheus Alert Rules get view.
@@ -278,11 +278,11 @@ class PrometheusAlertRulesView(APIView):
         return: Http JSON response.
         """
         # retrieve alert rules that are not a template and serialize them
-        no_template_alert_rules = PrometheusAlertRule.objects.filter(
+        no_template_alert_rules = PrometheusAlertRuleFile.objects.filter(
             template=False
         )
 
-        serialized = PrometheusAlertRuleSerializer(
+        serialized = PrometheusAlertRuleFileSerializer(
             no_template_alert_rules,
             many=True
         )
@@ -290,13 +290,13 @@ class PrometheusAlertRulesView(APIView):
         # retrieve template alert rules and render them
         rendered_rules = []
 
-        template_alert_rules = PrometheusAlertRule.objects.filter(
+        template_alert_rules = PrometheusAlertRuleFile.objects.filter(
             template=True
         )
         devices = Device.objects.all()
 
         for device in devices:
-            for rule in device.prometheus_rules_files.all():
+            for rule in device.prometheus_alert_rule_files.all():
                 if rule in template_alert_rules:
                     env = Environment(
                         variable_start_string="%%",
@@ -326,21 +326,21 @@ class PrometheusAlertRulesView(APIView):
         request: Http POST request.
         return: Http JSON response.
         """
-        serialized = PrometheusAlertRuleSerializer(data=request.data)
+        serialized = PrometheusAlertRuleFileSerializer(data=request.data)
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data, status=201)
         return Response(serialized.errors, status=400)
 
 
-class PrometheusAlertRuleView(APIView):
-    """PrometheusAlertRule API view."""
+class PrometheusAlertRuleFileView(APIView):
+    """PrometheusAlertRuleFile API view."""
 
-    def _get_alert_rule(self, uid: str) -> PrometheusAlertRule:
+    def _get_alert_rule(self, uid: str) -> PrometheusAlertRuleFile:
         try:
-            alert_rule = PrometheusAlertRule.objects.get(uid=uid)
+            alert_rule = PrometheusAlertRuleFile.objects.get(uid=uid)
             return alert_rule
-        except PrometheusAlertRule.DoesNotExist:
+        except PrometheusAlertRuleFile.DoesNotExist:
             raise NotFound("Object does not exist")
 
     def get(self, request: Request, uid: str) -> HttpResponse:
@@ -350,7 +350,7 @@ class PrometheusAlertRuleView(APIView):
         return: Http JSON response.
         """
         alert_rule = self._get_alert_rule(uid)
-        serialized = PrometheusAlertRuleSerializer(alert_rule)
+        serialized = PrometheusAlertRuleFileSerializer(alert_rule)
 
         response = HttpResponse(
             json.dumps(serialized.data),
@@ -366,7 +366,7 @@ class PrometheusAlertRuleView(APIView):
         return: Http JSON response.
         """
         alert_rule = self._get_alert_rule(uid)
-        serialized = PrometheusAlertRuleSerializer(
+        serialized = PrometheusAlertRuleFileSerializer(
             alert_rule, data=request.data, partial=True
         )
         if serialized.is_valid():
