@@ -218,6 +218,7 @@ class DeviceModelTests(TestCase):
             yaml.safe_load(SIMPLE_ALERT_RULE),
         )
 
+
 def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)
 
@@ -333,6 +334,5 @@ class DeviceViewTests(TestCase):
         )
         self.assertContains(
             response,
-            self.base_url
-            + "/cos-grafana/d/dashboard-1/?var-Host=hello-123"
+            self.base_url + "/cos-grafana/d/dashboard-1/?var-Host=hello-123",
         )

@@ -62,10 +62,12 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
 
     cos_model_name = settings.COS_MODEL_NAME
 
+    # fmt: off
     grafana_main_link = (
         f"{base_url}/{cos_model_name}-grafana/"
         f"dashboards/"
     )
+    # fmt: on
 
     grafana_dashboards = {}
     grafana_param = {"var-Host": uid}

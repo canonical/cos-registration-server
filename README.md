@@ -71,8 +71,8 @@ It consists of:
 The PrometheusAlertRuleFile model represents a Prometheus Alert Rule file stored in the database.
 It consists of:
 - UID: Unique ID of the alert rule file.
-- Rules: the rules in YAML format.
-- Template: boolean stating whether the rule file is a template and must be rendered.
+- Rules: The rules in YAML format.
+- Template: Boolean stating whether the rule file is a template and must be rendered.
 
 ### API
 The API can be used by the COS registration agent but also by any service
@@ -389,7 +389,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json; `              | {"uid": "string", "rules": yaml_string}                                                         |
+> | `200`         | `application/json; `              | {"uid": "string", "rules": yaml_string, "template": bool}                                                         |
 > | `404`         | `text/html;charset=utf-8`         | None                                                                |
 </details>
 
@@ -407,7 +407,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`                | {"uid": "string", "rules": yaml_string}                             |
+> | `201`         | `application/json`                | {"uid": "string", "rules": yaml_string, "template": bool}                             |
 > | `400`         | `application/json`                | {"field": "error details"}                                          |
 > | `404`         | `text/html;charset=utf-8`         | None                                                                |
 </details>

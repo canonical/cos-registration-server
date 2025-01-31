@@ -13,8 +13,8 @@ from applications.models import (
 )
 from applications.utils import is_alert_rule_a_jinja_template
 from devices.models import Device
-from rest_framework import serializers
 from django.core.serializers.pyyaml import DjangoSafeDumper
+from rest_framework import serializers
 
 
 class DashboardSerializer:
@@ -296,10 +296,9 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
 
             for alert_rule_uid in prometheus_alert_rules_data:
                 try:
-                    prometheus_alert_rule = \
-                        PrometheusAlertRuleFile.objects.get(
-                            uid=alert_rule_uid
-                        )
+                    prometheus_alert_rule = (
+                        PrometheusAlertRuleFile.objects.get(uid=alert_rule_uid)
+                    )
                     instance.prometheus_alert_rule_files.add(
                         prometheus_alert_rule
                     )
@@ -324,7 +323,7 @@ class AlertRuleFileSerializer(
         """AlertRuleFileSerializer Meta class."""
 
         model = AlertRuleFile
-        fields = ["uid", "rules"]
+        fields = ["uid", "rules", "template"]
 
     def to_representation(self, instance: AlertRuleFile) -> Dict[str, Any]:
         """Ensure that YAML data is properly serialized as a string.
@@ -339,9 +338,9 @@ class AlertRuleFileSerializer(
         """
         data = super().to_representation(instance)
         yaml_data = getattr(instance, "rules", {})
-        data["rules"] = yaml.dump(yaml_data,
-                                  Dumper=DjangoSafeDumper,
-                                  default_flow_style=False).rstrip('\n')
+        data["rules"] = yaml.dump(
+            yaml_data, Dumper=DjangoSafeDumper, default_flow_style=False
+        ).rstrip("\n")
         return data
 
     def update(

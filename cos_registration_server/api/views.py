@@ -283,8 +283,7 @@ class PrometheusAlertRuleFilesView(APIView):
         )
 
         serialized = PrometheusAlertRuleFileSerializer(
-            no_template_alert_rules,
-            many=True
+            no_template_alert_rules, many=True
         )
 
         # retrieve template alert rules and render them
@@ -302,8 +301,9 @@ class PrometheusAlertRuleFilesView(APIView):
                         variable_start_string="%%",
                         variable_end_string="%%",
                     )
-                    rule_string = yaml.dump(rule.rules,
-                                            default_flow_style=False)
+                    rule_string = yaml.dump(
+                        rule.rules, default_flow_style=False
+                    )
                     template = env.from_string(rule_string)
                     context = {"juju_device_uuid": f"{device.uid}"}
                     rendered_rule = template.render(context)
@@ -316,8 +316,7 @@ class PrometheusAlertRuleFilesView(APIView):
 
         # rendered rules are already dumped to get them rendered via jinja
         # hence they are already serialized as strings.
-        serialized_list = list(serialized.data) + \
-            rendered_rules
+        serialized_list = list(serialized.data) + rendered_rules
         return Response(serialized_list)
 
     def post(self, request: Request) -> Response:

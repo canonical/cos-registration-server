@@ -850,7 +850,8 @@ class PrometheusAlertRuleFileFilesViewTests(APITestCase):
 
         self.assertEqual(PrometheusAlertRuleFile.objects.count(), 1)
         self.assertEqual(
-            PrometheusAlertRuleFile.objects.get().uid, prometheus_alert_rule_uid
+            PrometheusAlertRuleFile.objects.get().uid,
+            prometheus_alert_rule_uid,
         )
         self.assertEqual(
             PrometheusAlertRuleFile.objects.get().rules,
@@ -867,7 +868,8 @@ class PrometheusAlertRuleFileFilesViewTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(PrometheusAlertRuleFile.objects.count(), 1)
         self.assertEqual(
-            PrometheusAlertRuleFile.objects.get().uid, prometheus_alert_rule_uid
+            PrometheusAlertRuleFile.objects.get().uid,
+            prometheus_alert_rule_uid,
         )
         self.assertEqual(
             PrometheusAlertRuleFile.objects.get().rules,
@@ -915,7 +917,7 @@ class PrometheusAlertRuleFileFilesViewTests(APITestCase):
     alert: MyRobotTest_{{ $label.instace }}"""
         self.assertEqual(
             content_json[0]["rules"],
-            self.simple_prometheus_alert_rule_rendered
+            self.simple_prometheus_alert_rule_rendered,
         )
 
 
@@ -923,6 +925,11 @@ class PrometheusAlertRuleFileFileViewTests(APITestCase):
     def setUp(self) -> None:
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+  rules:
+    alert: MyRobotTest_{{ $label.instace }}"""
+
+        self.simple_prometheus_alert_rule = """groups:
+  name: cos-robotics-model_robot_test_dummy_robot
   rules:
     alert: MyRobotTest_{{ $label.instace }}"""
 
@@ -947,7 +954,7 @@ class PrometheusAlertRuleFileFileViewTests(APITestCase):
         response = self.client.get(self.url("future-alert-rule"))
         self.assertEqual(response.status_code, 404)
 
-    def test_get_alert_rule(self) -> None:
+    def test_get_alert_rule_template(self) -> None:
         alert_rule_uid = "alert-rule-1"
         self.create_alert_rule(
             uid=alert_rule_uid,
@@ -959,9 +966,25 @@ class PrometheusAlertRuleFileFileViewTests(APITestCase):
 
         self.assertEqual(content_json["uid"], alert_rule_uid)
         self.assertEqual(
-            content_json["rules"],
-            self.simple_prometheus_alert_rule_template
+            content_json["rules"], self.simple_prometheus_alert_rule_template
         )
+        self.assertEqual(content_json["template"], True)
+
+    def test_get_alert_rule_no_template(self) -> None:
+        alert_rule_uid = "alert-rule-1"
+        self.create_alert_rule(
+            uid=alert_rule_uid,
+            rules=self.simple_prometheus_alert_rule,
+        )
+        response = self.client.get(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+
+        self.assertEqual(content_json["uid"], alert_rule_uid)
+        self.assertEqual(
+            content_json["rules"], self.simple_prometheus_alert_rule
+        )
+        self.assertEqual(content_json["template"], False)
 
     def test_patch_alert_rule(self) -> None:
         alert_rule_uid = "alert-rule-1"

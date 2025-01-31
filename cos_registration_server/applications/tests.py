@@ -28,7 +28,7 @@ SIMPLE_FOXGLOVE_DASHBOARD = {
 
 SIMPLE_ALERT_RULE = """
     groups:
-        - name: cos-robotics-model_robot_test_{{ $cos.device.uid }} # robot specific alert
+        - name: cos-robotics-model_robot_test_%%juju_device_uuid%%
         rules:
             - alert: MyRobotTest_{{ $cos.instance }}
             annotations:

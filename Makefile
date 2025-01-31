@@ -21,11 +21,12 @@ secretkey:          ## Generate the django secret key.
 
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
-	isort cos_registration_server/
+	isort --profile black cos_registration_server/
 	black -l 79 cos_registration_server/
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
+	black -l 79 --check cos_registration_server/
 	flake8 cos_registration_server/ --exclude migrations,tests.py
 	mypy --strict cos_registration_server
 

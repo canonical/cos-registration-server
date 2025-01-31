@@ -15,7 +15,8 @@ class Migration(migrations.Migration):
             model_name="device",
             name="prometheus_alert_rule_files",
             field=models.ManyToManyField(
-                related_name="devices", to="applications.prometheusalertrulefile"
+                related_name="devices",
+                to="applications.prometheusalertrulefile",
             ),
         ),
     ]

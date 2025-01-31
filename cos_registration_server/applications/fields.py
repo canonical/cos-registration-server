@@ -20,7 +20,7 @@ class YAMLField(models.TextField):  # type: ignore[type-arg]
         value: str,
         expression: Any,
         connection: Any,
-        context: Optional[Any] = None
+        context: Optional[Any] = None,
     ) -> Any:
         """Retrieve python object from database."""
         return self.to_python(value)
