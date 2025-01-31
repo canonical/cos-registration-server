@@ -1,5 +1,7 @@
 django
 djangorestframework
+jinja2
 whitenoise
 tzdata
 gunicorn
+pyyaml

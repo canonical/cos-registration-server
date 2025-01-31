@@ -31,4 +31,14 @@ urlpatterns = [
         views.FoxgloveDashboardView.as_view(),
         name="foxglove_dashboard",
     ),
+    path(
+        "v1/applications/prometheus/alert_rules/",
+        views.PrometheusAlertRuleFilesView.as_view(),
+        name="prometheus_alert_rule_files",
+    ),
+    path(
+        "v1/applications/prometheus/alert_rules/<str:uid>/",
+        views.PrometheusAlertRuleFileView.as_view(),
+        name="prometheus_alert_rule_file",
+    ),
 ]
