@@ -373,7 +373,7 @@ requiring to access the device database.
 
 > | http code     | content-type                      | response                                                            |
 > |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "rules": yaml_string}                                |
+> | `201`         | `application/json`        | {"uid": "string", "rules": yaml_string, "template": bool}                                |
 > | `400`         | `application/json`                | {"field": "error details"}                            |
 > | `409`         | `application/json`         | {"error": "PrometheusAlertRuleFile uid already exists"} |
 </details>
