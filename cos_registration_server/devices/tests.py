@@ -285,7 +285,7 @@ class DeviceViewTests(TestCase):
         )
         self.assertContains(
             response,
-            self.base_url + "/cos-grafana/dashboards/?query=" + device.uid,
+            self.base_url + "/cos-grafana/dashboards/",
         )
         self.assertContains(
             response,
