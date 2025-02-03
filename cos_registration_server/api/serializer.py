@@ -210,7 +210,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                 device.prometheus_alert_rule_files.add(promethues_alert_rule)
             except PrometheusAlertRuleFile.DoesNotExist:
                 raise serializers.ValidationError(
-                    f"PrometheusAlertRuleFile with UID {dashboard_uid}"
+                    f"PrometheusAlertRuleFile with UID {rule_uid}"
                     " does not exist."
                 )
         return device

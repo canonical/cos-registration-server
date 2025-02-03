@@ -808,7 +808,7 @@ class FoxgloveDashboardViewTests(APITestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class PrometheusAlertRuleFileFilesViewTests(APITestCase):
+class PrometheusAlertRuleFilesViewTests(APITestCase):
     def setUp(self) -> None:
         self.url = reverse("api:prometheus_alert_rule_files")
 
@@ -921,7 +921,7 @@ class PrometheusAlertRuleFileFilesViewTests(APITestCase):
         )
 
 
-class PrometheusAlertRuleFileFileViewTests(APITestCase):
+class PrometheusAlertRuleFileViewTests(APITestCase):
     def setUp(self) -> None:
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
