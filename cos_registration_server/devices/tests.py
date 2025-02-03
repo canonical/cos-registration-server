@@ -282,7 +282,7 @@ class DeviceViewTests(TestCase):
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%b. %d, %Y, %-I:%M')}",
+            f" {device.creation_date.strftime('%b. %-d, %Y, %-I:%M')}",
         )
         self.assertContains(
             response,
