@@ -815,14 +815,16 @@ class PrometheusAlertRuleFilesViewTests(APITestCase):
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
-    alert: MyRobotTest_{{ $label.instace }}
-        """
+  - alert: MyRobotTest_{{ $label.instace }}
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+       < 30"""
 
         self.simple_prometheus_alert_rule = """groups:
   name: cos-robotics-model_robot_NO_TEMPLATE
   rules:
-    alert: MyRobotTest_{{ $label.instance }}
-        """
+  - alert: MyRobotTest_{{ $label.instace }}
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+       < 30"""
 
     def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
         data = {}
@@ -914,7 +916,9 @@ class PrometheusAlertRuleFilesViewTests(APITestCase):
         self.simple_prometheus_alert_rule_rendered = """groups:
   name: cos-robotics-model_robot_test_robot1
   rules:
-    alert: MyRobotTest_{{ $label.instace }}"""
+  - alert: MyRobotTest_{{ $label.instace }}
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+      < 30"""
         self.assertEqual(
             content_json[0]["rules"],
             self.simple_prometheus_alert_rule_rendered,
@@ -926,12 +930,16 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
-    alert: MyRobotTest_{{ $label.instace }}"""
+  - alert: MyRobotTest_{{ $label.instace }}
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+      < 30"""
 
         self.simple_prometheus_alert_rule = """groups:
-  name: cos-robotics-model_robot_test_dummy_robot
+  name: cos-robotics-model_robot_NO_TEMPLATE
   rules:
-    alert: MyRobotTest_{{ $label.instace }}"""
+  - alert: MyRobotTest_{{ $label.instace }}
+    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+      < 30"""
 
     def url(self, uid: str) -> str:
         return reverse("api:prometheus_alert_rule_file", args=(uid,))
@@ -963,7 +971,6 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
         response = self.client.get(self.url(alert_rule_uid))
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
-
         self.assertEqual(content_json["uid"], alert_rule_uid)
         self.assertEqual(
             content_json["rules"], self.simple_prometheus_alert_rule_template
@@ -1008,6 +1015,219 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
         self.create_alert_rule(
             uid=alert_rule_uid,
             rules=self.simple_prometheus_alert_rule_template,
+        )
+        response = self.client.get(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 200)
+        response = self.client.delete(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 204)
+        response = self.client.get(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 404)
+
+
+class LokiAlertRuleFilesViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.url = reverse("api:loki_alert_rule_files")
+
+        self.simple_loki_alert_rule_template = """groups:
+  name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+  rules:
+  - alert: HighLogRatePerInstance
+    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m]) > 100"""
+
+        self.simple_loki_alert_rule = """groups:
+  name: cos-robotics-model_robot_NO_TEMPLATE
+  rules:
+  - alert: HighLogRatePerInstance
+    expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100"""
+
+    def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
+        data = {}
+        for field, value in fields.items():
+            data[field] = value
+        return self.client.post(self.url, data, format="json")
+
+    def add_device(self, uid: str) -> Device:
+        device = Device(uid=uid, address="127.0.0.1")
+        device.save()
+        return device
+
+    def test_get_nothing(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)), 0)
+
+    def test_create_alert_rule_template(self) -> None:
+        loki_alert_rule_uid = "first_rule"
+        response = self.create_alert_rule(
+            uid=loki_alert_rule_uid,
+            rules=self.simple_loki_alert_rule_template,
+        )
+        self.assertEqual(response.status_code, 201)
+
+        self.assertEqual(LokiAlertRuleFile.objects.count(), 1)
+        self.assertEqual(
+            LokiAlertRuleFile.objects.get().uid,
+            loki_alert_rule_uid,
+        )
+        self.assertEqual(
+            LokiAlertRuleFile.objects.get().rules,
+            yaml.safe_load(self.simple_loki_alert_rule_template),
+        )
+        self.assertEqual(LokiAlertRuleFile.objects.get().template, True)
+
+    def test_create_alert_rule(self) -> None:
+        loki_alert_rule_uid = "first_rule"
+        response = self.create_alert_rule(
+            uid=loki_alert_rule_uid,
+            rules=self.simple_loki_alert_rule,
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(LokiAlertRuleFile.objects.count(), 1)
+        self.assertEqual(
+            LokiAlertRuleFile.objects.get().uid,
+            loki_alert_rule_uid,
+        )
+        self.assertEqual(
+            LokiAlertRuleFile.objects.get().rules,
+            yaml.safe_load(self.simple_loki_alert_rule),
+        )
+        self.assertEqual(LokiAlertRuleFile.objects.get().template, False)
+
+    def test_create_multiple_alert_rules(self) -> None:
+        alert_rules = [
+            {"uid": "ar-1", "rules": "name: test1"},
+            {"uid": "ar-2", "rules": "name: test2"},
+            {"uid": "ar-3", "rules": "name: test3"},
+        ]
+        for alert_rule in alert_rules:
+            self.create_alert_rule(
+                uid=alert_rule["uid"], rules=alert_rule["rules"]
+            )
+
+        self.assertEqual(LokiAlertRuleFile.objects.count(), 3)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(len(content_json), 3)
+        for i, alert_rule in enumerate(content_json):
+            self.assertEqual(alert_rules[i]["uid"], alert_rule["uid"])
+            self.assertEqual(alert_rules[i]["rules"], alert_rule["rules"])
+
+    def test_get_alert_rule_associated_with_device(self) -> None:
+        loki_alert_rule_uid = "first_rule"
+        response = self.create_alert_rule(
+            uid=loki_alert_rule_uid,
+            rules=self.simple_loki_alert_rule_template,
+        )
+        self.add_device(uid="robot1").loki_alert_rule_files.add(
+            LokiAlertRuleFile.objects.get()
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.simple_loki_alert_rule_rendered = """groups:
+  name: cos-robotics-model_robot_test_robot1
+  rules:
+  - alert: HighLogRatePerInstance
+    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
+      > 100"""
+        self.assertEqual(
+            content_json[0]["rules"],
+            self.simple_loki_alert_rule_rendered,
+        )
+
+
+class LokiAlertRuleFileViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.simple_loki_alert_rule_template = """groups:
+  name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+  rules:
+  - alert: HighLogRatePerInstance
+    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
+      > 100"""
+
+        self.simple_loki_alert_rule = """groups:
+  name: cos-robotics-model_robot_NO_TEMPLATE
+  rules:
+  - alert: HighLogRatePerInstance
+    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
+      > 100"""
+
+    def url(self, uid: str) -> str:
+        return reverse("api:loki_alert_rule_file", args=(uid,))
+
+    def create_alert_rule(
+        self, **fields: Union[str, Dict[str, Any]]
+    ) -> HttpResponse:
+        data = {}
+        for field, value in fields.items():
+            data[field] = value
+        url = reverse("api:loki_alert_rule_files")
+        return self.client.post(url, data, format="json")
+
+    def add_device(self, uid: str) -> Device:
+        device = Device(uid=uid, address="127.0.0.1")
+        device.save()
+        return device
+
+    def test_get_nonexistent_alert_rule(self) -> None:
+        response = self.client.get(self.url("future-alert-rule"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_alert_rule_template(self) -> None:
+        alert_rule_uid = "alert-rule-1"
+        self.create_alert_rule(
+            uid=alert_rule_uid,
+            rules=self.simple_loki_alert_rule_template,
+        )
+        response = self.client.get(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+
+        self.assertEqual(content_json["uid"], alert_rule_uid)
+        self.assertEqual(
+            content_json["rules"], self.simple_loki_alert_rule_template
+        )
+        self.assertEqual(content_json["template"], True)
+
+    def test_get_alert_rule_no_template(self) -> None:
+        alert_rule_uid = "alert-rule-1"
+        self.create_alert_rule(
+            uid=alert_rule_uid,
+            rules=self.simple_loki_alert_rule,
+        )
+        response = self.client.get(self.url(alert_rule_uid))
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+
+        self.assertEqual(content_json["uid"], alert_rule_uid)
+        self.assertEqual(content_json["rules"], self.simple_loki_alert_rule)
+        self.assertEqual(content_json["template"], False)
+
+    def test_patch_alert_rule(self) -> None:
+        alert_rule_uid = "alert-rule-1"
+        self.create_alert_rule(
+            uid=alert_rule_uid,
+            rules=self.simple_loki_alert_rule_template,
+        )
+
+        data = {"rules": "name: test"}
+
+        response = self.client.patch(
+            self.url(alert_rule_uid), data, format="json"
+        )
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(content_json["uid"], alert_rule_uid)
+        self.assertEqual(content_json["rules"], data["rules"])
+
+    def test_delete_alert_rule(self) -> None:
+        alert_rule_uid = "alert-rule-1"
+        self.create_alert_rule(
+            uid=alert_rule_uid,
+            rules=self.simple_loki_alert_rule_template,
         )
         response = self.client.get(self.url(alert_rule_uid))
         self.assertEqual(response.status_code, 200)

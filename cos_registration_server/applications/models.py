@@ -53,8 +53,8 @@ class AlertRuleFile(models.Model):
     This class represent an application alert rule file in the DB.
 
     uid: Unique ID of the alert rule file.
-    rules: the rules in YAML format.
-    template = boolean stating whether the rule file is \
+    rules: The rules in YAML format.
+    template = Boolean stating whether the rule file is \
                a template and must be rendered.
 
     """
@@ -82,8 +82,8 @@ class PrometheusAlertRuleFile(AlertRuleFile):  # noqa: DJ08
     This class represent a Prometheus alert rule file in the DB.
 
     uid: Unique ID of the alert rule file.
-    rules: the rules in YAML format.
-    template = boolean stating whether the rule file is \
+    rules: The rules in YAML format.
+    template = Boolean stating whether the rule file is \
                a template and must be rendered.
     """
 
@@ -93,7 +93,7 @@ class LokiAlertRuleFile(AlertRuleFile):  # noqa: DJ08
     This class represent a Loki alert rule file in the DB.
 
     uid: Unique ID of the alert rule file.
-    rules: the rules in YAML format.
-    template = boolean stating whether the rule file is \
+    rules: The rules in YAML format.
+    template = Boolean stating whether the rule file is \
                a template and must be rendered.
     """

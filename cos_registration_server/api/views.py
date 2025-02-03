@@ -7,11 +7,14 @@ from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
+    LokiAlertRuleFileSerializer,
     PrometheusAlertRuleFileSerializer,
 )
 from applications.models import (
+    AlertRuleFile,
     FoxgloveDashboard,
     GrafanaDashboard,
+    LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
 from devices.models import Device
@@ -268,6 +271,25 @@ class FoxgloveDashboardView(APIView):
         return Response(status=204)
 
 
+def render_jinja_alert_rule_for_device(
+    rule: AlertRuleFile, device_uid: str
+) -> str:
+    """Render jinja template alert rules helper function.
+
+    rule: a rule dictionary stored in the db
+    device_uid: a str reprensenting the device uid \
+                the rule must be rendered for
+    """
+    env = Environment(
+        variable_start_string="%%",
+        variable_end_string="%%",
+    )
+    rule_string = yaml.dump(rule.rules, default_flow_style=False)
+    template = env.from_string(rule_string)
+    context = {"juju_device_uuid": f"{device_uid}"}
+    return template.render(context)
+
+
 class PrometheusAlertRuleFilesView(APIView):
     """PrometheusAlertRuleFiles API view."""
 
@@ -297,16 +319,9 @@ class PrometheusAlertRuleFilesView(APIView):
         for device in devices:
             for rule in device.prometheus_alert_rule_files.all():
                 if rule in template_alert_rules:
-                    env = Environment(
-                        variable_start_string="%%",
-                        variable_end_string="%%",
+                    rendered_rule = render_jinja_alert_rule_for_device(
+                        rule, device.uid
                     )
-                    rule_string = yaml.dump(
-                        rule.rules, default_flow_style=False
-                    )
-                    template = env.from_string(rule_string)
-                    context = {"juju_device_uuid": f"{device.uid}"}
-                    rendered_rule = template.render(context)
                     rendered_rules.append(
                         {
                             "uid": rule.uid + "/" + device.uid,
@@ -375,6 +390,113 @@ class PrometheusAlertRuleFileView(APIView):
 
     def delete(self, request: Request, uid: str) -> Response:
         """Prometheus alert rule delete view.
+
+        request: Http DELETE request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        alert_rule.delete()
+        return Response(status=204)
+
+
+class LokiAlertRuleFilesView(APIView):
+    """LokiAlertRuleFiles API view."""
+
+    def get(self, request: Request) -> Response:
+        """Loki Alert Rules get view.
+
+        request: Http GET request.
+        return: Http JSON response.
+        """
+        # retrieve alert rules that are not a template and serialize them
+        no_template_alert_rules = LokiAlertRuleFile.objects.filter(
+            template=False
+        )
+
+        serialized = LokiAlertRuleFileSerializer(
+            no_template_alert_rules, many=True
+        )
+
+        # retrieve template alert rules and render them
+        rendered_rules = []
+
+        template_alert_rules = LokiAlertRuleFile.objects.filter(template=True)
+        devices = Device.objects.all()
+
+        for device in devices:
+            for rule in device.loki_alert_rule_files.all():
+                if rule in template_alert_rules:
+                    rendered_rule = render_jinja_alert_rule_for_device(
+                        rule, device.uid
+                    )
+                    rendered_rules.append(
+                        {
+                            "uid": rule.uid + "/" + device.uid,
+                            "rules": rendered_rule,
+                        }
+                    )
+
+        # rendered rules are already dumped to get them rendered via jinja
+        # hence they are already serialized as strings.
+        serialized_list = list(serialized.data) + rendered_rules
+        return Response(serialized_list)
+
+    def post(self, request: Request) -> Response:
+        """Loki Alert Rules post view.
+
+        request: Http POST request.
+        return: Http JSON response.
+        """
+        serialized = LokiAlertRuleFileSerializer(data=request.data)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data, status=201)
+        return Response(serialized.errors, status=400)
+
+
+class LokiAlertRuleFileView(APIView):
+    """LokiAlertRuleFile API view."""
+
+    def _get_alert_rule(self, uid: str) -> LokiAlertRuleFile:
+        try:
+            alert_rule = LokiAlertRuleFile.objects.get(uid=uid)
+            return alert_rule
+        except LokiAlertRuleFile.DoesNotExist:
+            raise NotFound("Object does not exist")
+
+    def get(self, request: Request, uid: str) -> HttpResponse:
+        """Loki alert rule get view.
+
+        request: Http GET request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        serialized = LokiAlertRuleFileSerializer(alert_rule)
+
+        response = HttpResponse(
+            json.dumps(serialized.data),
+            content_type="application/json",
+        )
+
+        return response
+
+    def patch(self, request: Request, uid: str) -> Response:
+        """Loki alert rule patch view.
+
+        request: Http PATCH request.
+        return: Http JSON response.
+        """
+        alert_rule = self._get_alert_rule(uid)
+        serialized = LokiAlertRuleFileSerializer(
+            alert_rule, data=request.data, partial=True
+        )
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data)
+        return Response(serialized.errors, status=400)
+
+    def delete(self, request: Request, uid: str) -> Response:
+        """Loki alert rule delete view.
 
         request: Http DELETE request.
         return: Http JSON response.

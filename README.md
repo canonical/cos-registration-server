@@ -427,6 +427,89 @@ requiring to access the device database.
 > | `404`         | `text/html;charset=utf-8`        | None                                                         |
 </details>
 
+<details>
+ <summary><code>GET</code> <code><b>api/v1/applications/loki/alert_rules/</b></code> <code>(Get the details of Loki alert rule files)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json`        | list({"uid": string, "rules": yaml_string})                                                        |
+> | `404`         | `text/html;charset=utf-8`        | None                                                         |
+</details>
+
+<details>
+ <summary><code>POST</code> <code><b>api/v1/applications/loki/alert_rules/</b></code> <code>(Add a Loki alert rule file to the database)</code></summary>
+
+##### Parameters
+
+> | name      |  type     | data type               | description                                                           |
+> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | None      |  required | {"uid": "string", "rules": yaml_string} | Unique ID and Alert Rule File content. |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `201`         | `application/json`        | {"uid": "string", "rules": yaml_string, "template": bool}                                |
+> | `400`         | `application/json`                | {"field": "error details"}                            |
+> | `409`         | `application/json`         | {"error": "LokiAlertRuleFile uid already exists"} |
+</details>
+
+<details>
+ <summary><code>GET</code> <code><b>api/v1/applications/loki/alert_rules/&#60str:uid&#62;/</b></code> <code>(Get the details of a Loki Alert Rule file)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `200`         | `application/json; `              | {"uid": "string", "rules": yaml_string, "template": bool}                                                         |
+> | `404`         | `text/html;charset=utf-8`         | None                                                                |
+</details>
+
+<details>
+ <summary><code>PATCH</code> <code><b>api/v1/applications/loki/alert_rules/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a Loki Alert Rule file)</code></summary>
+
+##### Parameters
+
+> | name      |  type     | data type               | description                                                           |
+> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
+> | None      |  required | {"field: "value"}   | Field to modify. Can be: rules. |
+
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `201`         | `application/json`                | {"uid": "string", "rules": yaml_string, "template": bool}                             |
+> | `400`         | `application/json`                | {"field": "error details"}                                          |
+> | `404`         | `text/html;charset=utf-8`         | None                                                                |
+</details>
+
+<details>
+ <summary><code>DELETE</code> <code><b>api/v1/applications/loki/alert_rules/&#60str:uid&#62;/</b></code> <code>(Delete a Loki Alert Rule file from the database)</code></summary>
+
+##### Parameters
+
+> None
+
+##### Responses
+
+> | http code     | content-type                      | response                                                            |
+> |---------------|-----------------------------------|---------------------------------------------------------------------|
+> | `204`         | `text/html;charset=utf-8`        | None                                                         |
+> | `404`         | `text/html;charset=utf-8`        | None                                                         |
+</details>
+
 
 ## Installation
 First we must generate a secret key for our django to sign data.

@@ -3,6 +3,7 @@
 from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
+    LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
 from django.db import models
@@ -34,6 +35,9 @@ class Device(models.Model):
     )
     prometheus_alert_rule_files = models.ManyToManyField(
         PrometheusAlertRuleFile, related_name="devices"
+    )
+    loki_alert_rule_files = models.ManyToManyField(
+        LokiAlertRuleFile, related_name="devices"
     )
 
     def __str__(self) -> str:

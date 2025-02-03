@@ -40,18 +40,36 @@ I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
 kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
 YkkbhmeJAiNclXL6H"""
 
-SIMPLE_ALERT_RULE_TEMPLATE = """
+SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE = """
     groups:
         name: cos-robotics-model_robot_test_%%juju_device_uuid%%
         rules:
         alert: MyRobotTest_{{ $label.instace }}
+        expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
 """
 
-SIMPLE_ALERT_RULE = """
+SIMPLE_PROMETHEUS_ALERT_RULE = """
     groups:
         name: cos-robotics-model_robot
         rules:
         alert: MyRobotTest_{{ $label.instance }}
+        expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+"""
+
+SIMPLE_LOKI_ALERT_RULE_TEMPLATE = """
+    groups:
+        name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+        alert: MyRobotTest_{{ $label.instace }}
+        expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100
+"""
+
+SIMPLE_LOKI_ALERT_RULE = """
+    groups:
+        name: cos-robotics-model_robot
+        rules:
+        alert: MyRobotTest_{{ $label.instance }}
+        expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100
 """
 
 
@@ -181,7 +199,7 @@ class DeviceModelTests(TestCase):
     def test_device_create_prometheus_alert_rule(self) -> None:
         alert_name = "first_alert"
         prometheus_alert_rule = PrometheusAlertRuleFile(
-            uid=alert_name, rules=SIMPLE_ALERT_RULE_TEMPLATE
+            uid=alert_name, rules=SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE
         )
         prometheus_alert_rule.save()
         device = Device(
@@ -195,13 +213,13 @@ class DeviceModelTests(TestCase):
         )
         self.assertEqual(
             device.prometheus_alert_rule_files.all()[0].rules,
-            yaml.safe_load(SIMPLE_ALERT_RULE_TEMPLATE),
+            yaml.safe_load(SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE),
         )
 
     def test_device_relate_prometheus_alert_rules(self) -> None:
         alert_name = "first_alert"
         prometheus_alert_rule = PrometheusAlertRuleFile(
-            uid=alert_name, rules=SIMPLE_ALERT_RULE
+            uid=alert_name, rules=SIMPLE_PROMETHEUS_ALERT_RULE
         )
         prometheus_alert_rule.save()
         device = Device(
@@ -215,7 +233,47 @@ class DeviceModelTests(TestCase):
         )
         self.assertEqual(
             device.prometheus_alert_rule_files.all()[0].rules,
-            yaml.safe_load(SIMPLE_ALERT_RULE),
+            yaml.safe_load(SIMPLE_PROMETHEUS_ALERT_RULE),
+        )
+
+    def test_device_create_loki_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        loki_alert_rule = LokiAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_LOKI_ALERT_RULE_TEMPLATE
+        )
+        loki_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.loki_alert_rule_files.add(loki_alert_rule)
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].uid,
+            "first_alert",
+        )
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_LOKI_ALERT_RULE_TEMPLATE),
+        )
+
+    def test_device_relate_loki_alert_rules(self) -> None:
+        alert_name = "first_alert"
+        loki_alert_rule = LokiAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_LOKI_ALERT_RULE
+        )
+        loki_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.loki_alert_rule_files.add(loki_alert_rule)
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].uid,
+            alert_name,
+        )
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_LOKI_ALERT_RULE),
         )
 
 
