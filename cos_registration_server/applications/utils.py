@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 
 import yaml
+from django.core.serializers.pyyaml import DjangoSafeDumper
 from jinja2 import Environment, StrictUndefined, UndefinedError
 
 
@@ -37,7 +38,9 @@ def is_alert_rule_a_jinja_template(
     )
 
     # Dump the yaml since jinja can only render strings
-    yaml_string = yaml.dump(yaml_dict)
+    yaml_string = yaml.dump(
+        yaml_dict, Dumper=DjangoSafeDumper, default_flow_style=False
+    )
     try:
         template = env.from_string(yaml_string)
         rendered = template.render(context)

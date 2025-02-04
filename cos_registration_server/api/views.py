@@ -18,6 +18,7 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from devices.models import Device
+from django.core.serializers.pyyaml import DjangoSafeDumper
 from django.http import HttpResponse
 from jinja2 import Environment
 from rest_framework.exceptions import NotFound
@@ -284,7 +285,9 @@ def render_jinja_alert_rule_for_device(
         variable_start_string="%%",
         variable_end_string="%%",
     )
-    rule_string = yaml.dump(rule.rules, default_flow_style=False)
+    rule_string = yaml.dump(
+        rule.rules, Dumper=DjangoSafeDumper, default_flow_style=False
+    )
     template = env.from_string(rule_string)
     context = {"juju_device_uuid": f"{device_uid}"}
     return template.render(context)
@@ -365,7 +368,6 @@ class PrometheusAlertRuleFileView(APIView):
         """
         alert_rule = self._get_alert_rule(uid)
         serialized = PrometheusAlertRuleFileSerializer(alert_rule)
-
         response = HttpResponse(
             json.dumps(serialized.data),
             content_type="application/json",
