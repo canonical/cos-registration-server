@@ -29,7 +29,7 @@ SIMPLE_FOXGLOVE_DASHBOARD = {
 SIMPLE_PROMETHEUS_ALERT_RULE = """
     groups:
         - name: cos-robotics-model_robot_test_%%juju_device_uuid%%
-        rules:
+          rules:
             - alert: MyRobotTest_{{ $cos.instance }}
               annotations:
               description: "The very custom description"
@@ -42,7 +42,7 @@ SIMPLE_PROMETHEUS_ALERT_RULE = """
 SIMPLE_LOKI_ALERT_RULE = """
     groups:
         - name: cos-robotics-model_high_log_rate_per_instance
-	    rules:
+	      rules:
   	        - alert: HighLogRatePerInstance
               expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100
               for: 10m
