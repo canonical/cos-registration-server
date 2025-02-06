@@ -906,14 +906,14 @@ class PrometheusAlertRuleFilesViewTests(APITestCase):
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
   - alert: MyRobotTest_{{ $label.instace }}
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+    expr: (node_memory_MemFree_bytes{device_instance="%%juju_device_uuid%%"})/1e9
        < 30"""
 
         self.simple_prometheus_alert_rule = """groups:
   name: cos-robotics-model_robot_NO_TEMPLATE
   rules:
   - alert: MyRobotTest_{{ $label.instace }}
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+    expr: (node_memory_MemFree_bytes{device_instance="robot1"})/1e9
        < 30"""
 
     def create_alert_rule(self, **fields: Union[str, str]) -> HttpResponse:
@@ -1007,7 +1007,7 @@ class PrometheusAlertRuleFilesViewTests(APITestCase):
   name: cos-robotics-model_robot_test_robot1
   rules:
   - alert: MyRobotTest_{{ $label.instace }}
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+    expr: (node_memory_MemFree_bytes{device_instance="robot1"})/1e9
       < 30"""
         self.assertEqual(
             content_json[0]["rules"],
@@ -1020,16 +1020,15 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
         self.simple_prometheus_alert_rule_template = """groups:
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
-  - alert: MyRobotTest_{{ $label.instace }}
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
+  - alert: MyRobotTest_{{ $label.instance }}
+    expr: (node_memory_MemFree_bytes{device_instance="%%juju_device_uuid%%"})/1e9
       < 30"""
 
         self.simple_prometheus_alert_rule = """groups:
   name: cos-robotics-model_robot_NO_TEMPLATE
   rules:
-  - alert: MyRobotTest_{{ $label.instace }}
-    expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9
-      < 30"""
+  - alert: MyRobotTest_{{ $label.instance }}
+    expr: (node_memory_MemFree_bytes{device_instance="robot1"})/1e9 < 30"""
 
     def url(self, uid: str) -> str:
         return reverse("api:prometheus_alert_rule_file", args=(uid,))
@@ -1122,7 +1121,7 @@ class LokiAlertRuleFilesViewTests(APITestCase):
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
   - alert: HighLogRatePerInstance
-    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m]) > 100"""
+    expr: rate({job="loki.source.journal.read", instance="%%juju_device_uuid%%"}[5m]) > 100"""
 
         self.simple_loki_alert_rule = """groups:
   name: cos-robotics-model_robot_NO_TEMPLATE
@@ -1221,7 +1220,7 @@ class LokiAlertRuleFilesViewTests(APITestCase):
   name: cos-robotics-model_robot_test_robot1
   rules:
   - alert: HighLogRatePerInstance
-    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
+    expr: rate({job="loki.source.journal.read", instance="robot1"}[5m])
       > 100"""
         self.assertEqual(
             content_json[0]["rules"],
@@ -1235,15 +1234,14 @@ class LokiAlertRuleFileViewTests(APITestCase):
   name: cos-robotics-model_robot_test_%%juju_device_uuid%%
   rules:
   - alert: HighLogRatePerInstance
-    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
+    expr: rate({job="loki.source.journal.read", instance="%%juju_device_uuid%%"}[5m])
       > 100"""
 
         self.simple_loki_alert_rule = """groups:
   name: cos-robotics-model_robot_NO_TEMPLATE
   rules:
   - alert: HighLogRatePerInstance
-    expr: rate({job="loki.source.journal.read", instance="${{ $cos.instance }}"}[5m])
-      > 100"""
+    expr: rate({job="loki.source.journal.read", instance="robot1"}[5m]) > 100"""
 
     def url(self, uid: str) -> str:
         return reverse("api:loki_alert_rule_file", args=(uid,))

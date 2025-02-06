@@ -45,7 +45,7 @@ SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE = """
         name: cos-robotics-model_robot_test_%%juju_device_uuid%%
         rules:
         alert: MyRobotTest_{{ $label.instace }}
-        expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+        expr: (node_memory_MemFree_bytes{device_instance="%%juju_device_uuid%%"})/1e9 < 30
 """
 
 SIMPLE_PROMETHEUS_ALERT_RULE = """
@@ -53,7 +53,7 @@ SIMPLE_PROMETHEUS_ALERT_RULE = """
         name: cos-robotics-model_robot
         rules:
         alert: MyRobotTest_{{ $label.instance }}
-        expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+        expr: (node_memory_MemFree_bytes{device_instance="robot"})/1e9 < 30
 """
 
 SIMPLE_LOKI_ALERT_RULE_TEMPLATE = """

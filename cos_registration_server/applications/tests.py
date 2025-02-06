@@ -30,11 +30,11 @@ SIMPLE_PROMETHEUS_ALERT_RULE = """
     groups:
         - name: cos-robotics-model_robot_test_%%juju_device_uuid%%
           rules:
-            - alert: MyRobotTest_{{ $cos.instance }}
+            - alert: MyRobotTest_%%juju_device_uuid%%
               annotations:
               description: "The very custom description"
               summary: Not enough memory alert (instance {{ $labels.instance }})
-              expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+              expr: (node_memory_MemFree_bytes{device_instance="%%juju_device_uuid%%"})/1e9 < 30
               for: 5m
               severity: critical
 """
