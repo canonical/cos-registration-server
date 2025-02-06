@@ -2,7 +2,6 @@
 
 import json
 
-import yaml
 from api.serializer import (
     DeviceSerializer,
     FoxgloveDashboardSerializer,
@@ -11,16 +10,14 @@ from api.serializer import (
     PrometheusAlertRuleFileSerializer,
 )
 from applications.models import (
-    AlertRuleFile,
     FoxgloveDashboard,
     GrafanaDashboard,
     LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
+from applications.utils import render_alert_rule_template_for_device
 from devices.models import Device
-from django.core.serializers.pyyaml import DjangoSafeDumper
 from django.http import HttpResponse
-from jinja2 import Environment
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -272,27 +269,6 @@ class FoxgloveDashboardView(APIView):
         return Response(status=204)
 
 
-def render_jinja_alert_rule_for_device(
-    rule: AlertRuleFile, device_uid: str
-) -> str:
-    """Render jinja template alert rules helper function.
-
-    rule: a rule dictionary stored in the db
-    device_uid: a str reprensenting the device uid \
-                the rule must be rendered for
-    """
-    env = Environment(
-        variable_start_string="%%",
-        variable_end_string="%%",
-    )
-    rule_string = yaml.dump(
-        rule.rules, Dumper=DjangoSafeDumper, default_flow_style=False
-    )
-    template = env.from_string(rule_string)
-    context = {"juju_device_uuid": f"{device_uid}"}
-    return template.render(context)
-
-
 class PrometheusAlertRuleFilesView(APIView):
     """PrometheusAlertRuleFiles API view."""
 
@@ -322,8 +298,8 @@ class PrometheusAlertRuleFilesView(APIView):
         for device in devices:
             for rule in device.prometheus_alert_rule_files.all():
                 if rule in template_alert_rules:
-                    rendered_rule = render_jinja_alert_rule_for_device(
-                        rule, device.uid
+                    rendered_rule = render_alert_rule_template_for_device(
+                        rule, device
                     )
                     rendered_rules.append(
                         {
@@ -428,8 +404,8 @@ class LokiAlertRuleFilesView(APIView):
         for device in devices:
             for rule in device.loki_alert_rule_files.all():
                 if rule in template_alert_rules:
-                    rendered_rule = render_jinja_alert_rule_for_device(
-                        rule, device.uid
+                    rendered_rule = render_alert_rule_template_for_device(
+                        rule, device
                     )
                     rendered_rules.append(
                         {

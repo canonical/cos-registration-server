@@ -276,6 +276,14 @@ class DeviceViewTests(APITestCase):
             "userNodes": {},
             "playbackConfig": {"speed": 1},
         }
+        self.simple_prometheus_alert_rule = """groups:
+  name: cos-robotics-model_robot_NO_TEMPLATE
+  rules:
+  - alert: MyRobotTest_{{ $label.instace }}"""
+        self.simple_loki_alert_rule = """groups:
+  name: cos-robotics-model_robot_NO_TEMPLATE
+  rules:
+  - alert: HighLogRatePerInstance"""
         self.grafana_dashboard = GrafanaDashboard(
             uid="dashboard-1", dashboard=self.simple_grafana_dashboard_json
         )
@@ -284,6 +292,18 @@ class DeviceViewTests(APITestCase):
             uid="dashboard-1", dashboard=self.simple_foxglove_dashboard_json
         )
         self.foxglove_dashboard.save()
+
+        self.loki_alert_rule_file = LokiAlertRuleFile(
+            uid="alert-rule-1", rules=self.simple_loki_alert_rule
+        )
+
+        self.loki_alert_rule_file.save()
+
+        self.prometheus_alert_rule_file = PrometheusAlertRuleFile(
+            uid="alert-rule-1", rules=self.simple_prometheus_alert_rule
+        )
+
+        self.prometheus_alert_rule_file.save()
 
         self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
 
@@ -406,6 +426,76 @@ class DeviceViewTests(APITestCase):
         )
         self.assertEqual(Device.objects.get().grafana_dashboards.count(), 1)
         self.assertEqual(Device.objects.get().foxglove_dashboards.count(), 1)
+
+    def test_patch_prometheus_alert_rule_files(self) -> None:
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(uid=uid, address=address)
+        self.assertEqual(
+            Device.objects.get().prometheus_alert_rule_files.count(), 0
+        )
+        data = {
+            "prometheus_alert_rule_files": [
+                self.prometheus_alert_rule_file.uid
+            ]
+        }
+        response = self.client.patch(self.url(uid), data, format="json")
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(
+            content_json["prometheus_alert_rule_files"][0],
+            self.prometheus_alert_rule_file.uid,
+        )
+
+        self.assertEqual(
+            Device.objects.get().prometheus_alert_rule_files.get().uid,
+            self.prometheus_alert_rule_file.uid,
+        )
+
+    def test_patch_loki_alert_rule_files(self) -> None:
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(uid=uid, address=address)
+        self.assertEqual(Device.objects.get().loki_alert_rule_files.count(), 0)
+        data = {"loki_alert_rule_files": [self.loki_alert_rule_file.uid]}
+        response = self.client.patch(self.url(uid), data, format="json")
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(
+            content_json["loki_alert_rule_files"][0],
+            self.loki_alert_rule_file.uid,
+        )
+
+        self.assertEqual(
+            Device.objects.get().loki_alert_rule_files.get().uid,
+            self.loki_alert_rule_file.uid,
+        )
+
+    def test_partial_patch_with_existing_alert_rule_files(self) -> None:
+        uid = "robot-1"
+        address = "192.168.1.2"
+        self.create_device(
+            uid=uid,
+            address=address,
+            prometheus_alert_rule_files={self.prometheus_alert_rule_file.uid},
+            loki_alert_rule_files={self.loki_alert_rule_file.uid},
+        )
+        self.assertEqual(
+            Device.objects.get().prometheus_alert_rule_files.count(), 1
+        )
+        self.assertEqual(Device.objects.get().loki_alert_rule_files.count(), 1)
+        data = {"address": "192.168.1.3"}
+        response = self.client.patch(self.url(uid), data, format="json")
+        self.assertEqual(response.status_code, 200)
+        content_json = json.loads(response.content)
+        self.assertEqual(
+            content_json["address"],
+            data["address"],
+        )
+        self.assertEqual(
+            Device.objects.get().prometheus_alert_rule_files.count(), 1
+        )
+        self.assertEqual(Device.objects.get().loki_alert_rule_files.count(), 1)
 
     def test_invalid_patch_device(self) -> None:
         uid = "robot-1"

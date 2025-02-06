@@ -255,8 +255,9 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         instance.save()
 
         # Update Grafana dashboards
-        try:
-            grafana_dashboards_data = validated_data.pop("grafana_dashboards")
+        grafana_dashboards_data = validated_data.pop("grafana_dashboards", [])
+
+        if grafana_dashboards_data:
             current_grafana_dashboards = instance.grafana_dashboards.all()
             for grafana_dashboard in current_grafana_dashboards:
                 instance.grafana_dashboards.remove(grafana_dashboard)
@@ -272,16 +273,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Grafana Dashboard with UID {dashboard_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without grafana_dashboards vs
-            # empty grafana_dashboards
-            pass
 
         # Update Foxglove dashboards
-        try:
-            foxglove_dashboards_data = validated_data.pop(
-                "foxglove_dashboards"
-            )
+        foxglove_dashboards_data = validated_data.pop(
+            "foxglove_dashboards", []
+        )
+
+        if foxglove_dashboards_data:
             current_foxglove_dashboards = instance.foxglove_dashboards.all()
             for foxglove_dashboard in current_foxglove_dashboards:
                 instance.foxglove_dashboards.remove(foxglove_dashboard)
@@ -297,16 +295,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Foxglove Dashboard with UID {dashboard_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without foxglove_dashboards vs
-            # empty foxglove_dashboards
-            pass
 
         # Update Prometheus alert rules
-        try:
-            prometheus_alert_rules_data = validated_data.pop(
-                "prometheus_alert_rule_files", {}
-            )
+        prometheus_alert_rules_data = validated_data.pop(
+            "prometheus_alert_rule_files", []
+        )
+
+        if prometheus_alert_rules_data:
             current_prometheus_alert_rule_files = (
                 instance.prometheus_alert_rule_files.all()
             )
@@ -328,16 +323,11 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Prometheus Alert Rule with UID {alert_rule_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without prometheus_alert_rule_files vs
-            # empty prometheus_alert_rule_files
-            pass
 
         # Update Loki alert rules
-        try:
-            loki_alert_rules_data = validated_data.pop(
-                "loki_alert_rule_files", {}
-            )
+        loki_alert_rules_data = validated_data.pop("loki_alert_rule_files", [])
+
+        if loki_alert_rules_data:
             current_loki_alert_rule_files = (
                 instance.loki_alert_rule_files.all()
             )
@@ -355,10 +345,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Loki Alert Rule with UID {alert_rule_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without loki_alert_rule_files vs
-            # empty loki_alert_rule_files
-            pass
+
         return instance
 
 
