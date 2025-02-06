@@ -29,11 +29,11 @@ class YAMLField(models.TextField):  # type: ignore[type-arg]
         """Convert YAML string to a Python object."""
         if value == "":
             return {}
-        try:
-            if isinstance(value, str):
+        if isinstance(value, str):
+            try:
                 return yaml.load(value, yaml.SafeLoader)
-        except ValueError:
-            raise serializers.ValidationError("Provided YAML is invalid")
+            except ValueError:
+                raise serializers.ValidationError("Provided YAML is invalid")
 
     def get_prep_value(self, value: Any) -> Any:
         """Convert Python object to string of YAML."""
