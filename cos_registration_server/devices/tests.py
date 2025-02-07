@@ -1,7 +1,13 @@
 from datetime import timedelta
 from html import escape
 
-from applications.models import FoxgloveDashboard, GrafanaDashboard
+import yaml
+from applications.models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
+)
 from django.db.utils import IntegrityError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -33,6 +39,20 @@ EYn2qdU5C7GsIiwmFpgGCFkBE1bAwjepQar6NTBC3Blc1zjy6dCMdgQHjHhw26UIG3kmKTS\
 I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
 kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
 YkkbhmeJAiNclXL6H"""
+
+SIMPLE_ALERT_RULE_TEMPLATE = """
+    groups:
+        name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+        alert: MyRobotTest_{{ $label.instace }}
+"""
+
+SIMPLE_ALERT_RULE = """
+    groups:
+        name: cos-robotics-model_robot
+        rules:
+        alert: MyRobotTest_{{ $label.instance }}
+"""
 
 
 class DeviceModelTests(TestCase):
@@ -158,6 +178,46 @@ class DeviceModelTests(TestCase):
             Device(uid=uid, address="192.168.0.1").save,
         )
 
+    def test_device_create_prometheus_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE_TEMPLATE
+        )
+        prometheus_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].uid,
+            "first_alert",
+        )
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_ALERT_RULE_TEMPLATE),
+        )
+
+    def test_device_relate_prometheus_alert_rules(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE
+        )
+        prometheus_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].uid,
+            alert_name,
+        )
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_ALERT_RULE),
+        )
+
 
 def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)
@@ -222,11 +282,11 @@ class DeviceViewTests(TestCase):
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%B %d, %Y, %-I')}",
+            f" {device.creation_date.strftime('%b. %-d, %Y, %-I:%M')}",
         )
         self.assertContains(
             response,
-            self.base_url + "/cos-grafana/dashboards/?query=" + device.uid,
+            self.base_url + "/cos-grafana/dashboards/",
         )
         self.assertContains(
             response,
@@ -268,13 +328,11 @@ class DeviceViewTests(TestCase):
             + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
             + device.address
             + "%3A8765"
-            + escape("&layoutUrl=")
+            + escape("&layoutUrl=http%3A%2F%2F")
             + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
             + "applications%2Ffoxglove%2Fdashboards%2Flayout-1",
         )
-
         self.assertContains(
             response,
-            self.base_url
-            + "/cos-grafana/dashboards/dashboard-1/?instance=hello-123",
+            self.base_url + "/cos-grafana/d/dashboard-1/?var-Host=hello-123",
         )

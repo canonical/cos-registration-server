@@ -2,7 +2,12 @@ from devices.models import Device
 from django.db.utils import IntegrityError
 from django.test import TestCase
 
-from .models import FoxgloveDashboard, GrafanaDashboard
+from .models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
+)
 
 SIMPLE_GRAFANA_DASHBOARD = {
     "id": None,
@@ -20,6 +25,19 @@ SIMPLE_FOXGLOVE_DASHBOARD = {
     "userNodes": {},
     "playbackConfig": {"speed": 1},
 }
+
+SIMPLE_ALERT_RULE = """
+    groups:
+        - name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+            - alert: MyRobotTest_{{ $cos.instance }}
+            annotations:
+            description: "The very custom description"
+            summary: Not enough memory alert (instance {{ $labels.instance }})
+            expr: (node_memory_MemFree_bytes{device_instance="${{ $cos.instance }}"})/1e9 < 30
+            for: 5m
+            severity: critical
+"""
 
 
 class GrafanaDashboardModelTests(TestCase):
@@ -86,3 +104,35 @@ class FoxgloveDashboardModelTests(TestCase):
         device.foxglove_dashboards.add(foxglove_dashboard)
 
         self.assertEqual(foxglove_dashboard.devices.all()[0].uid, "robot")
+
+
+class PrometheusAlertRuleFileModelTests(TestCase):
+    def test_creation_of_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE
+        )
+        self.assertEqual(prometheus_alert_rule.uid, alert_name)
+        self.assertEqual(prometheus_alert_rule.rules, SIMPLE_ALERT_RULE)
+
+    def test_alert_rule_from_a_dashboard(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE
+        )
+        prometheus_alert_rule.save()
+        device = Device(uid="robot", address="127.0.0.1")
+        device.save()
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
+
+        self.assertEqual(prometheus_alert_rule.devices.all()[0].uid, "robot")
+
+
+class LokiAlertRuleFileModelTests(TestCase):
+    def test_creation_of_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        loki_alert_rule = LokiAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_ALERT_RULE
+        )
+        self.assertEqual(loki_alert_rule.uid, alert_name)
+        self.assertEqual(loki_alert_rule.rules, SIMPLE_ALERT_RULE)
