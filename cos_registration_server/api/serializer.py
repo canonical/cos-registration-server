@@ -9,6 +9,7 @@ from applications.models import (
     Dashboard,
     FoxgloveDashboard,
     GrafanaDashboard,
+    LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
 from applications.utils import is_alert_rule_a_jinja_template
@@ -126,6 +127,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
+    loki_alert_rule_files = serializers.SlugRelatedField(
+        many=True,
+        queryset=LokiAlertRuleFile.objects.all(),
+        slug_field="uid",
+        required=False,
+    )
+
     class Meta:
         """DeviceSerializer Meta class."""
 
@@ -138,6 +146,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "grafana_dashboards",
             "foxglove_dashboards",
             "prometheus_alert_rule_files",
+            "loki_alert_rule_files",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:
@@ -175,6 +184,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         prometheus_alert_rules_data = validated_data.pop(
             "prometheus_alert_rule_files", {}
         )
+        loki_alert_rules_data = validated_data.pop("loki_alert_rule_files", {})
 
         device = Device.objects.create(**validated_data)
 
@@ -213,6 +223,16 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                     f"PrometheusAlertRuleFile with UID {rule_uid}"
                     " does not exist."
                 )
+
+        for rule_uid in loki_alert_rules_data:
+            try:
+                loki_alert_rule = LokiAlertRuleFile.objects.get(uid=rule_uid)
+                device.loki_alert_rule_files.add(loki_alert_rule)
+            except LokiAlertRuleFile.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"LokiAlertRuleFile with UID {rule_uid}" " does not exist."
+                )
+
         return device
 
     def update(
@@ -229,13 +249,15 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                 "grafana_dashboards",
                 "foxglove_dashboards",
                 "prometheus_alert_rule_files",
+                "loki_alert_rule_files",
             }:
                 setattr(instance, field, value)
         instance.save()
 
         # Update Grafana dashboards
-        try:
-            grafana_dashboards_data = validated_data.pop("grafana_dashboards")
+        grafana_dashboards_data = validated_data.pop("grafana_dashboards", [])
+
+        if grafana_dashboards_data:
             current_grafana_dashboards = instance.grafana_dashboards.all()
             for grafana_dashboard in current_grafana_dashboards:
                 instance.grafana_dashboards.remove(grafana_dashboard)
@@ -251,16 +273,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Grafana Dashboard with UID {dashboard_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without grafana_dashboards vs
-            # empty grafana_dashboards
-            pass
 
         # Update Foxglove dashboards
-        try:
-            foxglove_dashboards_data = validated_data.pop(
-                "foxglove_dashboards"
-            )
+        foxglove_dashboards_data = validated_data.pop(
+            "foxglove_dashboards", []
+        )
+
+        if foxglove_dashboards_data:
             current_foxglove_dashboards = instance.foxglove_dashboards.all()
             for foxglove_dashboard in current_foxglove_dashboards:
                 instance.foxglove_dashboards.remove(foxglove_dashboard)
@@ -276,16 +295,13 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Foxglove Dashboard with UID {dashboard_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without foxglove_dashboards vs
-            # empty foxglove_dashboards
-            pass
 
         # Update Prometheus alert rules
-        try:
-            prometheus_alert_rules_data = validated_data.pop(
-                "prometheus_alert_rule_files", {}
-            )
+        prometheus_alert_rules_data = validated_data.pop(
+            "prometheus_alert_rule_files", []
+        )
+
+        if prometheus_alert_rules_data:
             current_prometheus_alert_rule_files = (
                 instance.prometheus_alert_rule_files.all()
             )
@@ -307,10 +323,29 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
                         f"Prometheus Alert Rule with UID {alert_rule_uid}"
                         " does not exist."
                     )
-        except KeyError:
-            # Handle partial updates without prometheus_alert_rule_files vs
-            # empty prometheus_alert_rule_files
-            pass
+
+        # Update Loki alert rules
+        loki_alert_rules_data = validated_data.pop("loki_alert_rule_files", [])
+
+        if loki_alert_rules_data:
+            current_loki_alert_rule_files = (
+                instance.loki_alert_rule_files.all()
+            )
+            for loki_alert_rule in current_loki_alert_rule_files:
+                instance.loki_alert_rule_files.remove(loki_alert_rule)
+
+            for alert_rule_uid in loki_alert_rules_data:
+                try:
+                    loki_alert_rule = LokiAlertRuleFile.objects.get(
+                        uid=alert_rule_uid
+                    )
+                    instance.loki_alert_rule_files.add(loki_alert_rule)
+                except LokiAlertRuleFile.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"Loki Alert Rule with UID {alert_rule_uid}"
+                        " does not exist."
+                    )
+
         return instance
 
 
@@ -413,3 +448,32 @@ class PrometheusAlertRuleFileSerializer(
         # in the model but not exposed in the API
         validated_data["template"] = is_template
         return PrometheusAlertRuleFile.objects.create(**validated_data)
+
+
+class LokiAlertRuleFileSerializer(
+    AlertRuleFileSerializer,
+):
+    """Loki Alert Rule Serializer class."""
+
+    class Meta(AlertRuleFileSerializer.Meta):
+        """AlertRuleSerializer Meta class."""
+
+        model = LokiAlertRuleFile
+
+    def create(self, validated_data: Dict[str, Any]) -> LokiAlertRuleFile:
+        """Create LokiAlertRuleFile object from data.
+
+        validated_data: Dict of complete JSON validated data
+        provided by the request.
+        In the alert rule case a valid data request is:
+            json = {
+              uid = "rule_uid"
+              rules = file(rules.rule)
+            }
+        """
+        is_template = is_alert_rule_a_jinja_template(validated_data["rules"])
+
+        # Add template key to the validated_data, this is available
+        # in the model but not exposed in the API
+        validated_data["template"] = is_template
+        return LokiAlertRuleFile.objects.create(**validated_data)

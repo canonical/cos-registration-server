@@ -3,8 +3,13 @@
 from typing import Any, Dict, Optional
 
 import yaml
+from applications.models import AlertRuleFile
+from devices.models import Device
 from django.core.serializers.pyyaml import DjangoSafeDumper
 from jinja2 import Environment, StrictUndefined, UndefinedError
+
+TEMPLATE_FILTER_START_STRING = "%%"
+TEMPLATE_FILTER_END_STRING = "%%"
 
 
 def is_alert_rule_a_jinja_template(
@@ -32,8 +37,8 @@ def is_alert_rule_a_jinja_template(
         context = {"juju_device_uuid": "dummy"}
 
     env = Environment(
-        variable_start_string="%%",
-        variable_end_string="%%",
+        variable_start_string=TEMPLATE_FILTER_START_STRING,
+        variable_end_string=TEMPLATE_FILTER_END_STRING,
         undefined=StrictUndefined,
     )
 
@@ -49,3 +54,23 @@ def is_alert_rule_a_jinja_template(
         raise RuntimeError(f"Invalid jinja file template: {e}")
     except Exception as e:
         raise RuntimeError(f"Error rendering template: {e}")
+
+
+def render_alert_rule_template_for_device(
+    rule: AlertRuleFile, device: Device
+) -> str:
+    """Render template alert rules helper function.
+
+    rule: a rule dictionary stored in the db.
+    device: a device instance in the db.
+    """
+    env = Environment(
+        variable_start_string=TEMPLATE_FILTER_START_STRING,
+        variable_end_string=TEMPLATE_FILTER_END_STRING,
+    )
+    rule_string = yaml.dump(
+        rule.rules, Dumper=DjangoSafeDumper, default_flow_style=False
+    )
+    template = env.from_string(rule_string)
+    context = {"juju_device_uuid": f"{device.uid}"}
+    return template.render(context)

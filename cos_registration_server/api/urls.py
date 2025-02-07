@@ -41,4 +41,14 @@ urlpatterns = [
         views.PrometheusAlertRuleFileView.as_view(),
         name="prometheus_alert_rule_file",
     ),
+    path(
+        "v1/applications/loki/alert_rules/",
+        views.LokiAlertRuleFilesView.as_view(),
+        name="loki_alert_rule_files",
+    ),
+    path(
+        "v1/applications/loki/alert_rules/<str:uid>/",
+        views.LokiAlertRuleFileView.as_view(),
+        name="loki_alert_rule_file",
+    ),
 ]
