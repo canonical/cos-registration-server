@@ -16,6 +16,7 @@ class devices(generic.ListView):  # type: ignore[type-arg]
 
     template_name = "devices/devices.html"
     context_object_name = "devices_list"
+    paginate_by = 25
 
     def get_queryset(self) -> Any:
         """Return all devices on GET."""
