@@ -294,7 +294,7 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "2 device(s):")
         self.assertContains(response, "robot-1")
         self.assertContains(response, "robot-2")
         self.assertQuerySetEqual(
@@ -306,16 +306,39 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "1 device(s):")
         self.assertQuerySetEqual(response.context["devices_list"], [device_1])
 
         device_2 = create_device("robot-2", "192.168.0.2")
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "2 device(s):")
         self.assertQuerySetEqual(
             list(response.context["devices_list"]), [device_1, device_2]
+        )
+
+    def test_devices_pagination(self) -> None:
+        total_number_of_devices = 40
+        max_devices_per_page = 25
+        devices = []
+        for i in range(0, total_number_of_devices):
+            devices.append(create_device(f"robot-{i}", "192.168.0.1"))
+
+        response = self.client.get(reverse("devices:devices"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["is_paginated"] == True)
+        self.assertContains(response, f"{total_number_of_devices} device(s):")
+        self.assertEquals(
+            len(response.context["devices_list"]), max_devices_per_page
+        )
+
+        response = self.client.get(reverse("devices:devices") + "?page=2")
+        self.assertEqual(response.status_code, 200)
+        # The second and last page has less devices
+        self.assertEquals(
+            len(response.context["devices_list"]),
+            total_number_of_devices - max_devices_per_page,
         )
 
 
