@@ -19,6 +19,13 @@ from applications.models import (
 from applications.utils import render_alert_rule_template_for_device
 from devices.models import Device
 from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+)
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import (
     CreateAPIView,
@@ -31,10 +38,69 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+status_code_200_device = {200: DeviceSerializer}
+status_code_201_device = {201: DeviceSerializer}
+
+status_code_404_uid_not_found = {
+    404: OpenApiResponse(description="UID not found")
+}
+
+status_code_200_grafana_dashboard = {200: GrafanaDashboardSerializer}
+status_code_201_grafana_dashboard = {201: GrafanaDashboardSerializer}
+
+status_code_200_foxglove_dashboard = {200: FoxgloveDashboardSerializer}
+status_code_201_foxglove_dashboard = {201: FoxgloveDashboardSerializer}
+
+status_code_200_dashboard = {
+    200: OpenApiResponse(
+        response=OpenApiTypes.STR,
+        description="Dashboard JSON returned as an attachment with "
+        "content-disposition header like: "
+        "'attachment; filename=dashboard_uid.json'",
+    )
+}
+
+status_code_404_dashboard_not_found = {
+    404: OpenApiResponse(description="Dashboard not found")
+}
+
+status_code_200_prometheus_alert_rule_file = {
+    200: PrometheusAlertRuleFileSerializer
+}
+status_code_201_prometheus_alert_rule_file = {
+    201: PrometheusAlertRuleFileSerializer
+}
+
+status_code_200_loki_alert_rule_file = {200: LokiAlertRuleFileSerializer}
+status_code_201_loki_alert_rule_file = {201: LokiAlertRuleFileSerializer}
+
+status_code_404_alert_rule_file_not_found = {
+    404: OpenApiResponse(description="Alert rule file not found")
+}
+
+status_code_400_field_parsing = {
+    400: OpenApiResponse(
+        response=OpenApiTypes.STR,
+        examples=[
+            OpenApiExample(
+                "Date parse error",
+                value={"field_name": "error details"},
+                status_codes=["400"],
+            )
+        ],
+    )
+}
+
 
 class HealthView(APIView):
     """Health API view."""
 
+    @extend_schema(
+        summary="Health",
+        responses={
+            200: OpenApiResponse(description="The application is alive."),
+        },
+    )
     def get(self, request: Request) -> Response:
         """Health get view."""
         return Response()
@@ -46,12 +112,35 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
 
+    @extend_schema(
+        summary="Register a device",
+        description="Register a device by its ID",
+        responses={
+            **status_code_201_device,
+            **status_code_400_field_parsing,
+        },
+    )
     def post(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """POST a device."""
         return super().post(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List devices",
+        description="List all registered devices and their attribute",
+        responses={**status_code_200_device},
+        parameters=[
+            OpenApiParameter(
+                name="fields",
+                description="Filter the fields provided."
+                "Will only output the fields listed in the parameter."
+                "Example: ?fields=uid,create_date",
+                required=False,
+                type=OpenApiTypes.STR,
+            )
+        ],
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -66,24 +155,58 @@ class DeviceView(RetrieveUpdateDestroyAPIView):  # type: ignore[type-arg]
     serializer_class = DeviceSerializer
     lookup_field = "uid"
 
+    @extend_schema(
+        summary="Get a device",
+        description="Retrieve all the fields of a device by its ID",
+        responses={
+            **status_code_200_device,
+            **status_code_404_uid_not_found,
+        },
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """GET a device."""
         return super().get(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a device completely",
+        description="Update all the fields of a given device",
+        responses={
+            **status_code_201_device,
+            **status_code_400_field_parsing,
+            **status_code_404_uid_not_found,
+        },
+    )
     def put(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PUT a device."""
         return super().put(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a device partially",
+        description="Update the provided fields of a given device",
+        responses={
+            **status_code_201_device,
+            **status_code_400_field_parsing,
+            **status_code_404_uid_not_found,
+        },
+    )
     def patch(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PATCH a device."""
         return super().patch(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Delete a device",
+        description="Delete a registered device",
+        responses={
+            204: DeviceSerializer,
+            **status_code_404_uid_not_found,
+        },
+    )
     def delete(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -97,12 +220,25 @@ class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]
     queryset = GrafanaDashboard.objects.all()
     serializer_class = GrafanaDashboardSerializer
 
+    @extend_schema(
+        summary="Add a Grafana dashboard",
+        description="Add a Grafana dashboard by its ID",
+        responses={
+            **status_code_201_grafana_dashboard,
+            **status_code_400_field_parsing,
+        },
+    )
     def post(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """POST a Grafana dashboard."""
         return super().post(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List Grafana dashboards",
+        description="List all Grafana dashboards and their attribute",
+        responses={**status_code_200_grafana_dashboard},
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -127,6 +263,15 @@ class GrafanaDashboardView(
         except GrafanaDashboard.DoesNotExist:
             raise NotFound("Object does not exist")
 
+    @extend_schema(
+        summary="Download Grafana dashboard JSON file",
+        description="Returns Grafana dashboard JSON object, "
+        "intended for file download.",
+        responses={
+            **status_code_200_dashboard,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def get(self, request: Request, uid: str) -> HttpResponse:
         """Grafana dashboard get view.
 
@@ -143,18 +288,44 @@ class GrafanaDashboardView(
         )
         return response
 
+    @extend_schema(
+        summary="Update a Grafana dashboard completely",
+        description="Update all the fields of a given Grafana dashboard",
+        responses={
+            **status_code_201_grafana_dashboard,
+            **status_code_400_field_parsing,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def put(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PUT a Grafana dashboard."""
         return super().put(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Grafana dashboard partially",
+        description="Update the provided fields of a given Grafana dashboard",
+        responses={
+            **status_code_201_grafana_dashboard,
+            **status_code_400_field_parsing,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def patch(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PATCH a Grafana dashboard."""
         return super().patch(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Delete a Grafana dashboard",
+        description="Delete a Grafana dashboard",
+        responses={
+            204: GrafanaDashboardSerializer,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def delete(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -169,12 +340,25 @@ class FoxgloveDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]
     serializer_class = FoxgloveDashboardSerializer
     lookup_field = "uid"
 
+    @extend_schema(
+        summary="Add a Foxglove dashboard",
+        description="Add a Foxglove dashboard by its ID",
+        responses={
+            **status_code_201_foxglove_dashboard,
+            **status_code_400_field_parsing,
+        },
+    )
     def post(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """POST a Foxglove dashboard."""
         return super().post(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List Foxglove dashboards",
+        description="List all Foxglove dashboards and their attribute",
+        responses={**status_code_200_foxglove_dashboard},
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -199,6 +383,15 @@ class FoxgloveDashboardView(
         except FoxgloveDashboard.DoesNotExist:
             raise NotFound("Object does not exist")
 
+    @extend_schema(
+        summary="Download Foxglove dashboard JSON file",
+        description="Returns Foxglove dashboard JSON object, "
+        "intended for file download.",
+        responses={
+            **status_code_200_dashboard,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def get(self, request: Request, uid: str) -> HttpResponse:
         """Foxglove dashboard get view.
 
@@ -215,18 +408,44 @@ class FoxgloveDashboardView(
         )
         return response
 
+    @extend_schema(
+        summary="Update a Foxglove dashboard completely",
+        description="Update all the fields of a given Foxglove dashboard",
+        responses={
+            **status_code_201_foxglove_dashboard,
+            **status_code_400_field_parsing,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def put(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PUT a Foxglove dashboard."""
         return super().put(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Foxglove dashboard partially",
+        description="Update the provided fields of a given Foxglove dashboard",
+        responses={
+            **status_code_201_foxglove_dashboard,
+            **status_code_400_field_parsing,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def patch(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PATCH a Foxglove dashboard."""
         return super().patch(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Delete a Foxglove dashboard",
+        description="Delete a Foxglove dashboard",
+        responses={
+            204: FoxgloveDashboardSerializer,
+            **status_code_404_dashboard_not_found,
+        },
+    )
     def delete(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -240,6 +459,13 @@ class PrometheusAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
     queryset = PrometheusAlertRuleFile.objects.all()
     serializer_class = PrometheusAlertRuleFileSerializer
 
+    @extend_schema(
+        summary="List Prometheus alert rule file",
+        description="List all Prometheus alert rule file and their attribute."
+        "This endpoint returns all the non-templated rules as well as "
+        "the templated rules rendered for the devices that specified them.",
+        responses={**status_code_200_prometheus_alert_rule_file},
+    )
     def get(self, request: Request) -> Response:
         """Prometheus Alert Rules get view.
 
@@ -280,6 +506,14 @@ class PrometheusAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
         serialized_list = list(serialized.data) + rendered_rules
         return Response(serialized_list)
 
+    @extend_schema(
+        summary="Add a Prometheus alert rule file",
+        description="Add a Prometheus alert rule file by its ID",
+        responses={
+            **status_code_201_prometheus_alert_rule_file,
+            **status_code_400_field_parsing,
+        },
+    )
     def post(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -299,24 +533,61 @@ class PrometheusAlertRuleFileView(
     serializer_class = PrometheusAlertRuleFileSerializer
     lookup_field = "uid"
 
+    @extend_schema(
+        summary="Download Prometheus alert rule file",
+        description="Returns Prometheus alert rule file."
+        "Templated rules won't be rendered.",
+        responses={
+            **status_code_200_prometheus_alert_rule_file,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """GET a Prometheus alert rule file."""
         return super().get(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Prometheus alert rule file completely",
+        description="Update all the fields of a given "
+        "Prometheus alert rule file",
+        responses={
+            **status_code_201_prometheus_alert_rule_file,
+            **status_code_400_field_parsing,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def put(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PUT a Prometheus alert rule file."""
         return super().put(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Prometheus alert rule file partially",
+        description="Update the provided fields of a given "
+        "Prometheus alert rule file",
+        responses={
+            **status_code_201_prometheus_alert_rule_file,
+            **status_code_400_field_parsing,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def patch(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PATCH a Prometheus alert rule file."""
         return super().patch(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Delete a Prometheus alert rule file",
+        description="Delete a Prometheus alert rule file",
+        responses={
+            204: PrometheusAlertRuleFileSerializer,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def delete(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -330,6 +601,13 @@ class LokiAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
     queryset = LokiAlertRuleFile.objects.all()
     serializer_class = LokiAlertRuleFileSerializer
 
+    @extend_schema(
+        summary="List Loki alert rule file",
+        description="List all Loki alert rule file and their attribute."
+        "This endpoint returns all the non-templated rules as well as "
+        "the templated rules rendered for the devices that specified them.",
+        responses={**status_code_200_loki_alert_rule_file},
+    )
     def get(self, request: Request) -> Response:
         """Loki Alert Rules get view.
 
@@ -368,6 +646,14 @@ class LokiAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
         serialized_list = list(serialized.data) + rendered_rules
         return Response(serialized_list)
 
+    @extend_schema(
+        summary="Add a Loki alert rule file",
+        description="Add a Loki alert rule file by its ID",
+        responses={
+            **status_code_201_loki_alert_rule_file,
+            **status_code_400_field_parsing,
+        },
+    )
     def post(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
@@ -387,24 +673,60 @@ class LokiAlertRuleFileView(
     lookup_field = "uid"
     serializer_class = LokiAlertRuleFileSerializer
 
+    @extend_schema(
+        summary="Download Loki alert rule file",
+        description="Returns Loki alert rule file."
+        "Templated rules won't be rendered.",
+        responses={
+            **status_code_200_loki_alert_rule_file,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def get(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """GET a Loki alert rule file."""
         return super().get(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Loki alert rule file completely",
+        description="Update all the fields of a given Loki alert rule file",
+        responses={
+            **status_code_201_loki_alert_rule_file,
+            **status_code_400_field_parsing,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def put(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PUT a Loki alert rule file."""
         return super().put(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Update a Loki alert rule file partially",
+        description="Update the provided fields of a given "
+        "Loki alert rule file",
+        responses={
+            **status_code_201_loki_alert_rule_file,
+            **status_code_400_field_parsing,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def patch(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """PATCH a Loki alert rule file."""
         return super().patch(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="Delete a Loki alert rule file",
+        description="Delete a Loki alert rule file",
+        responses={
+            204: LokiAlertRuleFileSerializer,
+            **status_code_404_alert_rule_file_not_found,
+        },
+    )
     def delete(
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
