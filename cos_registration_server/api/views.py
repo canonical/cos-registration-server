@@ -1,6 +1,7 @@
 """API views."""
 
 import json
+from typing import Any, Dict, Tuple
 
 from api.serializer import (
     DeviceSerializer,
@@ -19,6 +20,13 @@ from applications.utils import render_alert_rule_template_for_device
 from devices.models import Device
 from django.http import HttpResponse
 from rest_framework.exceptions import NotFound
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    UpdateAPIView,
+)
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -28,117 +36,89 @@ class HealthView(APIView):
     """Health API view."""
 
     def get(self, request: Request) -> Response:
-        """Health get view.
-
-        request: Http GET request.
-        return: Http JSON response.
-        """
+        """Health get view."""
         return Response()
 
 
-class DevicesView(APIView):
+class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
     """Devices API view."""
 
-    def get(self, request: Request) -> Response:
-        """Devices get view.
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
 
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        devices = Device.objects.all()
-        serialized = DeviceSerializer(
-            devices, many=True, context={"request": request}
-        )
-        return Response(serialized.data)
+    def post(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """POST a device."""
+        return super().post(request, *args, **kwargs)
 
-    def post(self, request: Request) -> Response:
-        """Devices post view.
-
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        serialized = DeviceSerializer(data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data, status=201)
-        return Response(serialized.errors, status=400)
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET devices."""
+        return super().get(request, *args, **kwargs)
 
 
-class DeviceView(APIView):
+class DeviceView(RetrieveUpdateDestroyAPIView):  # type: ignore[type-arg]
     """Device API view."""
 
-    def _get_device(self, uid: str) -> Device:
-        try:
-            device = Device.objects.get(uid=uid)
-            return device
-        except Device.DoesNotExist:
-            raise NotFound("Object does not exist")
+    queryset = Device.objects.all()
+    serializer_class = DeviceSerializer
+    lookup_field = "uid"
 
-    def get(self, request: Request, uid: str) -> Response:
-        """Device get view.
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET a device."""
+        return super().get(request, *args, **kwargs)
 
-        request: Http GET request.
-        uid: Device UID passed in the URL.
-        return: Http JSON response.
-        """
-        device = self._get_device(uid)
-        serialized = DeviceSerializer(device, context={"request": request})
-        return Response(serialized.data)
+    def put(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PUT a device."""
+        return super().put(request, *args, **kwargs)
 
-    def patch(self, request: Request, uid: str) -> Response:
-        """Device patch view.
+    def patch(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PATCH a device."""
+        return super().patch(request, *args, **kwargs)
 
-        request: Http PATCH request.
-        uid: Device UID passed in the URL.
-        return: Http JSON response.
-        """
-        device = self._get_device(uid)
-        serialized = DeviceSerializer(device, data=request.data, partial=True)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data)
-        return Response(serialized.errors, status=400)
-
-    def delete(self, request: Request, uid: str) -> Response:
-        """Device delete view.
-
-        request: Http DELETE request.
-        uid: Device UID passed in the URL.
-        return: Http response.
-        """
-        device = self._get_device(uid)
-        device.delete()
-        return Response(status=204)
+    def delete(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """DELETE a device."""
+        return super().delete(request, *args, **kwargs)
 
 
-class GrafanaDashboardsView(APIView):
+class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]
     """GrafanaDashboards API view."""
 
-    def get(self, request: Request) -> Response:
-        """Grafana dashboards get view.
+    queryset = GrafanaDashboard.objects.all()
+    serializer_class = GrafanaDashboardSerializer
 
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        dashboards = GrafanaDashboard.objects.all()
-        serialized = GrafanaDashboardSerializer(dashboards, many=True)
-        return Response(serialized.data)
+    def post(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """POST a Grafana dashboard."""
+        return super().post(request, *args, **kwargs)
 
-    def post(self, request: Request) -> Response:
-        """Grafana dashboards post view.
-
-        request: Http POST request.
-        return: Http JSON response.
-        """
-        serialized = GrafanaDashboardSerializer(data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data, status=201)
-        return Response(serialized.errors, status=400)
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET Grafana dashboards."""
+        return super().get(request, *args, **kwargs)
 
 
-class GrafanaDashboardView(APIView):
+class GrafanaDashboardView(
+    DestroyAPIView,  # type: ignore[type-arg]
+    UpdateAPIView,  # type: ignore[type-arg]
+):
     """GrafanaDashboard API view."""
+
+    queryset = GrafanaDashboard.objects.all()
+    serializer_class = GrafanaDashboardSerializer
+    lookup_field = "uid"
 
     def _get_dashboard(self, uid: str) -> GrafanaDashboard:
         try:
@@ -150,8 +130,7 @@ class GrafanaDashboardView(APIView):
     def get(self, request: Request, uid: str) -> HttpResponse:
         """Grafana dashboard get view.
 
-        request: Http GET request.
-        return: Http JSON response.
+        Retuns the file instead of the model view.
         """
         dashboard = self._get_dashboard(uid)
         serialized = GrafanaDashboardSerializer(dashboard)
@@ -164,60 +143,54 @@ class GrafanaDashboardView(APIView):
         )
         return response
 
-    def patch(self, request: Request, uid: str) -> Response:
-        """Grafana dashboard patch view.
+    def put(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PUT a Grafana dashboard."""
+        return super().put(request, *args, **kwargs)
 
-        request: Http PATCH request.
-        return: Http JSON response.
-        """
-        dashboard = self._get_dashboard(uid)
-        serialized = GrafanaDashboardSerializer(
-            dashboard, data=request.data, partial=True
-        )
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data)
-        return Response(serialized.errors, status=400)
+    def patch(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PATCH a Grafana dashboard."""
+        return super().patch(request, *args, **kwargs)
 
-    def delete(self, request: Request, uid: str) -> Response:
-        """Grafana dashboard delete view.
-
-        request: Http DELETE request.
-        return: Http JSON response.
-        """
-        dashboard = self._get_dashboard(uid)
-        dashboard.delete()
-        return Response(status=204)
+    def delete(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """DELETE a Grafana dashboard."""
+        return super().delete(request, *args, **kwargs)
 
 
-class FoxgloveDashboardsView(APIView):
+class FoxgloveDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]
     """FoxgloveDashboards API view."""
 
-    def get(self, request: Request) -> Response:
-        """Foxglove dashboards get view.
+    queryset = FoxgloveDashboard.objects.all()
+    serializer_class = FoxgloveDashboardSerializer
+    lookup_field = "uid"
 
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        dashboards = FoxgloveDashboard.objects.all()
-        serialized = FoxgloveDashboardSerializer(dashboards, many=True)
-        return Response(serialized.data)
+    def post(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """POST a Foxglove dashboard."""
+        return super().post(request, *args, **kwargs)
 
-    def post(self, request: Request) -> Response:
-        """Foxglove dashboards post view.
-
-        request: Http POST request.
-        return: Http JSON response.
-        """
-        serialized = FoxgloveDashboardSerializer(data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data, status=201)
-        return Response(serialized.errors, status=400)
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET Foxglove dashboards."""
+        return super().get(request, *args, **kwargs)
 
 
-class FoxgloveDashboardView(APIView):
+class FoxgloveDashboardView(
+    DestroyAPIView,  # type: ignore[type-arg]
+    UpdateAPIView,  # type: ignore[type-arg]
+):
     """FoxgloveDashboard API view."""
+
+    queryset = FoxgloveDashboard.objects.all()
+    serializer_class = FoxgloveDashboardSerializer
+    lookup_field = "uid"
 
     def _get_dashboard(self, uid: str) -> FoxgloveDashboard:
         try:
@@ -229,8 +202,7 @@ class FoxgloveDashboardView(APIView):
     def get(self, request: Request, uid: str) -> HttpResponse:
         """Foxglove dashboard get view.
 
-        request: Http GET request.
-        return: Http JSON response.
+        Retuns the file instead of the model view.
         """
         dashboard = self._get_dashboard(uid)
         serialized = FoxgloveDashboardSerializer(dashboard)
@@ -243,40 +215,35 @@ class FoxgloveDashboardView(APIView):
         )
         return response
 
-    def patch(self, request: Request, uid: str) -> Response:
-        """Foxglove dashboard patch view.
+    def put(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PUT a Foxglove dashboard."""
+        return super().put(request, *args, **kwargs)
 
-        request: Http PATCH request.
-        return: Http JSON response.
-        """
-        dashboard = self._get_dashboard(uid)
-        serialized = FoxgloveDashboardSerializer(
-            dashboard, data=request.data, partial=True
-        )
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data)
-        return Response(serialized.errors, status=400)
+    def patch(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PATCH a Foxglove dashboard."""
+        return super().patch(request, *args, **kwargs)
 
-    def delete(self, request: Request, uid: str) -> Response:
-        """Foxglove dashboard delete view.
-
-        request: Http DELETE request.
-        return: Http JSON response.
-        """
-        dashboard = self._get_dashboard(uid)
-        dashboard.delete()
-        return Response(status=204)
+    def delete(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """DELETE a Foxglove dashboard."""
+        return super().delete(request, *args, **kwargs)
 
 
-class PrometheusAlertRuleFilesView(APIView):
+class PrometheusAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
     """PrometheusAlertRuleFiles API view."""
+
+    queryset = PrometheusAlertRuleFile.objects.all()
+    serializer_class = PrometheusAlertRuleFileSerializer
 
     def get(self, request: Request) -> Response:
         """Prometheus Alert Rules get view.
 
-        request: Http GET request.
-        return: Http JSON response.
+        Return non-templated as well as rendered templated rules.
         """
         # retrieve alert rules that are not a template and serialize them
         no_template_alert_rules = PrometheusAlertRuleFile.objects.filter(
@@ -313,78 +280,60 @@ class PrometheusAlertRuleFilesView(APIView):
         serialized_list = list(serialized.data) + rendered_rules
         return Response(serialized_list)
 
-    def post(self, request: Request) -> Response:
-        """Prometheus Alert Rules post view.
-
-        request: Http POST request.
-        return: Http JSON response.
-        """
-        serialized = PrometheusAlertRuleFileSerializer(data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data, status=201)
-        return Response(serialized.errors, status=400)
+    def post(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """POST a Prometheus alert rule file."""
+        return super().post(request, *args, **kwargs)
 
 
-class PrometheusAlertRuleFileView(APIView):
-    """PrometheusAlertRuleFile API view."""
+class PrometheusAlertRuleFileView(
+    RetrieveUpdateDestroyAPIView  # type: ignore[type-arg]
+):
+    """PrometheusAlertRuleFile API view.
 
-    def _get_alert_rule(self, uid: str) -> PrometheusAlertRuleFile:
-        try:
-            alert_rule = PrometheusAlertRuleFile.objects.get(uid=uid)
-            return alert_rule
-        except PrometheusAlertRuleFile.DoesNotExist:
-            raise NotFound("Object does not exist")
+    Return non rendered rule.
+    """
 
-    def get(self, request: Request, uid: str) -> HttpResponse:
-        """Prometheus alert rule get view.
+    queryset = PrometheusAlertRuleFile.objects.all()
+    serializer_class = PrometheusAlertRuleFileSerializer
+    lookup_field = "uid"
 
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        serialized = PrometheusAlertRuleFileSerializer(alert_rule)
-        response = HttpResponse(
-            json.dumps(serialized.data),
-            content_type="application/json",
-        )
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET a Prometheus alert rule file."""
+        return super().get(request, *args, **kwargs)
 
-        return response
+    def put(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PUT a Prometheus alert rule file."""
+        return super().put(request, *args, **kwargs)
 
-    def patch(self, request: Request, uid: str) -> Response:
-        """Prometheus alert rule patch view.
+    def patch(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PATCH a Prometheus alert rule file."""
+        return super().patch(request, *args, **kwargs)
 
-        request: Http PATCH request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        serialized = PrometheusAlertRuleFileSerializer(
-            alert_rule, data=request.data, partial=True
-        )
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data)
-        return Response(serialized.errors, status=400)
-
-    def delete(self, request: Request, uid: str) -> Response:
-        """Prometheus alert rule delete view.
-
-        request: Http DELETE request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        alert_rule.delete()
-        return Response(status=204)
+    def delete(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """DELETE a Prometheus alert rule file."""
+        return super().delete(request, *args, **kwargs)
 
 
-class LokiAlertRuleFilesView(APIView):
+class LokiAlertRuleFilesView(CreateAPIView):  # type: ignore[type-arg]
     """LokiAlertRuleFiles API view."""
+
+    queryset = LokiAlertRuleFile.objects.all()
+    serializer_class = LokiAlertRuleFileSerializer
 
     def get(self, request: Request) -> Response:
         """Loki Alert Rules get view.
 
-        request: Http GET request.
-        return: Http JSON response.
+        Return non-templated as well as rendered templated rules.
         """
         # retrieve alert rules that are not a template and serialize them
         no_template_alert_rules = LokiAlertRuleFile.objects.filter(
@@ -419,66 +368,45 @@ class LokiAlertRuleFilesView(APIView):
         serialized_list = list(serialized.data) + rendered_rules
         return Response(serialized_list)
 
-    def post(self, request: Request) -> Response:
-        """Loki Alert Rules post view.
-
-        request: Http POST request.
-        return: Http JSON response.
-        """
-        serialized = LokiAlertRuleFileSerializer(data=request.data)
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data, status=201)
-        return Response(serialized.errors, status=400)
+    def post(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """POST a Loki alert rule file."""
+        return super().post(request, *args, **kwargs)
 
 
-class LokiAlertRuleFileView(APIView):
-    """LokiAlertRuleFile API view."""
+class LokiAlertRuleFileView(
+    RetrieveUpdateDestroyAPIView  # type: ignore[type-arg]
+):
+    """LokiAlertRuleFile API view.
 
-    def _get_alert_rule(self, uid: str) -> LokiAlertRuleFile:
-        try:
-            alert_rule = LokiAlertRuleFile.objects.get(uid=uid)
-            return alert_rule
-        except LokiAlertRuleFile.DoesNotExist:
-            raise NotFound("Object does not exist")
+    Returns non-rendered rules.
+    """
 
-    def get(self, request: Request, uid: str) -> HttpResponse:
-        """Loki alert rule get view.
+    queryset = LokiAlertRuleFile.objects.all()
+    lookup_field = "uid"
+    serializer_class = LokiAlertRuleFileSerializer
 
-        request: Http GET request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        serialized = LokiAlertRuleFileSerializer(alert_rule)
+    def get(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """GET a Loki alert rule file."""
+        return super().get(request, *args, **kwargs)
 
-        response = HttpResponse(
-            json.dumps(serialized.data),
-            content_type="application/json",
-        )
+    def put(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PUT a Loki alert rule file."""
+        return super().put(request, *args, **kwargs)
 
-        return response
+    def patch(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """PATCH a Loki alert rule file."""
+        return super().patch(request, *args, **kwargs)
 
-    def patch(self, request: Request, uid: str) -> Response:
-        """Loki alert rule patch view.
-
-        request: Http PATCH request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        serialized = LokiAlertRuleFileSerializer(
-            alert_rule, data=request.data, partial=True
-        )
-        if serialized.is_valid():
-            serialized.save()
-            return Response(serialized.data)
-        return Response(serialized.errors, status=400)
-
-    def delete(self, request: Request, uid: str) -> Response:
-        """Loki alert rule delete view.
-
-        request: Http DELETE request.
-        return: Http JSON response.
-        """
-        alert_rule = self._get_alert_rule(uid)
-        alert_rule.delete()
-        return Response(status=204)
+    def delete(
+        self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
+    ) -> Response:
+        """DELETE a Loki alert rule file."""
+        return super().delete(request, *args, **kwargs)
