@@ -69,7 +69,9 @@ jobs:
       - name: Install project
         run: make install
       - name: Generate django secret key
-        run: echo "SECRET_KEY_DJANGO=$(make secretkey)" >> $GITHUB_ENV
+        run: |
+          GENERATED_SECRET="$(make secretkey)"
+          echo "SECRET_KEY_DJANGO=${GENERATED_SECRET}" >> $GITHUB_ENV
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
