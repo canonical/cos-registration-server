@@ -360,10 +360,14 @@ class DeviceViewTests(TestCase):
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        formatted_date = device.creation_date.strftime("%B %-d, %Y, %-I:%M %P")
+        formatted_date = formatted_date.replace("am", "a.m.").replace(
+            "pm", "p.m."
+        )
         self.assertContains(
             response,
             f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%b. %-d, %Y, %-I:%M')}",
+            f" {formatted_date}",
         )
         self.assertContains(
             response,
