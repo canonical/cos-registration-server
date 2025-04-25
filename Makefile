@@ -36,6 +36,16 @@ test: lint        ## Run tests and generate coverage report.
 	coverage xml
 	coverage html
 
+.PHONY: install-test-requirements
+install-test-requirements: ## Install test requirements.
+	pip install -r requirements-test.txt
+
+.PHONY: pytest
+pytest: install-test-requirements ## Run pytest in the cos_registration_server folder.
+	cd cos_registration_server && pytest .
+
+
+
 .PHONY: clean
 clean:            ## Clean unused files.
 	@find ./ -name '*.pyc' -exec rm -f {} \;

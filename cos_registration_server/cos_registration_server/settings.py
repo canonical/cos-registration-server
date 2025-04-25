@@ -22,7 +22,7 @@ except KeyError:
     pass
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -36,9 +36,6 @@ except KeyError:
 # Application definition
 
 INSTALLED_APPS = [
-    "api.apps.ApiConfig",
-    "devices.apps.DevicesConfig",
-    "applications.apps.ApplicationsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -46,6 +43,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "api",
+    "devices",
+    "applications",
 ]
 
 REST_FRAMEWORK = {
@@ -91,15 +91,15 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 # to be able to store the database in a juju storage
-try:
-    database_base_dir = Path(os.environ["DATABASE_BASE_DIR_DJANGO"])
-except KeyError:
-    database_base_dir = BASE_DIR
+# try:
+#     database_base_dir = Path(os.environ["DATABASE_BASE_DIR_DJANGO"])
+# except KeyError:
+#     database_base_dir = BASE_DIR
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": database_base_dir / "db.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -113,16 +113,13 @@ AUTH_PASSWORD_VALIDATORS = [
         "UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation."
-        "MinimumLengthValidator",
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation."
-        "CommonPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation."
-        "NumericPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 

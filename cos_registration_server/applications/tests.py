@@ -1,13 +1,15 @@
-from devices.models import Device
-from django.db.utils import IntegrityError
-from django.test import TestCase
-
-from .models import (
+import pytest
+from applications.models import (
     FoxgloveDashboard,
     GrafanaDashboard,
     LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
+from devices.models import Device
+from django.db.utils import IntegrityError
+from django.test import TestCase
+
+pytestmark = pytest.mark.django_db
 
 SIMPLE_GRAFANA_DASHBOARD = {
     "id": None,
@@ -53,6 +55,11 @@ SIMPLE_LOKI_ALERT_RULE = """
 """
 
 
+class TestFarmApp:
+    def test_plot_detail_create(self):
+        assert 1 == 1
+
+
 class GrafanaDashboardModelTests(TestCase):
     def test_creation_of_a_dashboard(self) -> None:
         dashboard_name = "first_dashboard"
@@ -71,9 +78,7 @@ class GrafanaDashboardModelTests(TestCase):
 
     def test_dashboard_uid_uniqueness(self) -> None:
         dashboard_name = "first_dashboard"
-        GrafanaDashboard(
-            uid=dashboard_name, dashboard=SIMPLE_GRAFANA_DASHBOARD
-        ).save()
+        GrafanaDashboard(uid=dashboard_name, dashboard=SIMPLE_GRAFANA_DASHBOARD).save()
 
         self.assertRaises(
             IntegrityError,
@@ -102,9 +107,7 @@ class FoxgloveDashboardModelTests(TestCase):
             uid=dashboard_name, dashboard=SIMPLE_FOXGLOVE_DASHBOARD
         )
         self.assertEqual(foxglove_dashboard.uid, dashboard_name)
-        self.assertEqual(
-            foxglove_dashboard.dashboard, SIMPLE_FOXGLOVE_DASHBOARD
-        )
+        self.assertEqual(foxglove_dashboard.dashboard, SIMPLE_FOXGLOVE_DASHBOARD)
 
     def test_device_from_a_dashboard(self) -> None:
         dashboard_name = "first_dashboard"
@@ -126,9 +129,7 @@ class PrometheusAlertRuleFileModelTests(TestCase):
             uid=alert_name, rules=SIMPLE_PROMETHEUS_ALERT_RULE
         )
         self.assertEqual(prometheus_alert_rule.uid, alert_name)
-        self.assertEqual(
-            prometheus_alert_rule.rules, SIMPLE_PROMETHEUS_ALERT_RULE
-        )
+        self.assertEqual(prometheus_alert_rule.rules, SIMPLE_PROMETHEUS_ALERT_RULE)
 
     def test_device_from_an_alert_rule(self) -> None:
         alert_name = "first_alert"

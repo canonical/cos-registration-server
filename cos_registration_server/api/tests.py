@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Set, Union
 
+import pytest
 import yaml
 from applications.models import (
     FoxgloveDashboard,
@@ -14,23 +15,36 @@ from django.db import models
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
-from rest_framework.test import APITestCase
+
+from rest_framework.test import APIClient, APITestCase
+
+pytestmark = pytest.mark.django_db
 
 
-class HealthViewTests(APITestCase):
-    def setUp(self) -> None:
-        self.url = reverse("api:health")
+class TestHealthView:
+    @pytest.fixture
+    def url_health(self):
+        return reverse("api:health")
 
-    def test_health_ok(self) -> None:
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
+    def test_health_ok(self, client, url_health):
+        response = client.get(url_health)
+        assert response.status_code == 200
 
 
-class DevicesViewTests(APITestCase):
-    def setUp(self) -> None:
-        self.url = reverse("api:devices")
+@pytest.mark.django_db
+@pytest.mark.usefixtures("client")
+@pytest.mark.usefixtures("url")
+class TestDevicesView:
+    @pytest.fixture
+    def url(self):
+        return reverse("api:devices")
 
-        self.simple_grafana_dashboard = {
+    @pytest.fixture
+    def client(self):
+        return APIClient()
+
+    def simple_grafana_dashboard(self):
+        return {
             "id": None,
             "uid": None,
             "title": "Production Overview",
@@ -40,24 +54,36 @@ class DevicesViewTests(APITestCase):
             "refresh": "25s",
         }
 
-        self.simple_foxglove_dashboard = {
+    def simple_foxglove_dashboard(self):
+        return {
             "configById": {},
             "globalVariables": {},
             "userNodes": {},
             "playbackConfig": {"speed": 1},
         }
 
-        self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
+    def public_ssh_key(self):
+        return "ssh-rsa AaBbCc/+=098765431"
 
-    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
+    def create_device(
+        self, client, url, **fields: Union[str, Set[str]]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
-        return self.client.post(self.url, data, format="json")
+
+        print(data, "data")
+        print(type(data), "data")
+
+        return client.post(url, data, format="json")
 
     def add_grafana_dashboard(
         self, uid: str, dashboard: Dict[str, Any]
     ) -> GrafanaDashboard:
+        print(dashboard, "dashboard")
+        print(type(dashboard), "dashboard")
+        print(uid, "uid")
+        print(type(uid), "uid")
         grafana_dashboard = GrafanaDashboard(uid=uid, dashboard=dashboard)
         grafana_dashboard.save()
         return grafana_dashboard
@@ -69,60 +95,61 @@ class DevicesViewTests(APITestCase):
         foxglove_dashboard.save()
         return foxglove_dashboard
 
-    def test_get_nothing(self) -> None:
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(json.loads(response.content)), 0)
+    def test_get_nothing(self, client, url):
+        response = client.get(url)
+        assert response.status_code == 200
+        assert len(json.loads(response.content)) == 0
 
-    def test_create_device(self) -> None:
+    # @given(
+    #     uid=st.uuids(),
+    # )
+    def test_create_device(self, client, url):
         uid = "robot-1"
         address = "192.168.0.1"
-        grafana_dashboard_uid = "dashboard-1"
-        foxglove_dashboard_uid = "layout-1"
+        grafana_dashboard_uid: str = "dashboard-1"
+        foxglove_dashboard_uid: str = "layout-1"
+
+        print(address, "address")
+        print(self.simple_grafana_dashboard(), " simple_grafana_dashboard")
+
         self.add_grafana_dashboard(
-            uid=grafana_dashboard_uid, dashboard=self.simple_grafana_dashboard
+            uid=grafana_dashboard_uid, dashboard=self.simple_grafana_dashboard()
         )
         self.add_foxglove_dashboard(
-            uid=foxglove_dashboard_uid,
-            dashboard=self.simple_foxglove_dashboard,
+            uid=foxglove_dashboard_uid, dashboard=self.simple_foxglove_dashboard()
         )
         response = self.create_device(
+            client,
+            url,
             uid=uid,
             address=address,
-            public_ssh_key=self.public_ssh_key,
-            grafana_dashboards={grafana_dashboard_uid},
-            foxglove_dashboards={foxglove_dashboard_uid},
-        )
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(Device.objects.count(), 1)
-        self.assertEqual(Device.objects.get().uid, uid)
-        self.assertEqual(Device.objects.get().address, address)
-        self.assertEqual(
-            Device.objects.get().public_ssh_key, self.public_ssh_key
-        )
-        self.assertAlmostEqual(
-            Device.objects.get().creation_date,
-            timezone.now(),
-            delta=timedelta(seconds=10),
-        )
-        self.assertEqual(
-            Device.objects.get().grafana_dashboards.get().uid,
-            grafana_dashboard_uid,
-        )
-        self.assertEqual(
-            Device.objects.get().grafana_dashboards.get().dashboard,
-            self.simple_grafana_dashboard,
-        )
-        self.assertEqual(
-            Device.objects.get().foxglove_dashboards.get().uid,
-            foxglove_dashboard_uid,
-        )
-        self.assertEqual(
-            Device.objects.get().foxglove_dashboards.get().dashboard,
-            self.simple_foxglove_dashboard,
+            public_ssh_key=self.public_ssh_key(),
+            grafana_dashboards=[grafana_dashboard_uid],
+            foxglove_dashboards=[foxglove_dashboard_uid],
         )
 
-    def test_create_multiple_devices(self) -> None:
+        assert response.status_code == 201
+        assert Device.objects.count() == 1
+        device = Device.objects.get()
+        assert device.uid == uid
+        assert device.address == address
+        assert device.public_ssh_key == self.public_ssh_key()
+        assert abs((device.creation_date - timezone.now()).total_seconds()) < 10
+        assert device.grafana_dashboards.get().uid == grafana_dashboard_uid
+
+        print(device.grafana_dashboards.get().dashboard, "dashboard << test")
+        print(self.simple_grafana_dashboard(), "simple_grafana_dashboard << test")
+
+        assert (
+            device.grafana_dashboards.get().dashboard == self.simple_grafana_dashboard()
+        )
+        assert device.foxglove_dashboards.get().uid == foxglove_dashboard_uid
+        assert (
+            device.foxglove_dashboards.get().dashboard
+            == self.simple_foxglove_dashboard()
+        )
+
+    def test_create_multiple_devices(self, client, url):
         devices = [
             {
                 "uid": "robot-1",
@@ -141,24 +168,22 @@ class DevicesViewTests(APITestCase):
             },
         ]
         for device in devices:
-            self.client.post(self.url, device, format="json")
-        self.assertEqual(Device.objects.count(), 3)
+            client.post(url, device, format="json")
+        assert Device.objects.count() == 3
 
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
+        response = client.get(url)
+        assert response.status_code == 200
         content_json = json.loads(response.content)
-        self.assertEqual(len(content_json), 3)
+        assert len(content_json) == 3
         for i, device in enumerate(content_json):
-            self.assertEqual(devices[i]["uid"], device["uid"])
-            self.assertEqual(devices[i]["address"], device["address"])
-            self.assertEqual(
-                devices[i]["public_ssh_key"], device["public_ssh_key"]
-            )
-            self.assertIsNotNone(device.get("creation_date"))
-            self.assertEqual(device.get("grafana_dashboards"), [])
-            self.assertEqual(device.get("foxglove_dashboards"), [])
+            assert devices[i]["uid"] == device["uid"]
+            assert devices[i]["address"] == device["address"]
+            assert devices[i]["public_ssh_key"] == device["public_ssh_key"]
+            assert device.get("creation_date") is not None
+            assert device.get("grafana_dashboards") == []
+            assert device.get("foxglove_dashboards") == []
 
-    def test_get_devices_with_filtered_fields(self) -> None:
+    def test_get_devices_with_filtered_fields(self, client, url):
         devices = [
             {
                 "uid": "robot-1",
@@ -177,86 +202,78 @@ class DevicesViewTests(APITestCase):
             },
         ]
         for device in devices:
-            self.client.post(self.url, device, format="json")
-        self.assertEqual(Device.objects.count(), 3)
+            client.post(url, device, format="json")
+        assert Device.objects.count() == 3
 
         params = {"fields": "creation_date,address"}
-        response = self.client.get(self.url, data=params)
-        self.assertEqual(response.status_code, 200)
+        response = client.get(url, data=params)
+        assert response.status_code == 200
         content_json = json.loads(response.content)
-        self.assertEqual(len(content_json), 3)
+        assert len(content_json) == 3
         for i, device in enumerate(content_json):
-            self.assertIsNone(device.get("uid"))
-            self.assertEqual(devices[i]["address"], device["address"])
-            self.assertIsNotNone(device.get("creation_date"))
+            assert device.get("uid") is None
+            assert devices[i]["address"] == device["address"]
+            assert device.get("creation_date") is not None
 
-    def test_create_already_present_uid(self) -> None:
+    def test_create_already_present_uid(self, client, url):
         uid = "robot-1"
         address = "192.168.0.1"
-        response = self.create_device(uid=uid, address=address)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(Device.objects.count(), 1)
-        # we try to create the same one
-        response = self.create_device(uid=uid, address=address)
-        self.assertEqual(Device.objects.count(), 1)
-        self.assertContains(
-            response,
-            '{"uid":["device with this uid already exists."]}',
-            status_code=400,
+        response = self.create_device(client, url, uid=uid, address=address)
+        assert response.status_code == 201
+        assert Device.objects.count() == 1
+        response = self.create_device(client, url, uid=uid, address=address)
+        assert Device.objects.count() == 1
+        assert (
+            '{"uid":["device with this uid already exists."]}'
+            in response.content.decode()
         )
+        assert response.status_code == 400
 
-    def test_associate_device_with_non_existant_dashboards(
-        self,
-    ) -> None:
+    def test_associate_device_with_non_existent_dashboards(self, client, url):
         uid = "robot-1"
         address = "192.168.0.1"
         response = self.create_device(
-            uid=uid, address=address, grafana_dashboards={"dashboard-1"}
+            client, url, uid=uid, address=address, grafana_dashboards={"dashboard-1"}
         )
-        self.assertEqual(Device.objects.count(), 0)
-        self.assertContains(
-            response,
-            '{"grafana_dashboards":["Object with uid=dashboard-1 does not exist."]}',
-            status_code=400,
+        assert Device.objects.count() == 0
+        assert (
+            '{"grafana_dashboards":["Object with uid=dashboard-1 does not exist."]}'
+            in response.content.decode()
         )
+        assert response.status_code == 400
 
         response = self.create_device(
-            uid=uid, address=address, foxglove_dashboards={"dashboard-1"}
+            client, url, uid=uid, address=address, foxglove_dashboards={"dashboard-1"}
         )
-        self.assertEqual(Device.objects.count(), 0)
-        self.assertContains(
-            response,
-            '{"foxglove_dashboards":["Object with uid=dashboard-1 does not exist."]}',
-            status_code=400,
+        assert Device.objects.count() == 0
+        assert (
+            '{"foxglove_dashboards":["Object with uid=dashboard-1 does not exist."]}'
+            in response.content.decode()
         )
+        assert response.status_code == 400
 
-    def test_dashboards_not_in_a_list(self) -> None:
+    def test_dashboards_not_in_a_list(self, client, url):
         uid = "robot-1"
         address = "192.168.0.1"
-        # we try to create the same one
         response = self.create_device(
-            uid=uid,
-            address=address,
-            grafana_dashboards="dashboard-1",
+            client, url, uid=uid, address=address, grafana_dashboards="dashboard-1"
         )
-        self.assertEqual(Device.objects.count(), 0)
-        self.assertContains(
-            response,
-            '{"grafana_dashboards":["Expected a list of items but got type \\"str\\".',
-            status_code=400,
+        assert Device.objects.count() == 0
+        assert (
+            '{"grafana_dashboards":["Expected a list of items but got type \\"str\\".'
+            in response.content.decode()
         )
+        assert response.status_code == 400
 
         response = self.create_device(
-            uid=uid,
-            address=address,
-            foxglove_dashboards="dashboard-1",
+            client, url, uid=uid, address=address, foxglove_dashboards="dashboard-1"
         )
-        self.assertEqual(Device.objects.count(), 0)
-        self.assertContains(
-            response,
-            '{"foxglove_dashboards":["Expected a list of items but got type \\"str\\".',
-            status_code=400,
+        assert Device.objects.count() == 0
+        assert (
+            '{"foxglove_dashboards":["Expected a list of items but got type \\"str\\".'
+            in response.content.decode()
         )
+        assert response.status_code == 400
 
 
 class DeviceViewTests(APITestCase):
@@ -431,14 +448,8 @@ class DeviceViewTests(APITestCase):
         uid = "robot-1"
         address = "192.168.1.2"
         self.create_device(uid=uid, address=address)
-        self.assertEqual(
-            Device.objects.get().prometheus_alert_rule_files.count(), 0
-        )
-        data = {
-            "prometheus_alert_rule_files": [
-                self.prometheus_alert_rule_file.uid
-            ]
-        }
+        self.assertEqual(Device.objects.get().prometheus_alert_rule_files.count(), 0)
+        data = {"prometheus_alert_rule_files": [self.prometheus_alert_rule_file.uid]}
         response = self.client.patch(self.url(uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
@@ -480,9 +491,7 @@ class DeviceViewTests(APITestCase):
             prometheus_alert_rule_files={self.prometheus_alert_rule_file.uid},
             loki_alert_rule_files={self.loki_alert_rule_file.uid},
         )
-        self.assertEqual(
-            Device.objects.get().prometheus_alert_rule_files.count(), 1
-        )
+        self.assertEqual(Device.objects.get().prometheus_alert_rule_files.count(), 1)
         self.assertEqual(Device.objects.get().loki_alert_rule_files.count(), 1)
         data = {"address": "192.168.1.3"}
         response = self.client.patch(self.url(uid), data, format="json")
@@ -492,9 +501,7 @@ class DeviceViewTests(APITestCase):
             content_json["address"],
             data["address"],
         )
-        self.assertEqual(
-            Device.objects.get().prometheus_alert_rule_files.count(), 1
-        )
+        self.assertEqual(Device.objects.get().prometheus_alert_rule_files.count(), 1)
         self.assertEqual(Device.objects.get().loki_alert_rule_files.count(), 1)
 
     def test_invalid_patch_device(self) -> None:
@@ -537,9 +544,7 @@ class GrafanaDashboardsViewTests(APITestCase):
             "refresh": "25s",
         }
 
-    def create_dashboard(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_dashboard(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -562,9 +567,7 @@ class GrafanaDashboardsViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(GrafanaDashboard.objects.count(), 1)
-        self.assertEqual(
-            GrafanaDashboard.objects.get().uid, grafana_dashboard_uid
-        )
+        self.assertEqual(GrafanaDashboard.objects.get().uid, grafana_dashboard_uid)
         self.assertEqual(
             GrafanaDashboard.objects.get().dashboard,
             self.simple_grafana_dashboard,
@@ -662,9 +665,7 @@ class GrafanaDashboardViewTests(APITestCase):
     def url(self, uid: str) -> str:
         return reverse("api:grafana_dashboard", args=(uid,))
 
-    def create_dashboard(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_dashboard(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -698,15 +699,11 @@ class GrafanaDashboardViewTests(APITestCase):
             dashboard=self.simple_grafana_dashboard,
         )
         data = {"dashboard": '{"test": "dash"}'}
-        response = self.client.patch(
-            self.url(dashboard_uid), data, format="json"
-        )
+        response = self.client.patch(self.url(dashboard_uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], dashboard_uid)
-        self.assertEqual(
-            content_json["dashboard"], json.loads(data["dashboard"])
-        )
+        self.assertEqual(content_json["dashboard"], json.loads(data["dashboard"]))
 
     def test_invalid_patch_dashboard(self) -> None:
         dashboard_uid = "dashboard-1"
@@ -715,9 +712,7 @@ class GrafanaDashboardViewTests(APITestCase):
             dashboard=self.simple_grafana_dashboard,
         )
         data = {"dashboard": '{"test": "das}'}
-        response = self.client.patch(
-            self.url(dashboard_uid), data, format="json"
-        )
+        response = self.client.patch(self.url(dashboard_uid), data, format="json")
         self.assertEqual(response.status_code, 400)
 
     def test_delete_dashboard(self) -> None:
@@ -745,9 +740,7 @@ class FoxgloveDashboardsViewTests(APITestCase):
             "playbackConfig": {"speed": 1},
         }
 
-    def create_dashboard(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_dashboard(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -771,9 +764,7 @@ class FoxgloveDashboardsViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(FoxgloveDashboard.objects.count(), 1)
-        self.assertEqual(
-            FoxgloveDashboard.objects.get().uid, foxglove_dashboard_uid
-        )
+        self.assertEqual(FoxgloveDashboard.objects.get().uid, foxglove_dashboard_uid)
         self.assertEqual(
             FoxgloveDashboard.objects.get().dashboard,
             self.simple_foxglove_dashboard,
@@ -838,9 +829,7 @@ class FoxgloveDashboardViewTests(APITestCase):
     def url(self, uid: str) -> str:
         return reverse("api:foxglove_dashboard", args=(uid,))
 
-    def create_dashboard(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_dashboard(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -874,15 +863,11 @@ class FoxgloveDashboardViewTests(APITestCase):
             dashboard=self.simple_foxglove_dashboard,
         )
         data = {"dashboard": '{"test": "dash"}'}
-        response = self.client.patch(
-            self.url(dashboard_uid), data, format="json"
-        )
+        response = self.client.patch(self.url(dashboard_uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], dashboard_uid)
-        self.assertEqual(
-            content_json["dashboard"], json.loads(data["dashboard"])
-        )
+        self.assertEqual(content_json["dashboard"], json.loads(data["dashboard"]))
 
     def test_delete_dashboard(self) -> None:
         dashboard_uid = "layout-1"
@@ -976,9 +961,7 @@ class PrometheusAlertRuleFilesViewTests(APITestCase):
             {"uid": "ar-3", "rules": "name: test3"},
         ]
         for alert_rule in alert_rules:
-            self.create_alert_rule(
-                uid=alert_rule["uid"], rules=alert_rule["rules"]
-            )
+            self.create_alert_rule(uid=alert_rule["uid"], rules=alert_rule["rules"])
 
         self.assertEqual(PrometheusAlertRuleFile.objects.count(), 3)
 
@@ -1033,9 +1016,7 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
     def url(self, uid: str) -> str:
         return reverse("api:prometheus_alert_rule_file", args=(uid,))
 
-    def create_alert_rule(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_alert_rule(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -1077,9 +1058,7 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
         content_json = json.loads(response.content)
 
         self.assertEqual(content_json["uid"], alert_rule_uid)
-        self.assertEqual(
-            content_json["rules"], self.simple_prometheus_alert_rule
-        )
+        self.assertEqual(content_json["rules"], self.simple_prometheus_alert_rule)
         self.assertEqual(content_json["template"], False)
 
     def test_patch_alert_rule(self) -> None:
@@ -1091,9 +1070,7 @@ class PrometheusAlertRuleFileViewTests(APITestCase):
 
         data = {"rules": "name: test"}
 
-        response = self.client.patch(
-            self.url(alert_rule_uid), data, format="json"
-        )
+        response = self.client.patch(self.url(alert_rule_uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], alert_rule_uid)
@@ -1189,9 +1166,7 @@ class LokiAlertRuleFilesViewTests(APITestCase):
             {"uid": "ar-3", "rules": "name: test3"},
         ]
         for alert_rule in alert_rules:
-            self.create_alert_rule(
-                uid=alert_rule["uid"], rules=alert_rule["rules"]
-            )
+            self.create_alert_rule(uid=alert_rule["uid"], rules=alert_rule["rules"])
 
         self.assertEqual(LokiAlertRuleFile.objects.count(), 3)
 
@@ -1246,9 +1221,7 @@ class LokiAlertRuleFileViewTests(APITestCase):
     def url(self, uid: str) -> str:
         return reverse("api:loki_alert_rule_file", args=(uid,))
 
-    def create_alert_rule(
-        self, **fields: Union[str, Dict[str, Any]]
-    ) -> HttpResponse:
+    def create_alert_rule(self, **fields: Union[str, Dict[str, Any]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -1275,9 +1248,7 @@ class LokiAlertRuleFileViewTests(APITestCase):
         content_json = json.loads(response.content)
 
         self.assertEqual(content_json["uid"], alert_rule_uid)
-        self.assertEqual(
-            content_json["rules"], self.simple_loki_alert_rule_template
-        )
+        self.assertEqual(content_json["rules"], self.simple_loki_alert_rule_template)
         self.assertEqual(content_json["template"], True)
 
     def test_get_alert_rule_no_template(self) -> None:
@@ -1303,9 +1274,7 @@ class LokiAlertRuleFileViewTests(APITestCase):
 
         data = {"rules": "name: test"}
 
-        response = self.client.patch(
-            self.url(alert_rule_uid), data, format="json"
-        )
+        response = self.client.patch(self.url(alert_rule_uid), data, format="json")
         self.assertEqual(response.status_code, 200)
         content_json = json.loads(response.content)
         self.assertEqual(content_json["uid"], alert_rule_uid)

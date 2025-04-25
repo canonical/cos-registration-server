@@ -14,3 +14,8 @@ pytest-cov
 djangorestframework-stubs
 django-stubs
 types-setuptools
+pytest-black
+pytest
+
+pytest-django
+pytest-sugar
