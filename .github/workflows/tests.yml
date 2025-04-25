@@ -31,6 +31,7 @@ jobs:
       - name: Run linter
         run: make lint
 
+
   tests_linux:
     needs: linter
     strategy:
@@ -48,6 +49,8 @@ jobs:
         run: make install
       - name: Generate django secret key
         run: echo "SECRET_KEY_DJANGO=$(make secretkey)" >> $GITHUB_ENV
+      - name: pytest
+        run: make pytest
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
