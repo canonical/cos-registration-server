@@ -78,10 +78,11 @@ It consists of:
 The API can be used by the COS registration agent but also by any service
 requiring to access the device database.
 
-The details of the API are available in the Open API file: [cos_registration_server/openapi.yaml](cos_registration_server/openapi.yaml).
+The details of the API are available in the Open API file: [cos_registration_server/openapi.yaml](cos_registration_server/openapi.yaml) and
+as a Swagger view the [robotics documentation](https://canonical-robotics.readthedocs-hosted.com/en/latest/references/observability/cos-registration-server-api/).
 
 ## Installation
-First we must generate a secret key for our django to sign data.
+First we must generate a secret key for our Django to sign data.
 The secret key must be a large random value and it must be kept secret.
 
 A secret key can be generated with the following command:
