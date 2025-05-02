@@ -11,16 +11,19 @@ install:          ## Install the project in dev mode.
 	pip install -e .[test]
 
 .PHONY: runserver
-runserver:          ## Django run server.
+runserver:       ## Django run server.
 	python3 cos_registration_server/manage.py runserver
 
 .PHONY: secretkey
-secretkey:          ## Generate the django secret key.
+secretkey:       ## Generate the django secret key.
 	python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 
+.PHONY: openapi
+openapi:         ## Generate the Open API YAML file
+	python3 cos_registration_server/manage.py spectacular --color --file cos_registration_server/openapi.yaml
 
 .PHONY: fmt
-fmt:              ## Format code using black & isort.
+fmt:             ## Format code using black & isort.
 	isort --profile black cos_registration_server/
 	black -l 79 cos_registration_server/
 

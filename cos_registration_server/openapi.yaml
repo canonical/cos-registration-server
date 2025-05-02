@@ -1,0 +1,1267 @@
+openapi: 3.0.3
+info:
+  title: COS registration server API
+  version: '1'
+  description: COS registration server API documentation
+paths:
+  /api/v1/applications/foxglove/dashboards/:
+    get:
+      operationId: applications_foxglove_dashboards_list
+      description: List all Foxglove dashboards and their attribute
+      summary: List Foxglove dashboards
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FoxgloveDashboard'
+          description: ''
+    post:
+      operationId: applications_foxglove_dashboards_create
+      description: Add a Foxglove dashboard by its ID
+      summary: Add a Foxglove dashboard
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoxgloveDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FoxgloveDashboard'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoxgloveDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+  /api/v1/applications/foxglove/dashboards/{uid}/:
+    get:
+      operationId: applications_foxglove_dashboards_retrieve
+      description: Returns Foxglove dashboard JSON object, intended for file download.
+      summary: Download Foxglove dashboard JSON file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+          description: 'Dashboard JSON returned as an attachment with content-disposition
+            header like: ''attachment; filename=dashboard_uid.json'''
+        '404':
+          description: Dashboard not found
+    put:
+      operationId: applications_foxglove_dashboards_update
+      description: Update all the fields of a given Foxglove dashboard
+      summary: Update a Foxglove dashboard completely
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoxgloveDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FoxgloveDashboard'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoxgloveDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Dashboard not found
+    patch:
+      operationId: applications_foxglove_dashboards_partial_update
+      description: Update the provided fields of a given Foxglove dashboard
+      summary: Update a Foxglove dashboard partially
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFoxgloveDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFoxgloveDashboard'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoxgloveDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Dashboard not found
+    delete:
+      operationId: applications_foxglove_dashboards_destroy
+      description: Delete a Foxglove dashboard
+      summary: Delete a Foxglove dashboard
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoxgloveDashboard'
+          description: ''
+        '404':
+          description: Dashboard not found
+  /api/v1/applications/grafana/dashboards/:
+    get:
+      operationId: applications_grafana_dashboards_list
+      description: List all Grafana dashboards and their attribute
+      summary: List Grafana dashboards
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GrafanaDashboard'
+          description: ''
+    post:
+      operationId: applications_grafana_dashboards_create
+      description: Add a Grafana dashboard by its ID
+      summary: Add a Grafana dashboard
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrafanaDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GrafanaDashboard'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrafanaDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+  /api/v1/applications/grafana/dashboards/{uid}/:
+    get:
+      operationId: applications_grafana_dashboards_retrieve
+      description: Returns Grafana dashboard JSON object, intended for file download.
+      summary: Download Grafana dashboard JSON file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: string
+          description: 'Dashboard JSON returned as an attachment with content-disposition
+            header like: ''attachment; filename=dashboard_uid.json'''
+        '404':
+          description: Dashboard not found
+    put:
+      operationId: applications_grafana_dashboards_update
+      description: Update all the fields of a given Grafana dashboard
+      summary: Update a Grafana dashboard completely
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrafanaDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GrafanaDashboard'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrafanaDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Dashboard not found
+    patch:
+      operationId: applications_grafana_dashboards_partial_update
+      description: Update the provided fields of a given Grafana dashboard
+      summary: Update a Grafana dashboard partially
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGrafanaDashboard'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGrafanaDashboard'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrafanaDashboard'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Dashboard not found
+    delete:
+      operationId: applications_grafana_dashboards_destroy
+      description: Delete a Grafana dashboard
+      summary: Delete a Grafana dashboard
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrafanaDashboard'
+          description: ''
+        '404':
+          description: Dashboard not found
+  /api/v1/applications/loki/alert_rules/:
+    get:
+      operationId: applications_loki_alert_rules_retrieve
+      description: List all Loki alert rule file and their attribute.This endpoint
+        returns all the non-templated rules as well as the templated rules rendered
+        for the devices that specified them.
+      summary: List Loki alert rule file
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+    post:
+      operationId: applications_loki_alert_rules_create
+      description: Add a Loki alert rule file by its ID
+      summary: Add a Loki alert rule file
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LokiAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LokiAlertRuleFile'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+  /api/v1/applications/loki/alert_rules/{uid}/:
+    get:
+      operationId: applications_loki_alert_rules_retrieve_2
+      description: Returns Loki alert rule file.Templated rules won't be rendered.
+      summary: Download Loki alert rule file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+        '404':
+          description: Alert rule file not found
+    put:
+      operationId: applications_loki_alert_rules_update
+      description: Update all the fields of a given Loki alert rule file
+      summary: Update a Loki alert rule file completely
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LokiAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LokiAlertRuleFile'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Alert rule file not found
+    patch:
+      operationId: applications_loki_alert_rules_partial_update
+      description: Update the provided fields of a given Loki alert rule file
+      summary: Update a Loki alert rule file partially
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLokiAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLokiAlertRuleFile'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Alert rule file not found
+    delete:
+      operationId: applications_loki_alert_rules_destroy
+      description: Delete a Loki alert rule file
+      summary: Delete a Loki alert rule file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LokiAlertRuleFile'
+          description: ''
+        '404':
+          description: Alert rule file not found
+  /api/v1/applications/prometheus/alert_rules/:
+    get:
+      operationId: applications_prometheus_alert_rules_retrieve
+      description: List all Prometheus alert rule file and their attribute.This endpoint
+        returns all the non-templated rules as well as the templated rules rendered
+        for the devices that specified them.
+      summary: List Prometheus alert rule file
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+    post:
+      operationId: applications_prometheus_alert_rules_create
+      description: Add a Prometheus alert rule file by its ID
+      summary: Add a Prometheus alert rule file
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrometheusAlertRuleFile'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+  /api/v1/applications/prometheus/alert_rules/{uid}/:
+    get:
+      operationId: applications_prometheus_alert_rules_retrieve_2
+      description: Returns Prometheus alert rule file.Templated rules won't be rendered.
+      summary: Download Prometheus alert rule file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+        '404':
+          description: Alert rule file not found
+    put:
+      operationId: applications_prometheus_alert_rules_update
+      description: Update all the fields of a given Prometheus alert rule file
+      summary: Update a Prometheus alert rule file completely
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrometheusAlertRuleFile'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Alert rule file not found
+    patch:
+      operationId: applications_prometheus_alert_rules_partial_update
+      description: Update the provided fields of a given Prometheus alert rule file
+      summary: Update a Prometheus alert rule file partially
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPrometheusAlertRuleFile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPrometheusAlertRuleFile'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: Alert rule file not found
+    delete:
+      operationId: applications_prometheus_alert_rules_destroy
+      description: Delete a Prometheus alert rule file
+      summary: Delete a Prometheus alert rule file
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - {}
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrometheusAlertRuleFile'
+          description: ''
+        '404':
+          description: Alert rule file not found
+  /api/v1/devices/:
+    get:
+      operationId: devices_list
+      description: List all registered devices and their attribute
+      summary: List devices
+      parameters:
+      - in: query
+        name: fields
+        schema:
+          type: string
+        description: 'Filter the fields provided.Will only output the fields listed
+          in the parameter.Example: ?fields=uid,create_date'
+      tags:
+      - devices
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+          description: ''
+    post:
+      operationId: devices_create
+      description: Register a device by its ID
+      summary: Register a device
+      tags:
+      - devices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+  /api/v1/devices/{uid}/:
+    get:
+      operationId: devices_retrieve
+      description: Retrieve all the fields of a device by its ID
+      summary: Get a device
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+          description: ''
+        '404':
+          description: UID not found
+    put:
+      operationId: devices_update
+      description: Update all the fields of a given device
+      summary: Update a device completely
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Device'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Device'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: UID not found
+    patch:
+      operationId: devices_partial_update
+      description: Update the provided fields of a given device
+      summary: Update a device partially
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDevice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDevice'
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                DateParseError:
+                  value:
+                    field_name: error details
+                  summary: Date parse error
+          description: ''
+        '404':
+          description: UID not found
+    delete:
+      operationId: devices_destroy
+      description: Delete a registered device
+      summary: Delete a device
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - {}
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+          description: ''
+        '404':
+          description: UID not found
+  /api/v1/health/:
+    get:
+      operationId: health_retrieve
+      description: Health get view.
+      summary: Health
+      tags:
+      - health
+      security:
+      - {}
+      responses:
+        '200':
+          description: The application is alive.
+  /api/v1/schema/:
+    get:
+      operationId: schema_retrieve
+      description: |-
+        OpenApi3 schema for this API. Format can be selected via content negotiation.
+
+        - YAML: application/vnd.oai.openapi
+        - JSON: application/vnd.oai.openapi+json
+      parameters:
+      - in: query
+        name: format
+        schema:
+          type: string
+          enum:
+          - json
+          - yaml
+      - in: query
+        name: lang
+        schema:
+          type: string
+          enum:
+          - af
+          - ar
+          - ar-dz
+          - ast
+          - az
+          - be
+          - bg
+          - bn
+          - br
+          - bs
+          - ca
+          - ckb
+          - cs
+          - cy
+          - da
+          - de
+          - dsb
+          - el
+          - en
+          - en-au
+          - en-gb
+          - eo
+          - es
+          - es-ar
+          - es-co
+          - es-mx
+          - es-ni
+          - es-ve
+          - et
+          - eu
+          - fa
+          - fi
+          - fr
+          - fy
+          - ga
+          - gd
+          - gl
+          - he
+          - hi
+          - hr
+          - hsb
+          - hu
+          - hy
+          - ia
+          - id
+          - ig
+          - io
+          - is
+          - it
+          - ja
+          - ka
+          - kab
+          - kk
+          - km
+          - kn
+          - ko
+          - ky
+          - lb
+          - lt
+          - lv
+          - mk
+          - ml
+          - mn
+          - mr
+          - ms
+          - my
+          - nb
+          - ne
+          - nl
+          - nn
+          - os
+          - pa
+          - pl
+          - pt
+          - pt-br
+          - ro
+          - ru
+          - sk
+          - sl
+          - sq
+          - sr
+          - sr-latn
+          - sv
+          - sw
+          - ta
+          - te
+          - tg
+          - th
+          - tk
+          - tr
+          - tt
+          - udm
+          - uk
+          - ur
+          - uz
+          - vi
+          - zh-hans
+          - zh-hant
+      tags:
+      - schema
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/vnd.oai.openapi:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/yaml:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/vnd.oai.openapi+json:
+              schema:
+                type: object
+                additionalProperties: {}
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+components:
+  schemas:
+    Device:
+      type: object
+      description: Device Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        creation_date:
+          type: string
+          format: date-time
+          readOnly: true
+        address:
+          type: string
+          title: Device IP
+        public_ssh_key:
+          type: string
+          title: Device public SSH key
+        grafana_dashboards:
+          type: array
+          items:
+            type: string
+        foxglove_dashboards:
+          type: array
+          items:
+            type: string
+        prometheus_alert_rule_files:
+          type: array
+          items:
+            type: string
+        loki_alert_rule_files:
+          type: array
+          items:
+            type: string
+      required:
+      - address
+      - creation_date
+      - uid
+    FoxgloveDashboard:
+      type: object
+      description: Foxglove Dashboard Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        dashboard:
+          title: Dashboard json field
+      required:
+      - dashboard
+      - uid
+    GrafanaDashboard:
+      type: object
+      description: Grafana Dashboard Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        dashboard:
+          title: Dashboard json field
+      required:
+      - dashboard
+      - uid
+    LokiAlertRuleFile:
+      type: object
+      description: Loki Alert Rule Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        rules:
+          type: string
+        template:
+          type: boolean
+          title: Whether this rules file is                                    a template
+            and must be rendered
+      required:
+      - rules
+      - uid
+    PatchedDevice:
+      type: object
+      description: Device Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        creation_date:
+          type: string
+          format: date-time
+          readOnly: true
+        address:
+          type: string
+          title: Device IP
+        public_ssh_key:
+          type: string
+          title: Device public SSH key
+        grafana_dashboards:
+          type: array
+          items:
+            type: string
+        foxglove_dashboards:
+          type: array
+          items:
+            type: string
+        prometheus_alert_rule_files:
+          type: array
+          items:
+            type: string
+        loki_alert_rule_files:
+          type: array
+          items:
+            type: string
+    PatchedFoxgloveDashboard:
+      type: object
+      description: Foxglove Dashboard Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        dashboard:
+          title: Dashboard json field
+    PatchedGrafanaDashboard:
+      type: object
+      description: Grafana Dashboard Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        dashboard:
+          title: Dashboard json field
+    PatchedLokiAlertRuleFile:
+      type: object
+      description: Loki Alert Rule Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        rules:
+          type: string
+        template:
+          type: boolean
+          title: Whether this rules file is                                    a template
+            and must be rendered
+    PatchedPrometheusAlertRuleFile:
+      type: object
+      description: Prometheus Alert Rule Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        rules:
+          type: string
+        template:
+          type: boolean
+          title: Whether this rules file is                                    a template
+            and must be rendered
+    PrometheusAlertRuleFile:
+      type: object
+      description: Prometheus Alert Rule Serializer class.
+      properties:
+        uid:
+          type: string
+          maxLength: 200
+        rules:
+          type: string
+        template:
+          type: boolean
+          title: Whether this rules file is                                    a template
+            and must be rendered
+      required:
+      - rules
+      - uid

@@ -1,6 +1,7 @@
 """API urls."""
 
 from django.urls import path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from . import views
 
@@ -8,6 +9,12 @@ app_name = "api"
 
 urlpatterns = [
     # make a version API url
+    path("v1/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "v1/docs/",
+        SpectacularSwaggerView.as_view(url_name="api:schema"),
+        name="docs",
+    ),
     path("v1/health/", views.HealthView.as_view(), name="health"),
     path("v1/devices/", views.DevicesView.as_view(), name="devices"),
     path("v1/devices/<str:uid>/", views.DeviceView.as_view(), name="device"),
