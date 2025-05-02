@@ -55,7 +55,7 @@ jobs:
         run: make install
       - name: Generate django secret key
         run: |
-          GENERATED_SECRET="$(make secretkey)"
+          GENERATED_SECRET='$(make secretkey)'
           echo "SECRET_KEY_DJANGO=${GENERATED_SECRET}" >> $GITHUB_ENV
       - name: Run tests
         run: make test
