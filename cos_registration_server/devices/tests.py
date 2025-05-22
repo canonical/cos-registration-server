@@ -329,14 +329,14 @@ class DevicesViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["is_paginated"] == True)
         self.assertContains(response, f"{total_number_of_devices} device(s):")
-        self.assertEquals(
+        self.assertEqual(
             len(response.context["devices_list"]), max_devices_per_page
         )
 
         response = self.client.get(reverse("devices:devices") + "?page=2")
         self.assertEqual(response.status_code, 200)
         # The second and last page has less devices
-        self.assertEquals(
+        self.assertEqual(
             len(response.context["devices_list"]),
             total_number_of_devices - max_devices_per_page,
         )
