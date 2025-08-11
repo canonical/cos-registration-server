@@ -122,6 +122,25 @@ class DevicesViewTests(APITestCase):
             self.simple_foxglove_dashboard,
         )
 
+    def test_create_device_tls_request(self) -> None:
+        uid = "robot-1"
+        address = "10.239.43.76"
+
+        response = self.create_device(
+            uid=uid,
+            address=address,
+            public_ssh_key=self.public_ssh_key,
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Device.objects.count(), 1)
+        self.assertEqual(Device.objects.get().uid, uid)
+        self.assertEqual(Device.objects.get().address, address)
+        self.assertEqual(
+            Device.objects.get().public_ssh_key, self.public_ssh_key
+        )
+        self.assertIn("certificate", response.data)  # type: ignore
+        self.assertIn("private_key", response.data)  # type: ignore
+
     def test_create_multiple_devices(self) -> None:
         devices = [
             {
