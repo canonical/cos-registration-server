@@ -49,7 +49,9 @@ class DevicesViewTests(APITestCase):
 
         self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
 
-    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
+    def create_device(
+        self, **fields: Union[str, Set[str], bool]
+    ) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
@@ -130,6 +132,7 @@ class DevicesViewTests(APITestCase):
             uid=uid,
             address=address,
             public_ssh_key=self.public_ssh_key,
+            generate_certificate=True,
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Device.objects.count(), 1)

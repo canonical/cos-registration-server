@@ -19,7 +19,6 @@ from applications.models import (
 )
 from applications.utils import render_alert_rule_template_for_device
 from devices.models import Device
-from django.db import transaction
 from django.http import HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -74,14 +73,19 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """POST a device."""
-        with transaction.atomic():
-            response = super().post(request, *args, **kwargs)
+        generate_cert = bool(request.data.get("generate_certificate", False))
+
+        response = super().post(request, *args, **kwargs)
+
+        if generate_cert:
             device_uid = response.data.get("uid")
-            if device_uid:
-                device_ip = response.data.get("address")
-                cert_data = generate_tls_certificate(device_uid, device_ip)
-                response.data["certificate"] = cert_data["certificate"]
-                response.data["private_key"] = cert_data["private_key"]
+            device_ip = response.data.get("address")
+
+            cert_data = generate_tls_certificate(device_uid, device_ip)
+
+            response.data["certificate"] = cert_data["certificate"]
+            response.data["private_key"] = cert_data["private_key"]
+
         return response
 
     @extend_schema(

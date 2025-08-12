@@ -23,8 +23,6 @@ def generate_tls_certificate(
 
     subject = issuer = x509.Name(
         [
-            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "MyCompany"),
             x509.NameAttribute(NameOID.COMMON_NAME, device_uid),
         ]
     )
