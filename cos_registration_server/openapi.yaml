@@ -1112,6 +1112,9 @@ components:
         public_ssh_key:
           type: string
           title: Device public SSH key
+        generate_certificate:
+          type: boolean
+          title: Whether to generate a device TLS certificate
         grafana_dashboards:
           type: array
           items:
@@ -1189,6 +1192,9 @@ components:
         public_ssh_key:
           type: string
           title: Device public SSH key
+        generate_certificate:
+          type: boolean
+          title: Whether to generate a device TLS certificate
         grafana_dashboards:
           type: array
           items:
