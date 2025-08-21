@@ -941,7 +941,7 @@ paths:
   /api/v1/devices/{uid}/certificate:
     get:
       operationId: devices_certificate_retrieve
-      description: Retrieve the TLS certificate and private key for a device by UID
+      description: Retrieve TLS certificate and private key for a device by UID
       summary: Get a device TLS certificate
       parameters:
       - in: path
