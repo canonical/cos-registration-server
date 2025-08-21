@@ -50,9 +50,7 @@ class DevicesViewTests(APITestCase):
 
         self.public_ssh_key = "ssh-rsa AaBbCc/+=098765431"
 
-    def create_device(
-        self, **fields: Union[str, Set[str], bool]
-    ) -> HttpResponse:
+    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
         data = {}
         for field, value in fields.items():
             data[field] = value
