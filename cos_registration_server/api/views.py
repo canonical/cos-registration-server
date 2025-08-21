@@ -73,20 +73,7 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
         self, request: Request, *args: Tuple[Any], **kwargs: Dict[str, Any]
     ) -> Response:
         """POST a device."""
-        generate_cert = bool(request.data.get("generate_certificate", False))
-
-        response = super().post(request, *args, **kwargs)
-
-        if generate_cert:
-            device_uid = response.data.get("uid")
-            device_ip = response.data.get("address")
-
-            cert_data = generate_tls_certificate(device_uid, device_ip)
-
-            response.data["certificate"] = cert_data["certificate"]
-            response.data["private_key"] = cert_data["private_key"]
-
-        return response
+        return super().post(request, *args, **kwargs)
 
     @extend_schema(
         summary="List devices",
@@ -174,6 +161,50 @@ class DeviceView(RetrieveUpdateDestroyAPIView):  # type: ignore[type-arg]
     ) -> Response:
         """DELETE a device."""
         return super().delete(request, *args, **kwargs)
+
+
+class DeviceCertificateView(APIView):
+    """Device Certificate API view."""
+
+    @extend_schema(
+        summary="Get a device TLS certificate",
+        description="Retrieve the TLS certificate and private key for a device by UID",
+        responses={
+            **status.code_200_device_certificate,
+            **status.code_404_uid_not_found,
+            **status.code_404_device_address_not_found,
+            **status.code_404_device_certificate_not_found,
+        },
+    )
+    def get(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """GET a device certificate and private key in string pem encoded format."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            raise NotFound("Device does not exist")
+
+        if not device.address:
+            raise NotFound("Device does not have an ip address")
+
+        cert_data = generate_tls_certificate(device.uid, device.address)
+
+        if not cert_data.get("certificate") or not cert_data.get(
+            "private_key"
+        ):
+            raise NotFound("Certificate data for device not found")
+
+        return Response(
+            {
+                "certificate": cert_data["certificate"],
+                "private_key": cert_data["private_key"],
+            }
+        )
 
 
 class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]

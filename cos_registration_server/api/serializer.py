@@ -143,7 +143,6 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "creation_date",
             "address",
             "public_ssh_key",
-            "generate_certificate",
             "grafana_dashboards",
             "foxglove_dashboards",
             "prometheus_alert_rule_files",

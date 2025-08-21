@@ -19,6 +19,11 @@ urlpatterns = [
     path("v1/devices/", views.DevicesView.as_view(), name="devices"),
     path("v1/devices/<str:uid>/", views.DeviceView.as_view(), name="device"),
     path(
+        "v1/devices/<str:uid>/certificate",
+        views.DeviceCertificateView.as_view(),
+        name="device-certificate",
+    ),
+    path(
         "v1/applications/grafana/dashboards/",
         views.GrafanaDashboardsView.as_view(),
         name="grafana_dashboards",

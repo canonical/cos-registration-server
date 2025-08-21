@@ -27,10 +27,6 @@ class Device(models.Model):
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
     address = models.GenericIPAddressField("device IP")
     public_ssh_key = models.TextField("device public SSH key", default="")
-    generate_certificate = models.BooleanField(
-        "whether to generate a device TLS certificate",
-        default=False,
-    )
     grafana_dashboards = models.ManyToManyField(
         GrafanaDashboard, related_name="devices"
     )

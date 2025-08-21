@@ -13,7 +13,29 @@ from drf_spectacular.utils import OpenApiExample, OpenApiResponse
 code_200_device = {200: DeviceSerializer}
 code_201_device = {201: DeviceSerializer}
 
+code_200_device_certificate = {
+    200: {
+        "type": "object",
+        "properties": {
+            "certificate": {
+                "type": "string",
+                "description": "PEM-encoded certificate",
+            },
+            "private_key": {
+                "type": "string",
+                "description": "PEM-encoded private key",
+            },
+        },
+    }
+}
+
 code_404_uid_not_found = {404: OpenApiResponse(description="UID not found")}
+code_404_device_address_not_found = {
+    404: OpenApiResponse(description="device address not found")
+}
+code_404_device_certificate_not_found = {
+    404: OpenApiResponse(description="Device certficate not found")
+}
 
 code_200_grafana_dashboard = {200: GrafanaDashboardSerializer}
 code_201_grafana_dashboard = {201: GrafanaDashboardSerializer}
