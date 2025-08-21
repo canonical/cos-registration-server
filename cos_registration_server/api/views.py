@@ -168,7 +168,8 @@ class DeviceCertificateView(APIView):
 
     @extend_schema(
         summary="Get a device TLS certificate",
-        description="Retrieve the TLS certificate and private key for a device by UID",
+        description="Retrieve TLS certificate and "
+        "private key for a device by UID",
         responses={
             **status.code_200_device_certificate,
             **status.code_404_uid_not_found,
@@ -183,7 +184,7 @@ class DeviceCertificateView(APIView):
         *args: Tuple[Any],
         **kwargs: Dict[str, Any],
     ) -> Response:
-        """GET a device certificate and private key in string pem encoded format."""
+        """GET a device TLS certificate and private key."""
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
