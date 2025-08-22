@@ -173,7 +173,6 @@ class DeviceCertificateView(APIView):
         responses={
             **status.code_200_device_certificate,
             **status.code_404_uid_not_found,
-            **status.code_404_device_address_not_found,
             **status.code_404_device_certificate_not_found,
         },
     )
@@ -190,9 +189,9 @@ class DeviceCertificateView(APIView):
         except Device.DoesNotExist:
             raise NotFound("Device does not exist")
 
-        if not device.address:
-            raise NotFound("Device does not have an ip address")
-
+        # If the device exists it will have an address,
+        # the serializer does not allow the creation of a device
+        # without an ip address.
         cert_data = generate_tls_certificate(device.uid, device.address)
 
         if not cert_data.get("certificate") or not cert_data.get(

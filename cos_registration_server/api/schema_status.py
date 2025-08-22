@@ -30,11 +30,9 @@ code_200_device_certificate = {
 }
 
 code_404_uid_not_found = {404: OpenApiResponse(description="UID not found")}
-code_404_device_address_not_found = {
-    404: OpenApiResponse(description="device address not found")
-}
+
 code_404_device_certificate_not_found = {
-    404: OpenApiResponse(description="Device certficate not found")
+    404: OpenApiResponse(description="Device certificate not found")
 }
 
 code_200_grafana_dashboard = {200: GrafanaDashboardSerializer}

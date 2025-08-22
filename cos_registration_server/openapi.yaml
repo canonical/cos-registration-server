@@ -968,7 +968,7 @@ paths:
                     description: PEM-encoded private key
           description: ''
         '404':
-          description: Device certficate not found
+          description: Device certificate not found
   /api/v1/health/:
     get:
       operationId: health_retrieve

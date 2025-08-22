@@ -553,11 +553,14 @@ class DeviceCertificateViewTests(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 404)
+        self.assertIn("Device does not exist", str(response.data))
 
     def test_get_certificate_no_address(self) -> None:
         self.create_device(uid=self.device_uid, address="")
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 404)
+        self.assertIn("Device does not exist", str(response.data))
 
     @patch("api.views.generate_tls_certificate")
     def test_get_certificate_missing_cert_data(
