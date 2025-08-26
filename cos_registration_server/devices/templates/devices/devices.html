@@ -49,21 +49,21 @@
         <nav aria-label="Main">
           <ul class="p-side-navigation__list">
             <li class="p-side-navigation__item--title">
-              <a class="p-side-navigation__link" href="#"><span class="p-side-navigation__label">Devices</span></a>
+              <a class="p-side-navigation__link" href="/devices">
+                  <span class="p-side-navigation__label">Warehouse 1</span>
+                  <span class="p-side-navigation__status">
+                    <i class="p-icon--success"></i>
+                  </span>
+              </a>
             </li>
-
-{% if devices_list %}
-          {% for device in devices_list %}
           <li class="p-side-navigation__item">
-            <a class="p-side-navigation__link" href="{% url 'devices:device' device.uid %}"><span class="p-side-navigation__label">{{ device.uid }}</span></a>
+            <a class="p-side-navigation__link" href="/devices">
+                <span class="p-side-navigation__label">Warehouse 2</span>
+                  <span class="p-side-navigation__status">
+                    <i class="p-icon--warning"></i>
+                  </span>
+            </a>
           </li>
-          {% endfor %}
-          </ul>
-      {% else %}
-          <li class="p-side-navigation__item">
-            <span class="p-side-navigation__text"><span class="p-side-navigation__label">No devices are available.</span></span>
-          </li>
-      {% endif %}
           </ul>
         </nav>
         </div>
@@ -81,10 +81,29 @@
               </div-->
             </div>
             <div class="p-panel__content">
-            <h1>
-              &emsp;<i class="p-icon--success"></i>
-              All servers are operational!
-            </h1>
+              <div class="u-fixed-width">
+                <table aria-label="JAAS table example" class="p-main-table">
+            <thead>
+              <tr>
+                <th class="p-table__cell--icon-placeholder p-table__colump--ip"><span class="p-icon status-icon uuid">UUID</span></th>
+                <th>IP</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th class="u-align--right">Last Updated</th>
+              </tr>
+            </thead>
+          {% for device in devices_list %}
+            <tbody>
+              <tr style="background: rgba(0,0,0, 0.1)" data-test-model-uuid="2f995dee-392e-4459-8eb9-839c501590af">
+                    <td class="" data-test-column="uuid"><a href="/devices/{{device.uid}}" class="u-truncate p-link--soft">{{device.uid}}</a></td>
+                <td class="" data-test-column="IP"><a href="#_" class="u-truncate p-link--soft">{{device.address}}</a></td>
+                <td class="" data-test-column="Status"><a href="#_" class="u-truncate p-link--soft"><i class="p-icon--success"></i></a></td>
+                <td class="" data-test-column="Created"><a href="#_" class="u-truncate p-link--soft">{{device.creation_date}}</a></td>
+                <td class="u-align--right" data-test-column="updated">September 17, 2025, 3:15 a.m.</td>
+              </tr>
+            </tbody>
+          {% endfor %}
+          </table>
               <!--div class="u-fixed-width">
                 <table aria-label="JAAS table example" class="p-main-table">
                   <thead>
@@ -213,6 +232,14 @@
           </div>
         </aside-->
 
+        <aside class="l-status">
+          <div class="p-panel demo-status">
+            <div class="u-fixed-width">
+              &emsp;<i class="p-icon--success"></i>
+              All servers operationals
+            </div>
+          </div>
+        </aside>
 
       <script>
       /*

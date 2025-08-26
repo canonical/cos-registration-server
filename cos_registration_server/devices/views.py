@@ -109,6 +109,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
     )
     links.append(ApplicationLinks("Bag files", bag_files))
     context = {
+        "devices_list": Device.objects.all(),
         "device": device,
         "links_list": links,
     }

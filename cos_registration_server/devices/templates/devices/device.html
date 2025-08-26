@@ -49,7 +49,7 @@
         <nav aria-label="Main">
           <ul class="p-side-navigation__list">
             <li class="p-side-navigation__item--title">
-              <a class="p-side-navigation__link" href="#"><span class="p-side-navigation__label">Devices</span></a>
+              <a class="p-side-navigation__link" href="/devices"><span class="p-side-navigation__label">Devices</span></a>
             </li>
 
 {% if devices_list %}
@@ -103,15 +103,29 @@
             </tbody>
           </table>
 
-                 <ul>
+                 <!-- <ul> -->
                  {% for application_link in links_list%}
-                     <li><a href="{{request.scheme}}://{{application_link.main_link}}">{{ application_link.name }}</a>
+                     <div class="u-fixed-width">
+                     <table aria-label="Table with demo content">
+                       <thead>
+                         <tr>
+                           <th><a href="{{request.scheme}}://{{application_link.main_link}}">{{ application_link.name }}</a></th>
+                         </tr>
+                       </thead>
+                         </thead>
+                         <tbody>
+                     <!-- <li><a href="{{request.scheme}}://{{application_link.main_link}}">{{ application_link.name }}</a> -->
                          {% for name, link in application_link.additional_links.items %}
-                             <ul><a href="{{request.scheme}}://{{link}}">{{ name }}</a></ul>
+                             <!-- <ul><a href="{{request.scheme}}://{{link}}">{{ name }}</a></ul> -->
+                           <tr>
+                             <th><a href="{{request.scheme}}://{{link}}">{{ name }}</a></th>
+                           </tr>
                          {% endfor %}
                      </li>
+                      </tbody>
+                      </table>
                  {% endfor %}
-                 </ul>
+                 <!-- </ul> -->
                 <!--table aria-label="JAAS table example" class="p-main-table">
                   <thead>
                     <tr>
