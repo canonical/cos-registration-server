@@ -167,8 +167,8 @@ class DeviceCertificateView(APIView):
     """Device Certificate API view."""
 
     @extend_schema(
-        summary="Get a device TLS certificate",
-        description="Retrieve TLS certificate and "
+        summary="Generate and get a device TLS certificate",
+        description="Generate and retrieve TLS certificate and "
         "private key for a device by UID",
         responses={
             **status.code_200_device_certificate,
