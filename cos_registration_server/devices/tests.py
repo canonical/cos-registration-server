@@ -1,7 +1,13 @@
 from datetime import timedelta
 from html import escape
 
-from applications.models import FoxgloveDashboard, GrafanaDashboard
+import yaml
+from applications.models import (
+    FoxgloveDashboard,
+    GrafanaDashboard,
+    LokiAlertRuleFile,
+    PrometheusAlertRuleFile,
+)
 from django.db.utils import IntegrityError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -33,6 +39,38 @@ EYn2qdU5C7GsIiwmFpgGCFkBE1bAwjepQar6NTBC3Blc1zjy6dCMdgQHjHhw26UIG3kmKTS\
 I0nZLgqhU8dXB+lJS9pd6hljL1rfacJOUSshgXcVvd37kW02WdCs3YidfKkjgaFA5sNmevH\
 kK2t2rwLPZmlBZ+P5faO5sDe2gS3jCqCo9Qd/1QagTRliRnnmPa6RpMVw9lF1SWYFSmXEsy\
 YkkbhmeJAiNclXL6H"""
+
+SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE = """
+    groups:
+        name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+        alert: MyRobotTest_{{ $label.instace }}
+        expr: (node_memory_MemFree_bytes{device_instance="%%juju_device_uuid%%"})/1e9 < 30
+"""
+
+SIMPLE_PROMETHEUS_ALERT_RULE = """
+    groups:
+        name: cos-robotics-model_robot
+        rules:
+        alert: MyRobotTest_{{ $label.instance }}
+        expr: (node_memory_MemFree_bytes{device_instance="robot"})/1e9 < 30
+"""
+
+SIMPLE_LOKI_ALERT_RULE_TEMPLATE = """
+    groups:
+        name: cos-robotics-model_robot_test_%%juju_device_uuid%%
+        rules:
+        alert: MyRobotTest_{{ $label.instace }}
+        expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100
+"""
+
+SIMPLE_LOKI_ALERT_RULE = """
+    groups:
+        name: cos-robotics-model_robot
+        rules:
+        alert: MyRobotTest_{{ $label.instance }}
+        expr: rate({job="loki.source.journal.read", instance="robot-1"}[5m]) > 100
+"""
 
 
 class DeviceModelTests(TestCase):
@@ -158,6 +196,86 @@ class DeviceModelTests(TestCase):
             Device(uid=uid, address="192.168.0.1").save,
         )
 
+    def test_device_create_prometheus_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE
+        )
+        prometheus_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].uid,
+            "first_alert",
+        )
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_PROMETHEUS_ALERT_RULE_TEMPLATE),
+        )
+
+    def test_device_relate_prometheus_alert_rules(self) -> None:
+        alert_name = "first_alert"
+        prometheus_alert_rule = PrometheusAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_PROMETHEUS_ALERT_RULE
+        )
+        prometheus_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.prometheus_alert_rule_files.add(prometheus_alert_rule)
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].uid,
+            alert_name,
+        )
+        self.assertEqual(
+            device.prometheus_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_PROMETHEUS_ALERT_RULE),
+        )
+
+    def test_device_create_loki_alert_rule(self) -> None:
+        alert_name = "first_alert"
+        loki_alert_rule = LokiAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_LOKI_ALERT_RULE_TEMPLATE
+        )
+        loki_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.loki_alert_rule_files.add(loki_alert_rule)
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].uid,
+            "first_alert",
+        )
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_LOKI_ALERT_RULE_TEMPLATE),
+        )
+
+    def test_device_relate_loki_alert_rules(self) -> None:
+        alert_name = "first_alert"
+        loki_alert_rule = LokiAlertRuleFile(
+            uid=alert_name, rules=SIMPLE_LOKI_ALERT_RULE
+        )
+        loki_alert_rule.save()
+        device = Device(
+            uid="hello-123", creation_date=timezone.now(), address="127.0.0.1"
+        )
+        device.save()
+        device.loki_alert_rule_files.add(loki_alert_rule)
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].uid,
+            alert_name,
+        )
+        self.assertEqual(
+            device.loki_alert_rule_files.all()[0].rules,
+            yaml.safe_load(SIMPLE_LOKI_ALERT_RULE),
+        )
+
 
 def create_device(uid: str, address: str) -> Device:
     return Device.objects.create(uid=uid, address=address)
@@ -176,7 +294,7 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "2 device(s):")
         self.assertContains(response, "robot-1")
         self.assertContains(response, "robot-2")
         self.assertQuerySetEqual(
@@ -188,16 +306,39 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "1 device(s):")
         self.assertQuerySetEqual(response.context["devices_list"], [device_1])
 
         device_2 = create_device("robot-2", "192.168.0.2")
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Devices list:")
+        self.assertContains(response, "2 device(s):")
         self.assertQuerySetEqual(
             list(response.context["devices_list"]), [device_1, device_2]
+        )
+
+    def test_devices_pagination(self) -> None:
+        total_number_of_devices = 40
+        max_devices_per_page = 25
+        devices = []
+        for i in range(0, total_number_of_devices):
+            devices.append(create_device(f"robot-{i}", "192.168.0.1"))
+
+        response = self.client.get(reverse("devices:devices"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["is_paginated"] == True)
+        self.assertContains(response, f"{total_number_of_devices} device(s):")
+        self.assertEqual(
+            len(response.context["devices_list"]), max_devices_per_page
+        )
+
+        response = self.client.get(reverse("devices:devices") + "?page=2")
+        self.assertEqual(response.status_code, 200)
+        # The second and last page has less devices
+        self.assertEqual(
+            len(response.context["devices_list"]),
+            total_number_of_devices - max_devices_per_page,
         )
 
 
@@ -219,14 +360,18 @@ class DeviceViewTests(TestCase):
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {device.creation_date.strftime('%B %d, %Y, %-I')}",
+        formatted_date = device.creation_date.strftime("%B %-d, %Y, %-I:%M %P")
+        formatted_date = formatted_date.replace("am", "a.m.").replace(
+            "pm", "p.m."
         )
         self.assertContains(
             response,
-            self.base_url + "/cos-grafana/dashboards/?query=" + device.uid,
+            f"Device {device.uid} with ip {device.address}, was created on the"
+            f" {formatted_date}",
+        )
+        self.assertContains(
+            response,
+            self.base_url + "/cos-grafana/dashboards/",
         )
         self.assertContains(
             response,
@@ -268,13 +413,11 @@ class DeviceViewTests(TestCase):
             + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
             + device.address
             + "%3A8765"
-            + escape("&layoutUrl=")
+            + escape("&layoutUrl=http%3A%2F%2F")
             + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
             + "applications%2Ffoxglove%2Fdashboards%2Flayout-1",
         )
-
         self.assertContains(
             response,
-            self.base_url
-            + "/cos-grafana/dashboards/dashboard-1/?instance=hello-123",
+            self.base_url + "/cos-grafana/d/dashboard-1/?var-Host=hello-123",
         )

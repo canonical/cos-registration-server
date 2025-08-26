@@ -15,41 +15,49 @@ on:
 
 jobs:
   linter:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10"]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.13"
+      - name: Install project
+        run: make install
+      - name: Run linter
+        run: make lint
+  openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install project
+        run: make install
+      - name: Compare openapi.yaml file
+        run: |
+          set -e
+          cp cos_registration_server/openapi.yaml openapi_before.yaml
+          make openapi
+          cp cos_registration_server/openapi.yaml openapi_after.yaml
+          diff openapi_before.yaml openapi_after.yaml
+
+
+  tests_linux:
+    needs: [linter, openapi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - name: Install project
         run: make install
       - name: Generate django secret key
-        run: export SECRET_KEY_DJANGO=$(make secretkey)
-      - name: Run linter
-        run: make lint
-
-  tests_linux:
-    needs: linter
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10"]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install project
-        run: make install
+        run: |
+          GENERATED_SECRET='$(make secretkey)'
+          echo "SECRET_KEY_DJANGO=${GENERATED_SECRET}" >> $GITHUB_ENV
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v4
-
+        uses: codecov/codecov-action@v5

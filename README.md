@@ -9,8 +9,8 @@ its informations.
 A user can also visualize the registered devices as well as discovering
 customized device applications.
 
-[![codecov](https://codecov.io/gh/ubuntu-robotics/cos-registration-server/branch/main/graph/badge.svg?token=cos-registration-server_token_here)](https://codecov.io/gh/ubuntu-robotics/cos-registration-server)
-[![CI](https://github.com/ubuntu-robotics/cos-registration-server/actions/workflows/main.yml/badge.svg)](https://github.com/ubuntu-robotics/cos-registration-server/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/canonical/cos-registration-server/branch/main/graph/badge.svg?token=cos-registration-server_token_here)](https://codecov.io/gh/canonical/cos-registration-server)
+[![CI](https://github.com/canonical/cos-registration-server/actions/workflows/main.yml/badge.svg)](https://github.com/canonical/cos-registration-server/actions/workflows/main.yml)
 
 
 ## Features
@@ -31,6 +31,7 @@ It consists of:
 - Public SSH key: public SSH key for the device.
 - Grafana dashboards: Grafana dashboards used by this device.
 - Foxglove dashboards: Foxglove dashboards used by this device.
+- Prometheus alert rule files: Prometheus alert rule files used by this device.
 
 #### View: `devices/`
 
@@ -66,279 +67,22 @@ It consists of:
 - UID: Unique ID per dashboard. Typically, the name of the data it represents.
 - Dashboard: JSON data representing the dashboard.
 
+#### PrometheusAlertRuleFile model
+The PrometheusAlertRuleFile model represents a Prometheus Alert Rule file stored in the database.
+It consists of:
+- UID: Unique ID of the alert rule file.
+- Rules: The rules in YAML format.
+- Template: Boolean stating whether the rule file is a template and must be rendered.
+
 ### API
 The API can be used by the COS registration agent but also by any service
 requiring to access the device database.
 
-#### Health
-<details>
- <summary><code>GET</code> <code><b>api/v1/health/</b></code> <code>(Get wether or not the app is alive)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | | |
-</details>
-
-#### Devices
-<details>
- <summary><code>GET</code> <code><b>api/v1/devices/</b></code> <code>(Get the list of all the devices)</code></summary>
-
-##### Parameters
-
-> fields: comma seperated fields selection to get. Default to all.
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | List of devices.                                                         |
-</details>
-
-<details>
- <summary><code>POST</code> <code><b>api/v1/devices/</b></code> <code>(Add a device to the database)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}   | Unique ID and IP address of the device. Grafana dashboards and Foxglove are optional list of applications specific dashboards UID. |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `409`         | `application/json`         | {"error": "Device uid already exists"}                                                                |
-</details>
-
-<details>
- <summary><code>GET</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Get the details of a device)</code></summary>
-
-##### Parameters
-
-> fields: comma seperated fields selection to get. Default to all.
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards": "list(grafana_dashboards_uid)" , "foxglove_dashboards": "list(foxglove_dashboards_uid)}                                                         |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>PATCH</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a device)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: address, grafana_dashboards, foxglove_dashboards |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "creation_date": "string", "address": "string", "public_ssh_key": "string", "grafana_dashboards"(optional): list(grafana_dashboards_uid), "foxglove_dashboards"(optional): list(foxglove_dashboard_uid)}                                |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>DELETE</code> <code><b>api/v1/device/&#60str:uid&#62;/</b></code> <code>(Delete a device from the database)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `204`         | `text/html;charset=utf-8`        | None                                                         |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-#### Applications
-
-<details>
- <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards/</b></code> <code>(Get the details of a Grafana dashboards)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | list({"uid": string, "dashboard": JSON})                                                        |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>POST</code> <code><b>api/v1/applications/grafana/dashboards/</b></code> <code>(Add a Grafana dashboard to the database)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "dashboard": JSON} | Unique ID and Grafana dashboards JSON content. |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "dashboard": JSON}                                |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `409`         | `application/json`         | {"error": "GrafanaDashboard uid already exists"} |
-</details>
-
-<details>
- <summary><code>GET</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Get the details of a Grafana dashboard)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json; Content-Disposition attachment; filename=dashboard_uid.json`        | JSON file |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>PATCH</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a GrafanaDashboard)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: dasboard. |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "dashboard": JSON |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>DELETE</code> <code><b>api/v1/applications/grafana/dashboards/&#60str:uid&#62;/</b></code> <code>(Delete a Grafana dashboard from the database)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `204`         | `text/html;charset=utf-8`        | None                                                         |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards/</b></code> <code>(Get the details of a Foxglove dashboards)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json`        | list({"uid": string, "dashboard": JSON})                                                        |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>POST</code> <code><b>api/v1/applications/foxglove/dashboards/</b></code> <code>(Add a Foxglove dashboard to the database)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"uid": "string", "dashboard": JSON} | Unique ID and Foxglove dashboards JSON content. |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "dashboard": JSON}                                |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `409`         | `application/json`         | {"error": "FoxgloveDashboard uid already exists"} |
-</details>
-
-<details>
- <summary><code>GET</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Get the details of a Foxglove dashboard)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `200`         | `application/json; Content-Disposition attachment; filename=dashboard_uid.json`        | JSON file |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>PATCH</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Modify the attribute of a FoxgloveDashboard)</code></summary>
-
-##### Parameters
-
-> | name      |  type     | data type               | description                                                           |
-> |-----------|-----------|-------------------------|-----------------------------------------------------------------------|
-> | None      |  required | {"field: "value"}   | Field to modify. Can be: dasboard. |
-
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `201`         | `application/json`        | {"uid": "string", "dashboard": JSON |
-> | `400`         | `application/json`                | {"field": "error details"}                            |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
-<details>
- <summary><code>DELETE</code> <code><b>api/v1/applications/foxglove/dashboards/&#60str:uid&#62;/</b></code> <code>(Delete a Foxglove dashboard from the database)</code></summary>
-
-##### Parameters
-
-> None
-
-##### Responses
-
-> | http code     | content-type                      | response                                                            |
-> |---------------|-----------------------------------|---------------------------------------------------------------------|
-> | `204`         | `text/html;charset=utf-8`        | None                                                         |
-> | `404`         | `text/html;charset=utf-8`        | None                                                         |
-</details>
-
+The details of the API are available in the Open API file: [cos_registration_server/openapi.yaml](cos_registration_server/openapi.yaml) and
+as a Swagger view the [robotics documentation](https://canonical-robotics.readthedocs-hosted.com/en/latest/references/observability/cos-registration-server-api/).
 
 ## Installation
-First we must generate a secret key for our django to sign data.
+First we must generate a secret key for our Django to sign data.
 The secret key must be a large random value and it must be kept secret.
 
 A secret key can be generated with the following command:

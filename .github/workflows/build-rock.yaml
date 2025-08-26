@@ -15,13 +15,13 @@ jobs:
 
     - name: Determine any rockcraft.yaml changed in the PR
       id: changed-files
-      uses: tj-actions/changed-files@v44
+      uses: tj-actions/changed-files@v46
       with:
         files: "./rockcraft.yaml"
 
     - name: Setup LXD
       if: steps.changed-files.outputs.any_changed
-      uses: canonical/setup-lxd@v0.1.1
+      uses: canonical/setup-lxd@v0.1.3
       with:
         channel: latest/stable
 
