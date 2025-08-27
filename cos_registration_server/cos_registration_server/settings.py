@@ -167,3 +167,6 @@ USE_X_FORWARDED_HOST = True
 
 # COS model name used to generate URLs.
 COS_MODEL_NAME = os.getenv("COS_MODEL_NAME", "")
+
+# List of trusted origins for CSRF-protected requests.
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
