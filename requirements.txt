@@ -7,3 +7,4 @@ whitenoise
 tzdata
 gunicorn
 pyyaml
+cryptography

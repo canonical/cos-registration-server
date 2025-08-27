@@ -38,6 +38,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .utils import generate_tls_certificate
+
 
 class HealthView(APIView):
     """Health API view."""
@@ -159,6 +161,50 @@ class DeviceView(RetrieveUpdateDestroyAPIView):  # type: ignore[type-arg]
     ) -> Response:
         """DELETE a device."""
         return super().delete(request, *args, **kwargs)
+
+
+class DeviceCertificateView(APIView):
+    """Device Certificate API view."""
+
+    @extend_schema(
+        summary="Generate and get a device TLS certificate",
+        description="Generate and retrieve TLS certificate and "
+        "private key for a device by UID",
+        responses={
+            **status.code_200_device_certificate,
+            **status.code_404_uid_not_found,
+            **status.code_404_device_certificate_not_found,
+        },
+    )
+    def get(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """GET a device TLS certificate and private key."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            raise NotFound("Device does not exist")
+
+        # If the device exists it will have an address,
+        # the serializer does not allow the creation of a device
+        # without an ip address.
+        cert_data = generate_tls_certificate(device.uid, device.address)
+
+        if not cert_data.get("certificate") or not cert_data.get(
+            "private_key"
+        ):
+            raise NotFound("Certificate data for device not found")
+
+        return Response(
+            {
+                "certificate": cert_data["certificate"],
+                "private_key": cert_data["private_key"],
+            }
+        )
 
 
 class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]

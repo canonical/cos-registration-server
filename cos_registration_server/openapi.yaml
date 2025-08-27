@@ -938,6 +938,38 @@ paths:
           description: ''
         '404':
           description: UID not found
+  /api/v1/devices/{uid}/certificate:
+    get:
+      operationId: devices_certificate_retrieve
+      description: Generate and retrieve TLS certificate and private key for a device
+        by UID
+      summary: Generate and get a device TLS certificate
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificate:
+                    type: string
+                    description: PEM-encoded certificate
+                  private_key:
+                    type: string
+                    description: PEM-encoded private key
+          description: ''
+        '404':
+          description: Device certificate not found
   /api/v1/health/:
     get:
       operationId: health_retrieve

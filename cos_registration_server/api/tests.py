@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, Set, Union
+from unittest.mock import Mock, patch
 
 import yaml
 from applications.models import (
@@ -521,6 +522,60 @@ class DeviceViewTests(APITestCase):
         self.assertEqual(response.status_code, 204)
         response = self.client.get(self.url(uid))
         self.assertEqual(response.status_code, 404)
+
+
+class DeviceCertificateViewTests(APITestCase):
+    def setUp(self) -> None:
+        self.device_uid = "robot-123"
+        self.device_address = "192.168.0.10"
+        self.url = reverse(
+            "api:device-certificate", kwargs={"uid": self.device_uid}
+        )
+
+    def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
+        data = {}
+        for field, value in fields.items():
+            data[field] = value
+        url = reverse("api:devices")
+        return self.client.post(url, data, format="json")
+
+    def test_get_certificate_success(self) -> None:
+        self.create_device(uid=self.device_uid, address=self.device_address)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn("certificate", data)
+        self.assertIn("private_key", data)
+
+    def test_get_certificate_device_not_found(self) -> None:
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Device does not exist", str(response.data))
+
+    def test_get_certificate_no_address(self) -> None:
+        self.create_device(uid=self.device_uid, address="")
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Device does not exist", str(response.data))
+
+    @patch("api.views.generate_tls_certificate")
+    def test_get_certificate_missing_cert_data(
+        self, mock_generate: Mock
+    ) -> None:
+        self.create_device(uid=self.device_uid, address=self.device_address)
+
+        mock_generate.return_value = {"certificate": "", "private_key": ""}
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(
+            "Certificate data for device not found", str(response.data)
+        )
 
 
 class GrafanaDashboardsViewTests(APITestCase):
