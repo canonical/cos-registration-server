@@ -169,4 +169,8 @@ USE_X_FORWARDED_HOST = True
 COS_MODEL_NAME = os.getenv("COS_MODEL_NAME", "")
 
 # List of trusted origins for CSRF-protected requests.
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",")
+csrf_trusted_origins_list = os.getenv("CSRF_TRUSTED_ORIGINS")
+if csrf_trusted_origins_list:
+    CSRF_TRUSTED_ORIGINS = csrf_trusted_origins_list.split(",")
+else:
+    CSRF_TRUSTED_ORIGINS = []
