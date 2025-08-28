@@ -81,9 +81,11 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
             f"?{urlencode(grafana_param)}"
         )
 
+    websocket_scheme = "wss" if request.scheme == "https" else "ws"
+
     foxglove_params = {
         "ds": "foxglove-websocket",
-        "ds.url": f"ws://{device.address}:8765",
+        "ds.url": f"{websocket_scheme}://{device.address}:8765",
     }
     foxglove_main_link = (
         f"{base_url}/"
@@ -92,7 +94,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
     foxglove_layouts = {}
     for foxglove_dashboard in device.foxglove_dashboards.all():
         foxglove_params["layoutUrl"] = (
-            f"http://{base_url}/{cos_model_name}-cos-registration-server/api/v1/"  # noqa: E501
+            f"{base_url}/{cos_model_name}-cos-registration-server/api/v1/"  # noqa: E501
             f"applications/foxglove/dashboards/{foxglove_dashboard.uid}"
         )
         foxglove_layouts[foxglove_dashboard.uid] = (
