@@ -167,3 +167,13 @@ USE_X_FORWARDED_HOST = True
 
 # COS model name used to generate URLs.
 COS_MODEL_NAME = os.getenv("COS_MODEL_NAME", "")
+
+# List of trusted origins for CSRF-protected requests.
+csrf_trusted_origins_list = os.getenv("CSRF_TRUSTED_ORIGINS")
+if csrf_trusted_origins_list:
+    CSRF_TRUSTED_ORIGINS = csrf_trusted_origins_list.split(",")
+else:
+    CSRF_TRUSTED_ORIGINS = []
+
+# Trust proxy header to determine if the original request was HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

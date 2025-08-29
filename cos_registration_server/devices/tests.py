@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from html import escape
 
@@ -360,15 +361,10 @@ class DeviceViewTests(TestCase):
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        formatted_date = device.creation_date.strftime("%B %-d, %Y, %-I:%M %P")
-        formatted_date = formatted_date.replace("am", "a.m.").replace(
-            "pm", "p.m."
+        pattern = re.compile(
+            rf"Device {device.uid} with ip {device.address}, was created on the (?:[A-Za-z]+\.?) {device.creation_date.day}, {device.creation_date.year}, \d{{1,2}}:\d{{2}} (?:a\.m\.|am|p\.m\.|pm)"
         )
-        self.assertContains(
-            response,
-            f"Device {device.uid} with ip {device.address}, was created on the"
-            f" {formatted_date}",
-        )
+        self.assertRegex(response.content.decode(), pattern)
         self.assertContains(
             response,
             self.base_url + "/cos-grafana/dashboards/",
@@ -413,11 +409,55 @@ class DeviceViewTests(TestCase):
             + escape("?ds=foxglove-websocket&ds.url=ws%3A%2F%2F")
             + device.address
             + "%3A8765"
-            + escape("&layoutUrl=http%3A%2F%2F")
+            + escape("&layoutUrl=")
             + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
             + "applications%2Ffoxglove%2Fdashboards%2Flayout-1",
         )
         self.assertContains(
             response,
             self.base_url + "/cos-grafana/d/dashboard-1/?var-Host=hello-123",
+        )
+
+    def test_listed_device_additional_links_https(self) -> None:
+        grafana_dashboard = GrafanaDashboard(
+            uid="dashboard-1", dashboard=SIMPLE_GRAFANA_DASHBOARD
+        )
+        grafana_dashboard.save()
+        foxglove_dashboard = FoxgloveDashboard(
+            uid="layout-1", dashboard=SIMPLE_FOXGLOVE_DASHBOARD
+        )
+        foxglove_dashboard.save()
+        device = Device(
+            uid="hello-123",
+            creation_date=timezone.now(),
+            address="127.0.0.1",
+        )
+        device.save()
+        device.grafana_dashboards.add(grafana_dashboard)
+        device.foxglove_dashboards.add(foxglove_dashboard)
+
+        url = reverse("devices:device", args=(device.uid,))
+
+        # Simulate HTTPS request
+        response = self.client.get(url, secure=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            self.base_url
+            + "/cos-foxglove-studio/"
+            + escape("?ds=foxglove-websocket&ds.url=wss%3A%2F%2F")
+            + device.address
+            + "%3A8765"
+            + escape("&layoutUrl=")
+            + f"127.0.0.1%3A8080%2Fcos-cos-registration-server%2Fapi%2Fv1%2F"
+            + "applications%2Ffoxglove%2Fdashboards%2Flayout-1",
+        )
+        self.assertContains(
+            response,
+            'href="https://127.0.0.1:8080/cos-grafana/d/dashboard-1/?var-Host=hello-123"',
+        )
+        self.assertContains(
+            response,
+            'href="https://127.0.0.1:8080/cos-ros2bag-fileserver/hello-123/"',
         )
