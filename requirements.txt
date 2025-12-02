@@ -1,10 +1,11 @@
+django-environ==0.12.0
 django==4.2.26
 djangorestframework==3.16.1
 drf-spectacular==0.29.0
 drf-standardized-errors[openapi]
-jinja2
-whitenoise
-tzdata
 gunicorn
+jinja2
 pyyaml
 cryptography
+tzdata
+whitenoise

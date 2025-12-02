@@ -5,6 +5,9 @@ help:             ## Show the help.
 	@echo "Targets:"
 	@fgrep "##" Makefile | fgrep -v fgrep
 
+export SECRET_KEY=test
+export DATABASE_URL=sqlite://:memory:
+
 .PHONY: install
 install:          ## Install the project in dev mode.
 	@echo "Don't forget to run 'make virtualenv' if you got errors."
