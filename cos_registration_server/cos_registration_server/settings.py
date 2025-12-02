@@ -13,17 +13,18 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
-import environ
+from environs import Env
 
-env = environ.Env(DEBUG=(bool, False))  # type: ignore
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+DEBUG = env.bool("DEBUG", default=False)
 
-SECRET_KEY = env("SECRET_KEY_DJANGO")
+SECRET_KEY = env.str("SECRET_KEY_DJANGO")
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
@@ -97,7 +98,7 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
-    "default": env.db(default="sqlite://:memory:"),  # type: ignore
+    "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:"),
 }
 
 
