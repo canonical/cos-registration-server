@@ -6,7 +6,6 @@ help:             ## Show the help.
 	@fgrep "##" Makefile | fgrep -v fgrep
 
 export SECRET_KEY=test
-export DATABASE_URL=sqlite://:memory:
 
 .PHONY: install
 install:          ## Install the project in dev mode.

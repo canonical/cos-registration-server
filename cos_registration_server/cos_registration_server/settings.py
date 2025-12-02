@@ -97,7 +97,7 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASES = {
-    "default": env.db(),  # type: ignore
+    "default": env.db(default="sqlite://:memory:"),  # type: ignore
 }
 
 
