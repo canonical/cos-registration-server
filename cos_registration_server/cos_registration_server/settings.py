@@ -29,7 +29,7 @@ SECRET_KEY = env.str("SECRET_KEY_DJANGO")
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # to be able to add the webserver address
-additional_host = env.list("ALLOWED_HOST_DJANGO", default=[])  # type: ignore
+additional_host: list[str] = env.list("ALLOWED_HOST_DJANGO", default=[])
 ALLOWED_HOSTS.extend(additional_host)
 
 # Application definition
