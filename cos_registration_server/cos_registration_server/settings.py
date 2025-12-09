@@ -10,10 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 
 from environs import Env
+
+logger = logging.getLogger(__name__)
 
 env = Env()
 env.read_env()
@@ -23,6 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
+if DEBUG:
+    logger.warning(
+        "DEBUG mode is enabled; THIS IS NOT SUITABLE FOR PRODUCTION"
+    )
 
 SECRET_KEY = env.str("SECRET_KEY_DJANGO")
 
@@ -100,6 +107,11 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 DATABASES = {
     "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:"),
 }
+
+if DATABASES["default"].get("NAME") == ":memory:":
+    logger.warning(
+        "Using in-memory SQLite database; DATA WILL NOT BE PERSISTED."
+    )
 
 
 # Password validation
