@@ -150,12 +150,11 @@
 
             <div class="p-panel__content">
                <div class="u-fixed-width">
-                  <table aria-label="Device details" class="p-main-table">
+                   <table aria-label="Device details" class="p-main-table">
                     <thead>
                       <tr>
-                        <th class="p-table__cell--icon-placeholder"><span class="p-icon status-icon is-running">Device</span></th>
+                        <th>Device</th>
                         <th>IP</th>
-                        <th>Status</th>
                         <th class="u-align--right">Created</th>
                       </tr>
                     </thead>
@@ -163,14 +162,11 @@
                       <tr>
                         <td data-test-column="uuid"><span class="u-truncate">{{ device.uid }}</span></td>
                         <td data-test-column="IP"><span class="u-truncate">{{ device.address }}</span></td>
-                        <td data-test-column="Status">
-                          <i class="p-icon--success" aria-hidden="true"></i>
-                          <span class="u-off-screen">Online</span>
-                        </td>
                         <td class="u-align--right" data-test-column="Created">{{ device.creation_date }}</td>
                       </tr>
                     </tbody>
                   </table>
+
  
                  {% for application_link in links_list %}
                  <div class="u-fixed-width">
@@ -197,18 +193,8 @@
            </div>
          </main>
 
-         <aside class="l-status is-cos">
-           <div class="p-panel demo-status">
-             <div class="u-fixed-width">
-               <i class="p-icon--success"></i>
-               All systems operational
-             </div>
-           </div>
-         </aside>
+       <script>
 
-
-
-      <script>
       /*
         Set up event handlers for application layout examples.
         This is for demo purposes only. Real applications should implement it within their application code.

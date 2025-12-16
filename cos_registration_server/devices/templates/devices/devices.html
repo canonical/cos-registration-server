@@ -128,33 +128,30 @@
 
             <div class="p-panel__content">
               <div class="u-fixed-width">
-                <table aria-label="Devices" class="p-main-table">
-                  <thead>
-                    <tr>
-                      <th class="p-table__cell--icon-placeholder p-table__colump--ip"><span class="p-icon status-icon is-running">Devices ({{ devices_list|length }})</span></th>
-                      <th>IP</th>
-                      <th>Status</th>
-                      <th class="u-align--right">Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                  {% for device in devices_list %}
-                    <tr>
-                      <td data-test-column="uuid"><a href="../devices/{{ device.uid }}" class="u-truncate p-link--soft">{{ device.uid }}</a></td>
-                      <td data-test-column="IP"><span class="u-truncate">{{ device.address }}</span></td>
-                      <td data-test-column="Status">
-                        <i class="p-icon--success" aria-hidden="true"></i>
-                        <span class="u-off-screen">Online</span>
-                      </td>
-                      <td class="u-align--right" data-test-column="Created">{{ device.creation_date }}</td>
-                    </tr>
-                  {% empty %}
-                    <tr>
-                      <td colspan="4">No devices are available.</td>
-                    </tr>
-                   {% endfor %}
-                   </tbody>
-                 </table>
+                 <table aria-label="Devices" class="p-main-table">
+                   <thead>
+                     <tr>
+                        <th>Devices ({{ devices_list|length }})</th>
+
+                       <th>IP</th>
+                       <th class="u-align--right">Created</th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                   {% for device in devices_list %}
+                     <tr>
+                       <td data-test-column="uuid"><a href="../devices/{{ device.uid }}" class="u-truncate p-link--soft">{{ device.uid }}</a></td>
+                       <td data-test-column="IP"><span class="u-truncate">{{ device.address }}</span></td>
+                       <td class="u-align--right" data-test-column="Created">{{ device.creation_date }}</td>
+                     </tr>
+                   {% empty %}
+                     <tr>
+                       <td colspan="3">No devices are available.</td>
+                     </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+
                  {% if is_paginated %}
                  <nav class="p-pagination" aria-label="Pagination">
                    <ol class="p-pagination__items">
@@ -209,17 +206,8 @@
            </div>
          </main>
  
-         <aside class="l-status is-cos">
-           <div class="p-panel demo-status">
-             <div class="u-fixed-width">
-               <i class="p-icon--success"></i>
-               All systems operational
-             </div>
+       <script>
 
-          </div>
-        </aside>
-
-      <script>
       /*
         Set up event handlers for application layout examples.
         This is for demo purposes only. Real applications should implement it within their application code.
