@@ -131,7 +131,7 @@
                  <table aria-label="Devices" class="p-main-table">
                    <thead>
                      <tr>
-                        <th>Devices ({{ devices_list|length }})</th>
+                        <th>Devices</th>
 
                        <th>IP</th>
                        <th class="u-align--right">Created</th>
@@ -251,7 +251,7 @@
 
         [].slice.call(asideResize).forEach(function (button) {
           button.addEventListener('click', function () {
-            button.dataset.resizeClass;
+
             var panel = document.getElementById(button.getAttribute('aria-controls'));
             if (panel) {
               panel.classList.remove('is-narrow');

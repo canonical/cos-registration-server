@@ -238,7 +238,7 @@
 
         [].slice.call(asideResize).forEach(function (button) {
           button.addEventListener('click', function () {
-            button.dataset.resizeClass;
+
             var panel = document.getElementById(button.getAttribute('aria-controls'));
             if (panel) {
               panel.classList.remove('is-narrow');
@@ -279,35 +279,6 @@
 
       setupAppLayoutExamples();
       </script>
-    <!-- <header id="navigation" class="p-navigation is-dark">
-        <div class="p-navigation__row">
-          <div class="p-navigation__banner">
-            <div class="p-navigation__tagged-logo">
-              <a class="p-navigation__link" href="#">
-                <div class="p-navigation__logo-tag">
-                  <img class="p-navigation__logo-icon" src="https://assets.ubuntu.com/v1/82818827-CoF_white.svg" alt="">
-                </div>
-                <span class="p-navigation__logo-title" id="nav">
-                    Canonical Observability Stack
-                </span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </header>
-    <main class="p-section">
-        <div class="u-fixed-width">
-{% if devices_list %}
-    <h1>Devices list:</h1>
-    <ul class="p-list--divided">
-    {% for device in devices_list %}
-        <li><a href="{% url 'devices:device' device.uid %}">{{ device.uid }}</a></li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No devices are available.</p>
-{% endif %}
-      </div>
-    </main> -->
+
   </body>
 </html>
