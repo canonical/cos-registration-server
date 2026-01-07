@@ -16,7 +16,7 @@ class devices(generic.ListView):  # type: ignore[type-arg]
 
     template_name = "devices/devices.html"
     context_object_name = "devices_list"
-    paginate_by = 25
+    paginate_by = 20
 
     def get_queryset(self) -> Any:
         """Return all devices on GET."""
@@ -115,6 +115,7 @@ def device(request: HttpRequest, uid: str) -> HttpResponse:
     )
     links.append(ApplicationLinks("Bag files", bag_files))
     context = {
+        "devices_list": Device.objects.all(),
         "device": device,
         "links_list": links,
     }

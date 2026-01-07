@@ -1,10 +1,284 @@
-<p>Device {{device.uid}} with ip {{device.address}}, was created on the {{device.creation_date}}</p>
-<ul>
-{% for application_link in links_list%}
-    <li><a href="{{request.scheme}}://{{application_link.main_link}}">{{ application_link.name }}</a>
-        {% for name, link in application_link.additional_links.items %}
-            <ul><a href="{{request.scheme}}://{{link}}">{{ name }}</a></ul>
-        {% endfor %}
-    </li>
-{% endfor %}
-</ul>
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Devices</title>
+
+     <link rel="stylesheet" href="https://assets.ubuntu.com/v1/vanilla-framework-version-4.11.0.min.css" />
+
+     <style>
+       .l-application .u-fixed-width {
+         max-width: 95rem;
+       }
+
+       .demo-status {
+         padding-top: 0.75rem;
+         padding-bottom: 0.75rem;
+       }
+
+       .is-cos-background {
+         background-image: linear-gradient(180deg, #241f2b 0%, #181621 100%);
+       }
+
+       .is-cos-background .p-panel__logo-icon,
+       .is-cos-background .p-panel__logo-name,
+       .is-cos-background .p-panel__toggle,
+       .is-cos-background .p-side-navigation__link,
+       .is-cos-background .p-side-navigation__text {
+         color: #fff;
+       }
+
+       .is-cos-background .p-panel__logo-name {
+         margin-left: 0.5rem;
+       }
+
+       .is-cos-background .p-side-navigation__link:hover,
+       .is-cos-background .p-side-navigation__link:focus {
+         color: #f99b11;
+       }
+
+       .p-main-table {
+         width: 100%;
+       }
+     </style>
+
+     <link rel="icon" href="https://assets.ubuntu.com/v1/7144ec6d-logo-jaas-icon.svg" type="image/svg+xml" />
+
+   </head>
+
+
+  <body class="is-paper">
+    <div class="l-application" role="presentation">
+        <div class="l-navigation-bar">
+          <div class="p-panel is-dark is-cos-background">
+            <div class="p-panel__header">
+              <a class="p-panel__logo" href="../devices">
+                <img class="p-panel__logo-icon" src="https://assets.ubuntu.com/v1/7144ec6d-logo-jaas-icon.svg" alt="" width="24" height="24">
+                <span class="p-panel__logo-name is-fading-when-collapsed">COS for devices</span>
+              </a>
+              <div class="p-panel__controls">
+                <span class="p-panel__toggle js-menu-toggle">Menu</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+         <header class="l-navigation is-collapsed">
+           <div class="l-navigation__drawer">
+             <div class="p-panel is-dark is-cos-background">
+               <div class="p-panel__header is-sticky">
+                 <a class="p-panel__logo" href="../devices">
+                   <img class="p-panel__logo-icon" src="https://assets.ubuntu.com/v1/7144ec6d-logo-jaas-icon.svg" alt="" width="24" height="24">
+                   <span class="p-panel__logo-name is-fading-when-collapsed">COS for devices</span>
+                 </a>
+                 <div class="p-panel__controls u-hide--large">
+                   <button class="p-button--base is-dark has-icon u-no-margin u-hide--medium js-menu-close"><i class="is-light p-icon--close"></i></button>
+                   <button class="p-button--base is-dark has-icon u-no-margin u-hide--small js-menu-pin"><i class="is-light p-icon--pin"></i></button>
+                 </div>
+               </div>
+               <div class="p-panel__content">
+ 
+                  <nav class="p-side-navigation--icons" id="drawer-icons" aria-label="Main">
+                    <ul class="p-side-navigation__list">
+                      <li class="p-side-navigation__item">
+                        <a class="p-side-navigation__link" href="../devices">
+                            <span class="p-side-navigation__label">All devices</span>
+                            <span class="p-side-navigation__status">
+                              <i class="p-icon--success"></i>
+                            </span>
+                        </a>
+                      </li>
+                    </ul>
+                     {% if devices_list %}
+                     <ul class="p-side-navigation__list is-fading-when-collapsed">
+                        <li class="p-side-navigation__item">
+                          <span class="p-side-navigation__text"><strong>Devices</strong></span>
+                        </li>
+
+                       {% for item in devices_list %}
+                       <li class="p-side-navigation__item{% if item.uid == device.uid %} is-active{% endif %}">
+                         <a class="p-side-navigation__link" href="{% url 'devices:device' item.uid %}">
+                           <span class="p-side-navigation__label">{{ item.uid }}</span>
+                         </a>
+                       </li>
+                       {% endfor %}
+                     </ul>
+                     {% else %}
+                     <ul class="p-side-navigation__list is-fading-when-collapsed">
+                       <li class="p-side-navigation__item">
+                         <span class="p-side-navigation__text">No devices are available.</span>
+                       </li>
+                     </ul>
+                     {% endif %}
+                     <ul class="p-side-navigation__list is-fading-when-collapsed">
+                        <li class="p-side-navigation__item">
+                          <a href="https://github.com/canonical/cos-registration-server/issues" class="p-side-navigation__link" target="_blank" rel="noreferrer">Report a bug</a>
+                        </li>
+
+                       <li class="p-side-navigation__item">
+                         <a href="https://github.com/canonical/cos-registration-server/issues" class="p-side-navigation__link" target="_blank" rel="noreferrer">Feedback</a>
+                       </li>
+                     </ul>
+                     <ul class="p-side-navigation__list is-fading-when-collapsed">
+
+                      <li class="p-side-navigation__item">
+                        <span class="p-side-navigation__text">
+                          Version 1.0.0
+                          <div class="p-side-navigation__status">
+                            <span class="p-chip--caution is-readonly is-inline is-dense">Beta</span>
+                          </div>
+                        </span>
+                      </li>
+                    </ul>
+                  </nav>
+
+
+ 
+               </div>
+             </div>
+           </div>
+         </header>
+
+
+        <main class="l-main">
+          <div class="p-panel">
+             <div class="p-panel__header">
+               <h4 class="p-panel__title">Device {{ device.uid }}</h4>
+             </div>
+
+            <div class="p-panel__content">
+               <div class="u-fixed-width">
+                   <table aria-label="Device details" class="p-main-table">
+                    <thead>
+                      <tr>
+                        <th>Device</th>
+                        <th>IP</th>
+                        <th class="u-align--right">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td data-test-column="uuid"><span class="u-truncate">{{ device.uid }}</span></td>
+                        <td data-test-column="IP"><span class="u-truncate">{{ device.address }}</span></td>
+                        <td class="u-align--right" data-test-column="Created">{{ device.creation_date }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+ 
+                 {% for application_link in links_list %}
+                 <div class="u-fixed-width">
+                   <table aria-label="{{ application_link.name }} links" class="p-main-table">
+                     <thead>
+                       <tr>
+                          <th><a class="p-link--soft" href="{{ request.scheme }}://{{ application_link.main_link }}">{{ application_link.name }}</a></th>
+
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {% for name, link in application_link.additional_links.items %}
+                       <tr>
+                         <td><a href="{{ request.scheme }}://{{ link }}">{{ name }}</a></td>
+                       </tr>
+                       {% endfor %}
+                     </tbody>
+                   </table>
+                 </div>
+                 {% endfor %}
+
+               </div>
+             </div>
+           </div>
+         </main>
+
+       <script>
+
+      /*
+        Set up event handlers for application layout examples.
+        This is for demo purposes only. Real applications should implement it within their application code.
+      */
+      function setupAppLayoutExamples() {
+        var aside = document.querySelector('.l-aside');
+        var navigation = document.querySelector('.l-navigation');
+
+        var menuToggle = document.querySelector('.js-menu-toggle');
+        var menuClose = document.querySelector('.js-menu-close');
+        var menuPin = document.querySelector('.js-menu-pin');
+        var asideOpen = document.querySelector('.js-aside-open');
+        var asideClose = document.querySelector('.js-aside-close');
+        var asideResize = document.querySelectorAll('.js-aside-resize');
+        var asidePin = document.querySelector('.js-aside-pin');
+
+        if (menuToggle) {
+          menuToggle.addEventListener('click', function () {
+            navigation.classList.toggle('is-collapsed');
+          });
+        }
+
+        if (menuClose) {
+          menuClose.addEventListener('click', function (e) {
+            navigation.classList.add('is-collapsed');
+            document.activeElement.blur();
+          });
+        }
+
+        if (asideOpen) {
+          asideOpen.addEventListener('click', function () {
+            aside.classList.remove('is-collapsed');
+          });
+        }
+
+        if (asideClose) {
+          asideClose.addEventListener('click', function () {
+            aside.classList.add('is-collapsed');
+          });
+        }
+
+        [].slice.call(asideResize).forEach(function (button) {
+          button.addEventListener('click', function () {
+
+            var panel = document.getElementById(button.getAttribute('aria-controls'));
+            if (panel) {
+              panel.classList.remove('is-narrow');
+              panel.classList.remove('is-medium');
+              panel.classList.remove('is-wide');
+              if (button.dataset.resizeClass) {
+                panel.classList.add(button.dataset.resizeClass);
+              }
+            }
+          });
+        });
+
+        if (menuPin) {
+          menuPin.addEventListener('click', function () {
+            navigation.classList.toggle('is-pinned');
+            if (navigation.classList.contains('is-pinned')) {
+              menuPin.querySelector('i').classList.add('p-icon--close');
+              menuPin.querySelector('i').classList.remove('p-icon--pin');
+            } else {
+              menuPin.querySelector('i').classList.add('p-icon--pin');
+              menuPin.querySelector('i').classList.remove('p-icon--close');
+            }
+            document.activeElement.blur();
+          });
+        }
+
+        if (asidePin) {
+          asidePin.addEventListener('click', function () {
+            aside.classList.toggle('is-pinned');
+            if (aside.classList.contains('is-pinned')) {
+              asidePin.innerText = 'Unpin';
+            } else {
+              asidePin.innerText = 'Pin';
+            }
+          });
+        }
+      }
+
+      setupAppLayoutExamples();
+      </script>
+
+  </body>
+</html>

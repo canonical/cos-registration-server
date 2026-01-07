@@ -295,7 +295,7 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "2 device(s):")
+        self.assertContains(response, "2 devices")
         self.assertContains(response, "robot-1")
         self.assertContains(response, "robot-2")
         self.assertQuerySetEqual(
@@ -307,21 +307,21 @@ class DevicesViewTests(TestCase):
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "1 device(s):")
+        self.assertContains(response, "1 devices")
         self.assertQuerySetEqual(response.context["devices_list"], [device_1])
 
         device_2 = create_device("robot-2", "192.168.0.2")
 
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "2 device(s):")
+        self.assertContains(response, "2 devices")
         self.assertQuerySetEqual(
             list(response.context["devices_list"]), [device_1, device_2]
         )
 
     def test_devices_pagination(self) -> None:
         total_number_of_devices = 40
-        max_devices_per_page = 25
+        max_devices_per_page = 20
         devices = []
         for i in range(0, total_number_of_devices):
             devices.append(create_device(f"robot-{i}", "192.168.0.1"))
@@ -329,7 +329,7 @@ class DevicesViewTests(TestCase):
         response = self.client.get(reverse("devices:devices"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["is_paginated"] == True)
-        self.assertContains(response, f"{total_number_of_devices} device(s):")
+        self.assertContains(response, f"{total_number_of_devices} devices")
         self.assertEqual(
             len(response.context["devices_list"]), max_devices_per_page
         )
@@ -361,8 +361,10 @@ class DeviceViewTests(TestCase):
         url = reverse("devices:device", args=(device.uid,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"Device {device.uid}")
+        self.assertContains(response, f"{device.address}")
         pattern = re.compile(
-            rf"Device {device.uid} with ip {device.address}, was created on the (?:[A-Za-z]+\.?) {device.creation_date.day}, {device.creation_date.year}, \d{{1,2}}:\d{{2}} (?:a\.m\.|am|p\.m\.|pm)"
+            rf"(?:[A-Za-z]+\.?) {device.creation_date.day}, {device.creation_date.year}, \d{{1,2}}:\d{{2}} (?:a\.m\.|am|p\.m\.|pm)"
         )
         self.assertRegex(response.content.decode(), pattern)
         self.assertContains(
