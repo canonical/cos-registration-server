@@ -477,3 +477,48 @@ class LokiAlertRuleFileSerializer(
         # in the model but not exposed in the API
         validated_data["template"] = is_template
         return LokiAlertRuleFile.objects.create(**validated_data)
+
+
+class DeviceCertificateSerializer(
+    serializers.ModelSerializer  # type: ignore[type-arg]
+):
+    """Device Certificate Serializer class."""
+
+    class Meta:
+        """DeviceCertificateSerializer Meta class."""
+
+        model = Device
+        fields = (
+            "csr",
+            "certificate",
+            "certificate_status",
+            "certificate_detail",
+        )
+        read_only_fields = (
+            "certificate",
+            "certificate_status",
+            "certificate_detail",
+        )
+
+    def validate_csr(self, value: str) -> str:
+        """Validate CSR format.
+
+        value: CSR PEM string.
+        return: validated CSR.
+        raise: serializers.ValidationError
+        """
+        if not value:
+            raise serializers.ValidationError("CSR cannot be empty")
+
+        # Basic PEM format validation
+        if not value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
+            raise serializers.ValidationError(
+                "Invalid CSR format: Missing BEGIN CERTIFICATE "
+                "REQUEST header"
+            )
+        if not value.strip().endswith("-----END CERTIFICATE REQUEST-----"):
+            raise serializers.ValidationError(
+                "Invalid CSR format: Missing END CERTIFICATE " "REQUEST footer"
+            )
+
+        return value

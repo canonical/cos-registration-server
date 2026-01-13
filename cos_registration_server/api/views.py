@@ -5,6 +5,7 @@ from typing import Any, Dict, Tuple
 
 import api.schema_status as status
 from api.serializer import (
+    DeviceCertificateSerializer,
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
@@ -20,12 +21,14 @@ from applications.models import (
 from applications.utils import render_alert_rule_template_for_device
 from devices.models import Device
 from django.http import HttpResponse
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
 )
+from rest_framework import status as http_status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import (
     CreateAPIView,
@@ -37,8 +40,6 @@ from rest_framework.generics import (
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .utils import generate_tls_certificate
 
 
 class HealthView(APIView):
@@ -167,13 +168,64 @@ class DeviceCertificateView(APIView):
     """Device Certificate API view."""
 
     @extend_schema(
-        summary="Generate and get a device TLS certificate",
-        description="Generate and retrieve TLS certificate and "
-        "private key for a device by UID",
+        summary="Submit a Certificate Signing Request (CSR)",
+        description=(
+            "Submit a CSR for the device. The server stores it "
+            "and marks status as pending."
+        ),
+        request=DeviceCertificateSerializer,
         responses={
-            **status.code_200_device_certificate,
-            **status.code_404_uid_not_found,
-            **status.code_404_device_certificate_not_found,
+            202: OpenApiResponse(description="CSR accepted for processing"),
+            400: OpenApiResponse(description="Invalid CSR format"),
+            404: OpenApiResponse(description="Device not found"),
+        },
+    )
+    def post(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """POST a CSR for device certificate signing."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            return Response(
+                {"error": "Device not found"},
+                status=http_status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = DeviceCertificateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Invalid CSR format", "details": serializer.errors},
+                status=http_status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Store CSR and set pending status
+        device.csr = serializer.validated_data["csr"]
+        device.certificate_status = Device.CertificateStatus.PENDING
+        device.certificate_created_at = timezone.now()
+        device.certificate_updated_at = timezone.now()
+        device.certificate = ""
+        device.certificate_detail = ""
+        device.save()
+
+        return Response(status=http_status.HTTP_202_ACCEPTED)
+
+    @extend_schema(
+        summary="Check certificate signing status",
+        description=(
+            "Retrieve the status of the certificate request and "
+            "the signed certificate if available."
+        ),
+        responses={
+            200: OpenApiResponse(
+                description="Certificate status retrieved",
+                response=DeviceCertificateSerializer,
+            ),
+            404: OpenApiResponse(description="Device or CSR not found"),
         },
     )
     def get(
@@ -183,28 +235,100 @@ class DeviceCertificateView(APIView):
         *args: Tuple[Any],
         **kwargs: Dict[str, Any],
     ) -> Response:
-        """GET a device TLS certificate and private key."""
+        """GET certificate signing status and certificate if signed."""
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
-            raise NotFound("Device does not exist")
+            return Response(
+                {"error": "Device or CSR not found"},
+                status=http_status.HTTP_404_NOT_FOUND,
+            )
 
-        # If the device exists it will have an address,
-        # the serializer does not allow the creation of a device
-        # without an ip address.
-        cert_data = generate_tls_certificate(device.uid, device.address)
+        # Check if CSR exists
+        if not device.csr:
+            return Response(
+                {"error": "Device or CSR not found"},
+                status=http_status.HTTP_404_NOT_FOUND,
+            )
 
-        if not cert_data.get("certificate") or not cert_data.get(
-            "private_key"
-        ):
-            raise NotFound("Certificate data for device not found")
+        response_data = {
+            "status": device.certificate_status
+            or Device.CertificateStatus.PENDING,
+            "CSR": device.csr,
+            "certificate": device.certificate,
+        }
 
-        return Response(
-            {
-                "certificate": cert_data["certificate"],
-                "private_key": cert_data["private_key"],
-            }
-        )
+        # Include detail if status is denied
+        if device.certificate_status == Device.CertificateStatus.DENIED:
+            response_data["detail"] = device.certificate_detail
+
+        return Response(response_data, status=http_status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Update certificate status (internal use)",
+        description=(
+            "Internal endpoint for the charm to update certificate "
+            "status and provide signed certificate."
+        ),
+        request=DeviceCertificateSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="Certificate updated successfully",
+                response=DeviceCertificateSerializer,
+            ),
+            400: OpenApiResponse(description="Invalid request data"),
+            404: OpenApiResponse(description="Device not found"),
+        },
+    )
+    def patch(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """PATCH certificate status and certificate data."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            return Response(
+                {"error": "Device uid not found"},
+                status=http_status.HTTP_404_NOT_FOUND,
+            )
+
+        # Validate status if provided
+        new_status = request.data.get("status")
+        if new_status and new_status not in [
+            Device.CertificateStatus.PENDING,
+            Device.CertificateStatus.SIGNED,
+            Device.CertificateStatus.DENIED,
+        ]:
+            return Response(
+                {"error": "Invalid status value"},
+                status=http_status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Update fields
+        if new_status:
+            device.certificate_status = new_status
+        if "certificate" in request.data:
+            device.certificate = request.data["certificate"]
+        if "detail" in request.data:
+            device.certificate_detail = request.data["detail"]
+
+        device.certificate_updated_at = timezone.now()
+        device.save()
+
+        response_data = {
+            "uid": device.uid,
+            "status": device.certificate_status,
+            "CSR": device.csr,
+            "certificate": device.certificate,
+            "detail": device.certificate_detail,
+            "updated_at": device.certificate_updated_at,
+        }
+
+        return Response(response_data, status=http_status.HTTP_200_OK)
 
 
 class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]

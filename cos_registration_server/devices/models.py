@@ -21,7 +21,20 @@ class Device(models.Model):
     grafana_dashboards: Grafana dashboards relations.
     foxglove_dashboards: Foxglove dashboards relations.
     prometheus_alert_rule_files: Prometheus alert rules files relations.
+    csr: Certificate Signing Request in PEM format.
+    certificate: Signed certificate in PEM format (null until signed).
+    certificate_status: Current status of the certificate request.
+    certificate_detail: Additional details for denials or errors.
+    certificate_created_at: Timestamp when certificate request was created.
+    certificate_updated_at: Timestamp when certificate was last updated.
     """
+
+    class CertificateStatus(models.TextChoices):
+        """Certificate request status choices."""
+
+        PENDING = "pending", "Pending"
+        SIGNED = "signed", "Signed"
+        DENIED = "denied", "Denied"
 
     uid = models.CharField(max_length=200, unique=True)
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
@@ -38,6 +51,28 @@ class Device(models.Model):
     )
     loki_alert_rule_files = models.ManyToManyField(
         LokiAlertRuleFile, related_name="devices"
+    )
+    # TLS Certificate fields
+    csr = models.TextField(
+        "Certificate Signing Request", blank=True, default=""
+    )
+    certificate = models.TextField(
+        "Signed Certificate", blank=True, default=""
+    )
+    certificate_status = models.CharField(
+        max_length=20,
+        choices=CertificateStatus.choices,
+        blank=True,
+        default="",
+    )
+    certificate_detail = models.TextField(
+        "Certificate details", blank=True, default=""
+    )
+    certificate_created_at = models.DateTimeField(
+        "Certificate request created", null=True, blank=True
+    )
+    certificate_updated_at = models.DateTimeField(
+        "Certificate last updated", null=True, blank=True
     )
 
     def __str__(self) -> str:
