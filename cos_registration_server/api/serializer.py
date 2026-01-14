@@ -13,7 +13,7 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import is_alert_rule_a_jinja_template
-from devices.models import Device
+from devices.models import Certificate, Device
 from django.core.serializers.pyyaml import DjangoSafeDumper
 from rest_framework import serializers
 
@@ -103,6 +103,26 @@ class FoxgloveDashboardSerializer(
         return FoxgloveDashboard.objects.create(**validated_data)
 
 
+class CertificateSerializer(
+    serializers.ModelSerializer  # type: ignore[type-arg]
+):
+    """Certificate Serializer class."""
+
+    class Meta:
+        """CertificateSerializer Meta class."""
+
+        model = Certificate
+        fields = (
+            "csr",
+            "certificate",
+            "status",
+            "detail",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("created_at", "updated_at")
+
+
 class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     """Device Serializer class."""
 
@@ -134,6 +154,8 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
+    certificate = CertificateSerializer(read_only=True)
+
     class Meta:
         """DeviceSerializer Meta class."""
 
@@ -147,6 +169,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "foxglove_dashboards",
             "prometheus_alert_rule_files",
             "loki_alert_rule_files",
+            "certificate",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:
@@ -487,17 +510,17 @@ class DeviceCertificateSerializer(
     class Meta:
         """DeviceCertificateSerializer Meta class."""
 
-        model = Device
+        model = Certificate
         fields = (
             "csr",
             "certificate",
-            "certificate_status",
-            "certificate_detail",
+            "status",
+            "detail",
         )
         read_only_fields = (
             "certificate",
-            "certificate_status",
-            "certificate_detail",
+            "status",
+            "detail",
         )
 
     def validate_csr(self, value: str) -> str:

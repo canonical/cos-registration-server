@@ -9,6 +9,14 @@ from applications.models import (
 from django.db import models
 
 
+class CertificateStatus(models.TextChoices):
+    """Certificate request status choices."""
+
+    PENDING = "pending", "Pending"
+    SIGNED = "signed", "Signed"
+    DENIED = "denied", "Denied"
+
+
 class Device(models.Model):
     """Device model.
 
@@ -21,20 +29,7 @@ class Device(models.Model):
     grafana_dashboards: Grafana dashboards relations.
     foxglove_dashboards: Foxglove dashboards relations.
     prometheus_alert_rule_files: Prometheus alert rules files relations.
-    csr: Certificate Signing Request in PEM format.
-    certificate: Signed certificate in PEM format (null until signed).
-    certificate_status: Current status of the certificate request.
-    certificate_detail: Additional details for denials or errors.
-    certificate_created_at: Timestamp when certificate request was created.
-    certificate_updated_at: Timestamp when certificate was last updated.
     """
-
-    class CertificateStatus(models.TextChoices):
-        """Certificate request status choices."""
-
-        PENDING = "pending", "Pending"
-        SIGNED = "signed", "Signed"
-        DENIED = "denied", "Denied"
 
     uid = models.CharField(max_length=200, unique=True)
     creation_date = models.DateTimeField("creation date", auto_now_add=True)
@@ -52,29 +47,52 @@ class Device(models.Model):
     loki_alert_rule_files = models.ManyToManyField(
         LokiAlertRuleFile, related_name="devices"
     )
-    # TLS Certificate fields
+
+    def __str__(self) -> str:
+        """Str representation of a device."""
+        return self.uid
+
+
+class Certificate(models.Model):
+    """Certificate model.
+
+    This class represents a device certificate in the DB.
+
+    device: OneToOne relationship to Device.
+    csr: Certificate Signing Request in PEM format.
+    certificate: Signed certificate in PEM format (null until signed).
+    status: Current status of the certificate request.
+    detail: Additional details for denials or errors.
+    created_at: Timestamp when certificate request was created.
+    updated_at: Timestamp when certificate was last updated.
+    """
+
+    device = models.OneToOneField(
+        Device,
+        on_delete=models.CASCADE,
+        related_name="certificate",
+        primary_key=True,
+    )
     csr = models.TextField(
         "Certificate Signing Request", blank=True, default=""
     )
     certificate = models.TextField(
         "Signed Certificate", blank=True, default=""
     )
-    certificate_status = models.CharField(
+    status = models.CharField(
         max_length=20,
         choices=CertificateStatus.choices,
         blank=True,
         default="",
     )
-    certificate_detail = models.TextField(
-        "Certificate details", blank=True, default=""
+    detail = models.TextField("Certificate details", blank=True, default="")
+    created_at = models.DateTimeField(
+        "Certificate request created", auto_now_add=True
     )
-    certificate_created_at = models.DateTimeField(
-        "Certificate request created", null=True, blank=True
-    )
-    certificate_updated_at = models.DateTimeField(
-        "Certificate last updated", null=True, blank=True
+    updated_at = models.DateTimeField(
+        "Certificate last updated", auto_now=True
     )
 
     def __str__(self) -> str:
-        """Str representation of a device."""
-        return self.uid
+        """Str representation of a certificate."""
+        return f"Certificate for {self.device.uid}"

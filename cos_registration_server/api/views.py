@@ -19,9 +19,8 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import render_alert_rule_template_for_device
-from devices.models import Device
+from devices.models import Certificate, CertificateStatus, Device
 from django.http import HttpResponse
-from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
     OpenApiParameter,
@@ -62,6 +61,19 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
 
+    def get_queryset(self) -> Any:
+        """Get the queryset, with optional filtering by certificate_status."""
+        queryset = super().get_queryset()
+
+        # Filter by certificate_status if provided
+        certificate_status = self.request.query_params.get(
+            "certificate_status"
+        )
+        if certificate_status:
+            queryset = queryset.filter(certificate__status=certificate_status)
+
+        return queryset
+
     @extend_schema(
         summary="Register a device",
         description="Register a device by its ID",
@@ -88,7 +100,14 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
                 "Example: ?fields=uid,create_date",
                 required=False,
                 type=OpenApiTypes.STR,
-            )
+            ),
+            OpenApiParameter(
+                name="certificate_status",
+                description="Filter devices by certificate status."
+                "Example: ?certificate_status=pending",
+                required=False,
+                type=OpenApiTypes.STR,
+            ),
         ],
     )
     def get(
@@ -203,14 +222,16 @@ class DeviceCertificateView(APIView):
                 status=http_status.HTTP_400_BAD_REQUEST,
             )
 
-        # Store CSR and set pending status
-        device.csr = serializer.validated_data["csr"]
-        device.certificate_status = Device.CertificateStatus.PENDING
-        device.certificate_created_at = timezone.now()
-        device.certificate_updated_at = timezone.now()
-        device.certificate = ""
-        device.certificate_detail = ""
-        device.save()
+        # Create or update Certificate object
+        certificate, created = Certificate.objects.update_or_create(
+            device=device,
+            defaults={
+                "csr": serializer.validated_data["csr"],
+                "status": CertificateStatus.PENDING,
+                "certificate": "",
+                "detail": "",
+            },
+        )
 
         return Response(status=http_status.HTTP_202_ACCEPTED)
 
@@ -244,23 +265,24 @@ class DeviceCertificateView(APIView):
                 status=http_status.HTTP_404_NOT_FOUND,
             )
 
-        # Check if CSR exists
-        if not device.csr:
+        # Check if Certificate exists
+        try:
+            certificate = device.certificate
+        except Certificate.DoesNotExist:
             return Response(
                 {"error": "Device or CSR not found"},
                 status=http_status.HTTP_404_NOT_FOUND,
             )
 
         response_data = {
-            "status": device.certificate_status
-            or Device.CertificateStatus.PENDING,
-            "CSR": device.csr,
-            "certificate": device.certificate,
+            "status": certificate.status or CertificateStatus.PENDING,
+            "CSR": certificate.csr,
+            "certificate": certificate.certificate,
         }
 
         # Include detail if status is denied
-        if device.certificate_status == Device.CertificateStatus.DENIED:
-            response_data["detail"] = device.certificate_detail
+        if certificate.status == CertificateStatus.DENIED:
+            response_data["detail"] = certificate.detail
 
         return Response(response_data, status=http_status.HTTP_200_OK)
 
@@ -296,12 +318,21 @@ class DeviceCertificateView(APIView):
                 status=http_status.HTTP_404_NOT_FOUND,
             )
 
+        # Get or create certificate
+        try:
+            certificate = device.certificate
+        except Certificate.DoesNotExist:
+            return Response(
+                {"error": "Certificate not found"},
+                status=http_status.HTTP_404_NOT_FOUND,
+            )
+
         # Validate status if provided
         new_status = request.data.get("status")
         if new_status and new_status not in [
-            Device.CertificateStatus.PENDING,
-            Device.CertificateStatus.SIGNED,
-            Device.CertificateStatus.DENIED,
+            CertificateStatus.PENDING,
+            CertificateStatus.SIGNED,
+            CertificateStatus.DENIED,
         ]:
             return Response(
                 {"error": "Invalid status value"},
@@ -310,22 +341,21 @@ class DeviceCertificateView(APIView):
 
         # Update fields
         if new_status:
-            device.certificate_status = new_status
+            certificate.status = new_status
         if "certificate" in request.data:
-            device.certificate = request.data["certificate"]
+            certificate.certificate = request.data["certificate"]
         if "detail" in request.data:
-            device.certificate_detail = request.data["detail"]
+            certificate.detail = request.data["detail"]
 
-        device.certificate_updated_at = timezone.now()
-        device.save()
+        certificate.save()
 
         response_data = {
             "uid": device.uid,
-            "status": device.certificate_status,
-            "CSR": device.csr,
-            "certificate": device.certificate,
-            "detail": device.certificate_detail,
-            "updated_at": device.certificate_updated_at,
+            "status": certificate.status,
+            "CSR": certificate.csr,
+            "certificate": certificate.certificate,
+            "detail": certificate.detail,
+            "updated_at": certificate.updated_at,
         }
 
         return Response(response_data, status=http_status.HTTP_200_OK)

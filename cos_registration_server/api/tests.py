@@ -10,7 +10,7 @@ from applications.models import (
     LokiAlertRuleFile,
     PrometheusAlertRuleFile,
 )
-from devices.models import Device
+from devices.models import Certificate, CertificateStatus, Device
 from django.db import models
 from django.http import HttpResponse
 from django.urls import reverse
@@ -563,16 +563,16 @@ Yh5L7kKLHZqQqKL=
 
         self.assertEqual(response.status_code, 202)
 
-        # Verify device was updated with CSR
+        # Verify certificate was created with CSR
         device = Device.objects.get(uid=self.device_uid)
-        self.assertEqual(device.csr, self.valid_csr)
-        self.assertEqual(
-            device.certificate_status, Device.CertificateStatus.PENDING
-        )
-        self.assertIsNotNone(device.certificate_created_at)
-        self.assertIsNotNone(device.certificate_updated_at)
-        self.assertEqual(device.certificate, "")
-        self.assertEqual(device.certificate_detail, "")
+        self.assertTrue(hasattr(device, "certificate"))
+        certificate = device.certificate
+        self.assertEqual(certificate.csr, self.valid_csr)
+        self.assertEqual(certificate.status, CertificateStatus.PENDING)
+        self.assertIsNotNone(certificate.created_at)
+        self.assertIsNotNone(certificate.updated_at)
+        self.assertEqual(certificate.certificate, "")
+        self.assertEqual(certificate.detail, "")
 
     def test_post_csr_device_not_found(self) -> None:
         """Test CSR submission for non-existent device."""
@@ -643,12 +643,11 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 202)
         device = Device.objects.get(uid=self.device_uid)
-        self.assertEqual(device.csr, new_csr)
-        self.assertEqual(
-            device.certificate_status, Device.CertificateStatus.PENDING
-        )
+        certificate = device.certificate
+        self.assertEqual(certificate.csr, new_csr)
+        self.assertEqual(certificate.status, CertificateStatus.PENDING)
         # Certificate should be cleared
-        self.assertEqual(device.certificate, "")
+        self.assertEqual(certificate.certificate, "")
 
     # GET endpoint tests
     def test_get_certificate_status_pending(self) -> None:
@@ -675,9 +674,10 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
             "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----"
         )
         device = Device.objects.get(uid=self.device_uid)
-        device.certificate_status = Device.CertificateStatus.SIGNED
-        device.certificate = signed_cert
-        device.save()
+        certificate = device.certificate
+        certificate.status = CertificateStatus.SIGNED
+        certificate.certificate = signed_cert
+        certificate.save()
 
         response = self.client.get(self.url)
 
@@ -694,9 +694,10 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         # Simulate charm denying certificate
         device = Device.objects.get(uid=self.device_uid)
-        device.certificate_status = Device.CertificateStatus.DENIED
-        device.certificate_detail = "CSR rejected by administrator"
-        device.save()
+        certificate = device.certificate
+        certificate.status = CertificateStatus.DENIED
+        certificate.detail = "CSR rejected by administrator"
+        certificate.save()
 
         response = self.client.get(self.url)
 
@@ -749,12 +750,11 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(data["uid"], self.device_uid)
         self.assertIsNotNone(data["updated_at"])
 
-        # Verify device was updated
+        # Verify certificate was updated
         device = Device.objects.get(uid=self.device_uid)
-        self.assertEqual(
-            device.certificate_status, Device.CertificateStatus.SIGNED
-        )
-        self.assertEqual(device.certificate, signed_cert)
+        certificate = device.certificate
+        self.assertEqual(certificate.status, CertificateStatus.SIGNED)
+        self.assertEqual(certificate.certificate, signed_cert)
 
     def test_patch_certificate_deny(self) -> None:
         """Test PATCH to mark certificate as denied."""
@@ -775,12 +775,11 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(data["status"], "denied")
         self.assertEqual(data["detail"], "Invalid CSR")
 
-        # Verify device was updated
+        # Verify certificate was updated
         device = Device.objects.get(uid=self.device_uid)
-        self.assertEqual(
-            device.certificate_status, Device.CertificateStatus.DENIED
-        )
-        self.assertEqual(device.certificate_detail, "Invalid CSR")
+        certificate = device.certificate
+        self.assertEqual(certificate.status, CertificateStatus.DENIED)
+        self.assertEqual(certificate.detail, "Invalid CSR")
 
     def test_patch_certificate_device_not_found(self) -> None:
         """Test PATCH for non-existent device."""
@@ -827,10 +826,9 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         # Status should remain pending since we didn't update it
         device = Device.objects.get(uid=self.device_uid)
-        self.assertEqual(
-            device.certificate_status, Device.CertificateStatus.PENDING
-        )
-        self.assertEqual(device.certificate, signed_cert)
+        certificate = device.certificate
+        self.assertEqual(certificate.status, CertificateStatus.PENDING)
+        self.assertEqual(certificate.certificate, signed_cert)
 
 
 class GrafanaDashboardsViewTests(APITestCase):
