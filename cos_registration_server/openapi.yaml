@@ -753,6 +753,11 @@ paths:
       summary: List devices
       parameters:
       - in: query
+        name: certificate_status
+        schema:
+          type: string
+        description: 'Filter devices by certificate status.Example: ?certificate_status=pending'
+      - in: query
         name: fields
         schema:
           type: string
@@ -1184,16 +1189,39 @@ paths:
           description: ''
 components:
   schemas:
-    CertificateStatusEnum:
+    BlankEnum:
       enum:
-      - pending
-      - signed
-      - denied
-      type: string
-      description: |-
-        * `pending` - Pending
-        * `signed` - Signed
-        * `denied` - Denied
+      - ''
+    Certificate:
+      type: object
+      description: Certificate Serializer class.
+      properties:
+        csr:
+          type: string
+          title: Certificate Signing Request
+        certificate:
+          type: string
+          title: Signed Certificate
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        detail:
+          type: string
+          title: Certificate details
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Certificate request created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Certificate last updated
+      required:
+      - created_at
+      - updated_at
     Device:
       type: object
       description: Device Serializer class.
@@ -1227,8 +1255,13 @@ components:
           type: array
           items:
             type: string
+        certificate:
+          allOf:
+          - $ref: '#/components/schemas/Certificate'
+          readOnly: true
       required:
       - address
+      - certificate
       - creation_date
       - uid
     DeviceCertificate:
@@ -1242,18 +1275,18 @@ components:
           type: string
           readOnly: true
           title: Signed Certificate
-        certificate_status:
+        status:
           allOf:
-          - $ref: '#/components/schemas/CertificateStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
-        certificate_detail:
+        detail:
           type: string
           readOnly: true
           title: Certificate details
       required:
       - certificate
-      - certificate_detail
-      - certificate_status
+      - detail
+      - status
     FoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.
@@ -1327,6 +1360,10 @@ components:
           type: array
           items:
             type: string
+        certificate:
+          allOf:
+          - $ref: '#/components/schemas/Certificate'
+          readOnly: true
     PatchedDeviceCertificate:
       type: object
       description: Device Certificate Serializer class.
@@ -1338,11 +1375,11 @@ components:
           type: string
           readOnly: true
           title: Signed Certificate
-        certificate_status:
+        status:
           allOf:
-          - $ref: '#/components/schemas/CertificateStatusEnum'
+          - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
-        certificate_detail:
+        detail:
           type: string
           readOnly: true
           title: Certificate details
@@ -1406,3 +1443,13 @@ components:
       required:
       - rules
       - uid
+    StatusEnum:
+      enum:
+      - pending
+      - signed
+      - denied
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `signed` - Signed
+        * `denied` - Denied
