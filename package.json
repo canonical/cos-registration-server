@@ -1,6 +1,5 @@
 {
   "name": "cos-registration-server",
-  "version": "1.0.0",
   "description": "COS registration server is responsible for storing devices registered by the COS registration agent. The COS registration server is a django server consisting of a database, an API as well as front end views. With COS registration server a device can register itself and update its informations. A user can also visualize the registered devices as well as discovering customized device applications.",
   "main": "index.js",
   "scripts": {
