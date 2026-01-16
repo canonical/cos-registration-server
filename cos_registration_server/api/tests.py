@@ -572,7 +572,6 @@ Yh5L7kKLHZqQqKL=
         self.assertIsNotNone(certificate.created_at)
         self.assertIsNotNone(certificate.updated_at)
         self.assertEqual(certificate.certificate, "")
-        self.assertEqual(certificate.detail, "")
 
     def test_post_csr_device_not_found(self) -> None:
         """Test CSR submission for non-existent device."""
@@ -696,7 +695,6 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         device = Device.objects.get(uid=self.device_uid)
         certificate = device.certificate
         certificate.status = CertificateStatus.DENIED
-        certificate.detail = "CSR rejected by administrator"
         certificate.save()
 
         response = self.client.get(self.url)
@@ -705,7 +703,6 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         data = json.loads(response.content)
         self.assertEqual(data["status"], "denied")
         self.assertEqual(data["certificate"], "")
-        self.assertEqual(data["detail"], "CSR rejected by administrator")
 
     def test_get_certificate_device_not_found(self) -> None:
         """Test GET for non-existent device."""
@@ -773,13 +770,11 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data["status"], "denied")
-        self.assertEqual(data["detail"], "Invalid CSR")
 
         # Verify certificate was updated
         device = Device.objects.get(uid=self.device_uid)
         certificate = device.certificate
         self.assertEqual(certificate.status, CertificateStatus.DENIED)
-        self.assertEqual(certificate.detail, "Invalid CSR")
 
     def test_patch_certificate_device_not_found(self) -> None:
         """Test PATCH for non-existent device."""

@@ -115,8 +115,9 @@ class CertificateSerializer(
         fields = (
             "csr",
             "certificate",
+            "ca",
+            "chain",
             "status",
-            "detail",
             "created_at",
             "updated_at",
         )
@@ -514,13 +515,15 @@ class DeviceCertificateSerializer(
         fields = (
             "csr",
             "certificate",
+            "ca",
+            "chain",
             "status",
-            "detail",
         )
         read_only_fields = (
             "certificate",
+            "ca",
+            "chain",
             "status",
-            "detail",
         )
 
     def validate_csr(self, value: str) -> str:

@@ -229,7 +229,8 @@ class DeviceCertificateView(APIView):
                 "csr": serializer.validated_data["csr"],
                 "status": CertificateStatus.PENDING,
                 "certificate": "",
-                "detail": "",
+                "ca": "",
+                "chain": "",
             },
         )
 
@@ -278,11 +279,9 @@ class DeviceCertificateView(APIView):
             "status": certificate.status or CertificateStatus.PENDING,
             "CSR": certificate.csr,
             "certificate": certificate.certificate,
+            "ca": certificate.ca,
+            "chain": certificate.chain,
         }
-
-        # Include detail if status is denied
-        if certificate.status == CertificateStatus.DENIED:
-            response_data["detail"] = certificate.detail
 
         return Response(response_data, status=http_status.HTTP_200_OK)
 
@@ -344,8 +343,10 @@ class DeviceCertificateView(APIView):
             certificate.status = new_status
         if "certificate" in request.data:
             certificate.certificate = request.data["certificate"]
-        if "detail" in request.data:
-            certificate.detail = request.data["detail"]
+        if "ca" in request.data:
+            certificate.ca = request.data["ca"]
+        if "chain" in request.data:
+            certificate.chain = request.data["chain"]
 
         certificate.save()
 
@@ -354,7 +355,8 @@ class DeviceCertificateView(APIView):
             "status": certificate.status,
             "CSR": certificate.csr,
             "certificate": certificate.certificate,
-            "detail": certificate.detail,
+            "ca": certificate.ca,
+            "chain": certificate.chain,
             "updated_at": certificate.updated_at,
         }
 

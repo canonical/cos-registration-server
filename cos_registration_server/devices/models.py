@@ -61,8 +61,9 @@ class Certificate(models.Model):
     device: OneToOne relationship to Device.
     csr: Certificate Signing Request in PEM format.
     certificate: Signed certificate in PEM format (null until signed).
+    ca: CA that signed the certificate.
+    chain: Certificate chain in PEM format.
     status: Current status of the certificate request.
-    detail: Additional details for denials or errors.
     created_at: Timestamp when certificate request was created.
     updated_at: Timestamp when certificate was last updated.
     """
@@ -79,13 +80,14 @@ class Certificate(models.Model):
     certificate = models.TextField(
         "Signed Certificate", blank=True, default=""
     )
+    ca = models.TextField("Certificate Authority", blank=True, default="")
+    chain = models.TextField("Certificate Chain", blank=True, default="")
     status = models.CharField(
         max_length=20,
         choices=CertificateStatus.choices,
         blank=True,
         default="",
     )
-    detail = models.TextField("Certificate details", blank=True, default="")
     created_at = models.DateTimeField(
         "Certificate request created", auto_now_add=True
     )

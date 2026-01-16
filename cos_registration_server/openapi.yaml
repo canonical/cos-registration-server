@@ -1202,13 +1202,16 @@ components:
         certificate:
           type: string
           title: Signed Certificate
+        ca:
+          type: string
+          title: Certificate Authority
+        chain:
+          type: string
+          title: Certificate Chain
         status:
           oneOf:
           - $ref: '#/components/schemas/StatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
-        detail:
-          type: string
-          title: Certificate details
         created_at:
           type: string
           format: date-time
@@ -1275,17 +1278,22 @@ components:
           type: string
           readOnly: true
           title: Signed Certificate
+        ca:
+          type: string
+          readOnly: true
+          title: Certificate Authority
+        chain:
+          type: string
+          readOnly: true
+          title: Certificate Chain
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
-        detail:
-          type: string
-          readOnly: true
-          title: Certificate details
       required:
+      - ca
       - certificate
-      - detail
+      - chain
       - status
     FoxgloveDashboard:
       type: object
@@ -1375,14 +1383,18 @@ components:
           type: string
           readOnly: true
           title: Signed Certificate
+        ca:
+          type: string
+          readOnly: true
+          title: Certificate Authority
+        chain:
+          type: string
+          readOnly: true
+          title: Certificate Chain
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
-        detail:
-          type: string
-          readOnly: true
-          title: Certificate details
     PatchedFoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.
