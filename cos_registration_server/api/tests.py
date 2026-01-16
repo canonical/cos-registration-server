@@ -659,7 +659,7 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
         self.assertEqual(data["status"], "pending")
-        self.assertEqual(data["CSR"], self.valid_csr)
+        self.assertEqual(data["csr"], self.valid_csr)
         self.assertEqual(data["certificate"], "")
         self.assertNotIn("detail", data)
 
@@ -684,7 +684,7 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         data = json.loads(response.content)
         self.assertEqual(data["status"], "signed")
         self.assertEqual(data["certificate"], signed_cert)
-        self.assertEqual(data["CSR"], self.valid_csr)
+        self.assertEqual(data["csr"], self.valid_csr)
 
     def test_get_certificate_status_denied(self) -> None:
         """Test GET when certificate is denied."""

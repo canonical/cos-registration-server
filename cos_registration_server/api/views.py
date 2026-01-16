@@ -277,7 +277,7 @@ class DeviceCertificateView(APIView):
 
         response_data = {
             "status": certificate.status or CertificateStatus.PENDING,
-            "CSR": certificate.csr,
+            "csr": certificate.csr,
             "certificate": certificate.certificate,
             "ca": certificate.ca,
             "chain": certificate.chain,
@@ -353,7 +353,7 @@ class DeviceCertificateView(APIView):
         response_data = {
             "uid": device.uid,
             "status": certificate.status,
-            "CSR": certificate.csr,
+            "csr": certificate.csr,
             "certificate": certificate.certificate,
             "ca": certificate.ca,
             "chain": certificate.chain,
