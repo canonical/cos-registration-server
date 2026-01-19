@@ -13,6 +13,8 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import is_alert_rule_a_jinja_template
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 from devices.models import Certificate, Device
 from django.core.serializers.pyyaml import DjangoSafeDumper
 from rest_framework import serializers
@@ -518,12 +520,8 @@ class DeviceCertificateSerializer(
             "ca",
             "chain",
             "status",
-        )
-        read_only_fields = (
-            "certificate",
-            "ca",
-            "chain",
-            "status",
+            "created_at",
+            "updated_at",
         )
 
     def validate_csr(self, value: str) -> str:
@@ -536,15 +534,11 @@ class DeviceCertificateSerializer(
         if not value:
             raise serializers.ValidationError("CSR cannot be empty")
 
-        # Basic PEM format validation
-        if not value.startswith("-----BEGIN CERTIFICATE REQUEST-----"):
+        # Validate the CSR using x509 library
+        try:
+            x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+        except ValueError as e:
             raise serializers.ValidationError(
-                "Invalid CSR format: Missing BEGIN CERTIFICATE "
-                "REQUEST header"
-            )
-        if not value.strip().endswith("-----END CERTIFICATE REQUEST-----"):
-            raise serializers.ValidationError(
-                "Invalid CSR format: Missing END CERTIFICATE " "REQUEST footer"
-            )
-
+                f"Invalid CSR format: {e}"
+            ) from e
         return value

@@ -532,17 +532,21 @@ class DeviceCertificateViewTests(APITestCase):
             "api:device_certificate", kwargs={"uid": self.device_uid}
         )
         self.valid_csr = """-----BEGIN CERTIFICATE REQUEST-----
-MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3QxDTALBgNV
+MIICujCCAaICAQAwdTELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3QxDTALBgNV
 BAcMBFRlc3QxDTALBgNVBAoMBFRlc3QxDTALBgNVBAsMBFRlc3QxDDAKBgNVBAMM
-A2ZvbzEeMBwGCSqGSIb3DQEJARYPdGVzdEB0ZXN0LmNvbTCCASIwDQYJKoZIhvcN
-AQEBBQADggEPADCCAQoCggEBAMlf4xR7pL3ndOwVJEm/xJLVHqN5LsSDLxTLvIpd
-DgLlGSHfH7mvqLMvTJrAqQmU9pLCXPJsUiqLiMlVN6I1FAVl2cQdJ3sKwPmCMZzU
-f0VTJgLjBjjO0pKzWGQdnEFhZFvFGGPZDvXB8xDLVvQz7d9CKmxNFDPZqvLlvLXi
-RQYLHfGgm3GxBTXsYLJLfFPEJmZVMsKMa9pPLtxQfqCXZmlJOqQYGLLJiKKvg5aP
-PnXJLQaDpQKt9Yh5L7kKLHZqQqKLcvPnXJLQaDpQKt9Yh5L7kKLHZqQqKLcPnXJL
-QaDpQKt9Yh5L7kKLHZqQqKLMsKMa9pPLtxQfqCXZmlJOqQYGLLJiKKvg5aPCAQID
-AQABoAAwDQYJKoZIhvcNAQELBQADggEBABcDp4T7J9vZl7f7qKGMfXJLQaDpQKt9
-Yh5L7kKLHZqQqKL=
+A2ZvbzEcMBoGCSqGSIb3DQEJARYNdGVzdEB0ZXN0LmNvbTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBALG0zb43MgTji5sEGsiWXY8cFmcfsbVyL+H/7+VU
++UT5IW4EAVMr43WPGtJT9ts4lmN1AiI9Y3EJJA2v+/ySqdi4VfaWbES9CZuv0iE2
+n514kjErGpFNA0jwLTdyodOfixZZLY47tOq+lWr5rIpTR7XnW9//TCI5gZIC3TzB
+1Dn1SmkYfzqH/7X2W/ojzCOltjBjW8dM7IzwJ1gez2wcWlBcu8v4OXKRFbJ8nBao
+EsGSL06d6ARkJJ1PqZ+JUEfserXz8EOZPTcDAkHVuCAcu21u5dnp1bpL0WJKC9+N
+6E9b6L0BqQn3GF24Z6HkF8N8qbcbA69iwLhutNLSRRVQyIECAwEAAaAAMA0GCSqG
+SIb3DQEBCwUAA4IBAQB7RytS3IYkYAMLnYWP+A5blWFCzUkZykObxcXChzzwpekx
+4PWG9zlFmLRBZraaolv2I/++Cknv8pl7tvE3qnDLU4+MqY6weoEXyEhbi7MXchie
+AH+LoyVjvEHHAo46grYvF+qocIn4Ct++bmkY288HgIECZAsfB8hS3OVt4ylnoYr0
+ItwafNnlamyeBjdNNWIgpHfCw/97z0R6kmUlCMKWGf71VdLpq4gqZZuoZUedHmRY
+Ufqdch7rwup73OcYtwj/pyenBeMY6hUDPGE+LXs75HQRsX60dzRpRNYDBl/K3KDG
+uv/5wRkaVmEeKdM+i2l2/Hro9IMuKiLh+cOX1m/f
 -----END CERTIFICATE REQUEST-----"""
 
     def create_device(self, **fields: Union[str, Set[str]]) -> HttpResponse:
@@ -597,9 +601,6 @@ Yh5L7kKLHZqQqKL=
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data["error"], "Invalid CSR format")
-        self.assertIn(
-            "Missing BEGIN CERTIFICATE REQUEST header", str(data["details"])
-        )
 
     def test_post_csr_invalid_format_missing_footer(self) -> None:
         """Test CSR submission with missing END footer."""
@@ -615,9 +616,6 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertEqual(data["error"], "Invalid CSR format")
-        self.assertIn(
-            "Missing END CERTIFICATE REQUEST footer", str(data["details"])
-        )
 
     def test_post_csr_empty(self) -> None:
         """Test CSR submission with empty CSR."""

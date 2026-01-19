@@ -753,11 +753,6 @@ paths:
       summary: List devices
       parameters:
       - in: query
-        name: certificate_status
-        schema:
-          type: string
-        description: 'Filter devices by certificate status.Example: ?certificate_status=pending'
-      - in: query
         name: fields
         schema:
           type: string
@@ -989,6 +984,7 @@ paths:
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/DeviceCertificate'
+        required: true
       security:
       - {}
       responses:
@@ -1224,6 +1220,7 @@ components:
           title: Certificate last updated
       required:
       - created_at
+      - csr
       - updated_at
     Device:
       type: object
@@ -1276,25 +1273,31 @@ components:
           title: Certificate Signing Request
         certificate:
           type: string
-          readOnly: true
           title: Signed Certificate
         ca:
           type: string
-          readOnly: true
           title: Certificate Authority
         chain:
           type: string
-          readOnly: true
           title: Certificate Chain
         status:
-          allOf:
+          oneOf:
           - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        created_at:
+          type: string
+          format: date-time
           readOnly: true
+          title: Certificate request created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Certificate last updated
       required:
-      - ca
-      - certificate
-      - chain
-      - status
+      - created_at
+      - csr
+      - updated_at
     FoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.
@@ -1381,20 +1384,27 @@ components:
           title: Certificate Signing Request
         certificate:
           type: string
-          readOnly: true
           title: Signed Certificate
         ca:
           type: string
-          readOnly: true
           title: Certificate Authority
         chain:
           type: string
-          readOnly: true
           title: Certificate Chain
         status:
-          allOf:
+          oneOf:
           - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        created_at:
+          type: string
+          format: date-time
           readOnly: true
+          title: Certificate request created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Certificate last updated
     PatchedFoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.

@@ -74,9 +74,7 @@ class Certificate(models.Model):
         related_name="certificate",
         primary_key=True,
     )
-    csr = models.TextField(
-        "Certificate Signing Request", blank=True, default=""
-    )
+    csr = models.TextField("Certificate Signing Request")
     certificate = models.TextField(
         "Signed Certificate", blank=True, default=""
     )

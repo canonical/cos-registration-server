@@ -61,19 +61,6 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
 
-    def get_queryset(self) -> Any:
-        """Get the queryset, with optional filtering by certificate_status."""
-        queryset = super().get_queryset()
-
-        # Filter by certificate_status if provided
-        certificate_status = self.request.query_params.get(
-            "certificate_status"
-        )
-        if certificate_status:
-            queryset = queryset.filter(certificate__status=certificate_status)
-
-        return queryset
-
     @extend_schema(
         summary="Register a device",
         description="Register a device by its ID",
@@ -98,13 +85,6 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
                 description="Filter the fields provided."
                 "Will only output the fields listed in the parameter."
                 "Example: ?fields=uid,create_date",
-                required=False,
-                type=OpenApiTypes.STR,
-            ),
-            OpenApiParameter(
-                name="certificate_status",
-                description="Filter devices by certificate status."
-                "Example: ?certificate_status=pending",
                 required=False,
                 type=OpenApiTypes.STR,
             ),
