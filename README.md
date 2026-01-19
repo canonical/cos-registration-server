@@ -33,6 +33,18 @@ It consists of:
 - Foxglove dashboards: Foxglove dashboards used by this device.
 - Prometheus alert rule files: Prometheus alert rule files used by this device.
 
+#### Certificate model
+The Certificate model represents a certificate associated with a device.
+Each device can have one certificate, and the certificate is deleted when the device is deleted.
+It consists of:
+- CSR: Certificate Signing Request in PEM format.
+- Certificate: Signed certificate in PEM format.
+- CA: Certificate Authority that signed the certificate.
+- Chain: Certificate chain in PEM format.
+- Status: Current status of the certificate request (pending, signed, or denied).
+- Created at: Timestamp when certificate request was created.
+- Updated at: Timestamp when certificate was last updated.
+
 #### View: `devices/`
 
 It provides a simple list of all the registered devices.
