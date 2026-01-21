@@ -28,7 +28,7 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import status as http_status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
@@ -190,17 +190,11 @@ class DeviceCertificateView(APIView):
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
-            return Response(
-                {"error": "Device not found"},
-                status=http_status.HTTP_404_NOT_FOUND,
-            )
+            raise NotFound("Device not found")
 
         serializer = DeviceCertificateSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(
-                {"error": "Invalid CSR format", "details": serializer.errors},
-                status=http_status.HTTP_400_BAD_REQUEST,
-            )
+            raise ValidationError(serializer.errors)
 
         # Create or update Certificate object
         certificate, created = Certificate.objects.update_or_create(
@@ -241,19 +235,13 @@ class DeviceCertificateView(APIView):
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
-            return Response(
-                {"error": "Device or CSR not found"},
-                status=http_status.HTTP_404_NOT_FOUND,
-            )
+            raise NotFound("Device or CSR not found")
 
         # Check if Certificate exists
         try:
             certificate = device.certificate
         except Certificate.DoesNotExist:
-            return Response(
-                {"error": "Device or CSR not found"},
-                status=http_status.HTTP_404_NOT_FOUND,
-            )
+            raise NotFound("Device or CSR not found")
 
         response_data = {
             "status": certificate.status or CertificateStatus.PENDING,
@@ -292,31 +280,39 @@ class DeviceCertificateView(APIView):
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
-            return Response(
-                {"error": "Device uid not found"},
-                status=http_status.HTTP_404_NOT_FOUND,
-            )
+            raise NotFound("Device uid not found")
 
         # Get or create certificate
         try:
             certificate = device.certificate
         except Certificate.DoesNotExist:
-            return Response(
-                {"error": "Certificate not found"},
-                status=http_status.HTTP_404_NOT_FOUND,
+            raise NotFound("Certificate not found")
+
+        # Validate that if certificate is provided, status must also be provided
+        new_status = request.data.get("status")
+        if "certificate" in request.data and not new_status:
+            raise ValidationError(
+                "Status must be provided when updating certificate"
             )
 
         # Validate status if provided
-        new_status = request.data.get("status")
-        if new_status and new_status not in [
-            CertificateStatus.PENDING,
-            CertificateStatus.SIGNED,
-            CertificateStatus.DENIED,
-        ]:
-            return Response(
-                {"error": "Invalid status value"},
-                status=http_status.HTTP_400_BAD_REQUEST,
-            )
+        if new_status:
+            valid_statuses = [
+                CertificateStatus.PENDING,
+                CertificateStatus.SIGNED,
+                CertificateStatus.DENIED,
+            ]
+            if new_status not in valid_statuses:
+                raise ValidationError("Invalid status value")
+
+            # If certificate is being provided, status must be signed or denied
+            if "certificate" in request.data and new_status not in [
+                CertificateStatus.SIGNED,
+                CertificateStatus.DENIED,
+            ]:
+                raise ValidationError(
+                    "Status must be 'signed' or 'denied' when providing certificate"
+                )
 
         # Update fields
         if new_status:

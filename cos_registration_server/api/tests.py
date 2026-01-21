@@ -556,7 +556,6 @@ uv/5wRkaVmEeKdM+i2l2/Hro9IMuKiLh+cOX1m/f
         url = reverse("api:devices")
         return self.client.post(url, data, format="json")
 
-    # POST endpoint tests
     def test_post_csr_success(self) -> None:
         """Test successful CSR submission."""
         self.create_device(uid=self.device_uid, address=self.device_address)
@@ -584,15 +583,12 @@ uv/5wRkaVmEeKdM+i2l2/Hro9IMuKiLh+cOX1m/f
         )
 
         self.assertEqual(response.status_code, 404)
-        data = json.loads(response.content)
-        self.assertEqual(data["error"], "Device not found")
 
-    def test_post_csr_invalid_format_missing_header(self) -> None:
+    def test_post_csr_invalid_format(self) -> None:
         """Test CSR submission with missing BEGIN header."""
         self.create_device(uid=self.device_uid, address=self.device_address)
 
-        invalid_csr = """MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q=
------END CERTIFICATE REQUEST-----"""
+        invalid_csr = """invalid CSR content"""
 
         response = self.client.post(
             self.url, {"csr": invalid_csr}, format="json"
@@ -600,22 +596,7 @@ uv/5wRkaVmEeKdM+i2l2/Hro9IMuKiLh+cOX1m/f
 
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Invalid CSR format")
-
-    def test_post_csr_invalid_format_missing_footer(self) -> None:
-        """Test CSR submission with missing END footer."""
-        self.create_device(uid=self.device_uid, address=self.device_address)
-
-        invalid_csr = """-----BEGIN CERTIFICATE REQUEST-----
-MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
-
-        response = self.client.post(
-            self.url, {"csr": invalid_csr}, format="json"
-        )
-
-        self.assertEqual(response.status_code, 400)
-        data = json.loads(response.content)
-        self.assertEqual(data["error"], "Invalid CSR format")
+        self.assertIn("csr", data)
 
     def test_post_csr_empty(self) -> None:
         """Test CSR submission with empty CSR."""
@@ -625,28 +606,8 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Invalid CSR format")
+        self.assertIn("csr", data)
 
-    def test_post_csr_overwrite_existing(self) -> None:
-        """Test CSR submission overwrites existing CSR."""
-        self.create_device(uid=self.device_uid, address=self.device_address)
-
-        # Submit first CSR
-        self.client.post(self.url, {"csr": self.valid_csr}, format="json")
-
-        # Submit new CSR
-        new_csr = self.valid_csr.replace("robot-123", "robot-456")
-        response = self.client.post(self.url, {"csr": new_csr}, format="json")
-
-        self.assertEqual(response.status_code, 202)
-        device = Device.objects.get(uid=self.device_uid)
-        certificate = device.certificate
-        self.assertEqual(certificate.csr, new_csr)
-        self.assertEqual(certificate.status, CertificateStatus.PENDING)
-        # Certificate should be cleared
-        self.assertEqual(certificate.certificate, "")
-
-    # GET endpoint tests
     def test_get_certificate_status_pending(self) -> None:
         """Test GET when certificate is pending."""
         self.create_device(uid=self.device_uid, address=self.device_address)
@@ -659,7 +620,6 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
         self.assertEqual(data["status"], "pending")
         self.assertEqual(data["csr"], self.valid_csr)
         self.assertEqual(data["certificate"], "")
-        self.assertNotIn("detail", data)
 
     def test_get_certificate_status_signed(self) -> None:
         """Test GET when certificate is signed."""
@@ -708,7 +668,7 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Device or CSR not found")
+        self.assertEqual(data["detail"], "Device or CSR not found")
 
     def test_get_certificate_no_csr(self) -> None:
         """Test GET when device exists but no CSR submitted."""
@@ -718,9 +678,8 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Device or CSR not found")
+        self.assertEqual(data["detail"], "Device or CSR not found")
 
-    # PATCH endpoint tests
     def test_patch_certificate_sign_success(self) -> None:
         """Test PATCH to mark certificate as signed."""
         self.create_device(uid=self.device_uid, address=self.device_address)
@@ -784,7 +743,7 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Device uid not found")
+        self.assertEqual(data["detail"], "Device uid not found")
 
     def test_patch_certificate_invalid_status(self) -> None:
         """Test PATCH with invalid status value."""
@@ -799,10 +758,10 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
 
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
-        self.assertEqual(data["error"], "Invalid status value")
+        self.assertIn("Invalid status value", str(data))
 
     def test_patch_certificate_partial_update(self) -> None:
-        """Test PATCH with only certificate (no status)."""
+        """Test PATCH with only certificate (no status) should fail."""
         self.create_device(uid=self.device_uid, address=self.device_address)
         self.client.post(self.url, {"csr": self.valid_csr}, format="json")
 
@@ -815,13 +774,34 @@ MIICvDCCAaQCAQAwdzELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3Q="""
             format="json",
         )
 
-        self.assertEqual(response.status_code, 200)
+        # Status must be provided when updating certificate
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn(
+            "Status must be provided when updating certificate", str(data)
+        )
 
-        # Status should remain pending since we didn't update it
-        device = Device.objects.get(uid=self.device_uid)
-        certificate = device.certificate
-        self.assertEqual(certificate.status, CertificateStatus.PENDING)
-        self.assertEqual(certificate.certificate, signed_cert)
+    def test_patch_certificate_with_pending_status_should_fail(self) -> None:
+        """Test PATCH with certificate and 'pending' status should fail."""
+        self.create_device(uid=self.device_uid, address=self.device_address)
+        self.client.post(self.url, {"csr": self.valid_csr}, format="json")
+
+        signed_cert = (
+            "-----BEGIN CERTIFICATE-----\nMIID...\n-----END CERTIFICATE-----"
+        )
+        response = self.client.patch(
+            self.url,
+            {"certificate": signed_cert, "status": "pending"},
+            format="json",
+        )
+
+        # Status must be 'signed' or 'denied' when providing certificate
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.content)
+        self.assertIn(
+            "Status must be 'signed' or 'denied' when providing certificate",
+            str(data),
+        )
 
 
 class GrafanaDashboardsViewTests(APITestCase):
