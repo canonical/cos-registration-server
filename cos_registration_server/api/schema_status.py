@@ -1,6 +1,7 @@
 """API schema status."""
 
 from api.serializer import (
+    DeviceCertificateSerializer,
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
@@ -12,28 +13,13 @@ from drf_spectacular.utils import OpenApiExample, OpenApiResponse
 
 code_200_device = {200: DeviceSerializer}
 code_201_device = {201: DeviceSerializer}
-
-code_200_device_certificate = {
-    200: {
-        "type": "object",
-        "properties": {
-            "certificate": {
-                "type": "string",
-                "description": "PEM-encoded certificate",
-            },
-            "private_key": {
-                "type": "string",
-                "description": "PEM-encoded private key",
-            },
-        },
-    }
-}
-
 code_404_uid_not_found = {404: OpenApiResponse(description="UID not found")}
 
-code_404_device_certificate_not_found = {
-    404: OpenApiResponse(description="Device certificate not found")
+code_200_device_certificate = {200: DeviceCertificateSerializer}
+code_202_csr_accepted = {
+    202: OpenApiResponse(description="CSR accepted for processing")
 }
+code_400_invalid_csr = {400: OpenApiResponse(description="Invalid CSR format")}
 
 code_200_grafana_dashboard = {200: GrafanaDashboardSerializer}
 code_201_grafana_dashboard = {201: GrafanaDashboardSerializer}

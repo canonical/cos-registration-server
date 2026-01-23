@@ -15,7 +15,7 @@ from applications.models import (
 from applications.utils import is_alert_rule_a_jinja_template
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from devices.models import Certificate, Device
+from devices.models import Device, DeviceCertificate
 from django.core.serializers.pyyaml import DjangoSafeDumper
 from rest_framework import serializers
 
@@ -105,15 +105,15 @@ class FoxgloveDashboardSerializer(
         return FoxgloveDashboard.objects.create(**validated_data)
 
 
-class CertificateSerializer(
+class DeviceCertificateSerializer(
     serializers.ModelSerializer  # type: ignore[type-arg]
 ):
     """Certificate Serializer class."""
 
     class Meta:
-        """CertificateSerializer Meta class."""
+        """DeviceCertificateSerializer Meta class."""
 
-        model = Certificate
+        model = DeviceCertificate
         fields = (
             "csr",
             "certificate",
@@ -157,7 +157,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
-    certificate = CertificateSerializer(read_only=True)
+    certificate = DeviceCertificateSerializer(read_only=True)
 
     class Meta:
         """DeviceSerializer Meta class."""
@@ -513,7 +513,7 @@ class DeviceCertificateSerializer(
     class Meta:
         """DeviceCertificateSerializer Meta class."""
 
-        model = Certificate
+        model = DeviceCertificate
         fields = (
             "csr",
             "certificate",

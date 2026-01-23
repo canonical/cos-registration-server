@@ -19,7 +19,7 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import render_alert_rule_template_for_device
-from devices.models import Certificate, CertificateStatus, Device
+from devices.models import Device, DeviceCertificate
 from django.http import HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -174,9 +174,9 @@ class DeviceCertificateView(APIView):
         ),
         request=DeviceCertificateSerializer,
         responses={
-            202: OpenApiResponse(description="CSR accepted for processing"),
-            400: OpenApiResponse(description="Invalid CSR format"),
-            404: OpenApiResponse(description="Device not found"),
+            **status.code_202_csr_accepted,
+            **status.code_400_invalid_csr,
+            **status.code_404_uid_not_found,
         },
     )
     def post(
@@ -196,12 +196,11 @@ class DeviceCertificateView(APIView):
         if not serializer.is_valid():
             raise ValidationError(serializer.errors)
 
-        # Create or update Certificate object
-        certificate, created = Certificate.objects.update_or_create(
+        certificate, created = DeviceCertificate.objects.update_or_create(
             device=device,
             defaults={
                 "csr": serializer.validated_data["csr"],
-                "status": CertificateStatus.PENDING,
+                "status": DeviceCertificate.CertificateStatus.PENDING,
                 "certificate": "",
                 "ca": "",
                 "chain": "",
@@ -221,7 +220,7 @@ class DeviceCertificateView(APIView):
                 description="Certificate status retrieved",
                 response=DeviceCertificateSerializer,
             ),
-            404: OpenApiResponse(description="Device or CSR not found"),
+            **status.code_404_uid_not_found,
         },
     )
     def get(
@@ -237,14 +236,13 @@ class DeviceCertificateView(APIView):
         except Device.DoesNotExist:
             raise NotFound("Device or CSR not found")
 
-        # Check if Certificate exists
         try:
             certificate = device.certificate
-        except Certificate.DoesNotExist:
+        except DeviceCertificate.DoesNotExist:
             raise NotFound("Device or CSR not found")
 
         response_data = {
-            "status": certificate.status or CertificateStatus.PENDING,
+            "status": certificate.status,
             "csr": certificate.csr,
             "certificate": certificate.certificate,
             "ca": certificate.ca,
@@ -282,39 +280,35 @@ class DeviceCertificateView(APIView):
         except Device.DoesNotExist:
             raise NotFound("Device uid not found")
 
-        # Get or create certificate
         try:
             certificate = device.certificate
-        except Certificate.DoesNotExist:
+        except DeviceCertificate.DoesNotExist:
             raise NotFound("Certificate not found")
 
-        # Validate that if certificate is provided, status must also be provided
         new_status = request.data.get("status")
         if "certificate" in request.data and not new_status:
             raise ValidationError(
                 "Status must be provided when updating certificate"
             )
 
-        # Validate status if provided
         if new_status:
             valid_statuses = [
-                CertificateStatus.PENDING,
-                CertificateStatus.SIGNED,
-                CertificateStatus.DENIED,
+                DeviceCertificate.CertificateStatus.PENDING,
+                DeviceCertificate.CertificateStatus.SIGNED,
+                DeviceCertificate.CertificateStatus.DENIED,
             ]
             if new_status not in valid_statuses:
                 raise ValidationError("Invalid status value")
 
             # If certificate is being provided, status must be signed or denied
             if "certificate" in request.data and new_status not in [
-                CertificateStatus.SIGNED,
-                CertificateStatus.DENIED,
+                DeviceCertificate.CertificateStatus.SIGNED,
+                DeviceCertificate.CertificateStatus.DENIED,
             ]:
                 raise ValidationError(
                     "Status must be 'signed' or 'denied' when providing certificate"
                 )
 
-        # Update fields
         if new_status:
             certificate.status = new_status
         if "certificate" in request.data:
@@ -327,7 +321,6 @@ class DeviceCertificateView(APIView):
         certificate.save()
 
         response_data = {
-            "uid": device.uid,
             "status": certificate.status,
             "csr": certificate.csr,
             "certificate": certificate.certificate,

@@ -962,7 +962,7 @@ paths:
                 $ref: '#/components/schemas/DeviceCertificate'
           description: Certificate status retrieved
         '404':
-          description: Device or CSR not found
+          description: UID not found
     post:
       operationId: devices_certificate_create
       description: Submit a CSR for the device. The server stores it and marks status
@@ -993,7 +993,7 @@ paths:
         '400':
           description: Invalid CSR format
         '404':
-          description: Device not found
+          description: UID not found
     patch:
       operationId: devices_certificate_partial_update
       description: Internal endpoint for the charm to update certificate status and
@@ -1188,40 +1188,6 @@ components:
     BlankEnum:
       enum:
       - ''
-    Certificate:
-      type: object
-      description: Certificate Serializer class.
-      properties:
-        csr:
-          type: string
-          title: Certificate Signing Request
-        certificate:
-          type: string
-          title: Signed Certificate
-        ca:
-          type: string
-          title: Certificate Authority
-        chain:
-          type: string
-          title: Certificate Chain
-        status:
-          oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          - $ref: '#/components/schemas/BlankEnum'
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-          title: Certificate request created
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-          title: Certificate last updated
-      required:
-      - created_at
-      - csr
-      - updated_at
     Device:
       type: object
       description: Device Serializer class.
@@ -1257,7 +1223,7 @@ components:
             type: string
         certificate:
           allOf:
-          - $ref: '#/components/schemas/Certificate'
+          - $ref: '#/components/schemas/DeviceCertificate'
           readOnly: true
       required:
       - address
@@ -1266,20 +1232,20 @@ components:
       - uid
     DeviceCertificate:
       type: object
-      description: Device Certificate Serializer class.
+      description: Certificate Serializer class.
       properties:
         csr:
           type: string
-          title: Certificate Signing Request
+          title: Device Certificate Signing Request
         certificate:
           type: string
-          title: Signed Certificate
+          title: Signed Device Certificate
         ca:
           type: string
-          title: Certificate Authority
+          title: Device Certificate Authority
         chain:
           type: string
-          title: Certificate Chain
+          title: Device Certificate Chain
         status:
           oneOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -1288,12 +1254,12 @@ components:
           type: string
           format: date-time
           readOnly: true
-          title: Certificate request created
+          title: Device Certificate request created
         updated_at:
           type: string
           format: date-time
           readOnly: true
-          title: Certificate last updated
+          title: Device Certificate last updated
       required:
       - created_at
       - csr
@@ -1373,7 +1339,7 @@ components:
             type: string
         certificate:
           allOf:
-          - $ref: '#/components/schemas/Certificate'
+          - $ref: '#/components/schemas/DeviceCertificate'
           readOnly: true
     PatchedDeviceCertificate:
       type: object
@@ -1381,16 +1347,16 @@ components:
       properties:
         csr:
           type: string
-          title: Certificate Signing Request
+          title: Device Certificate Signing Request
         certificate:
           type: string
-          title: Signed Certificate
+          title: Signed Device Certificate
         ca:
           type: string
-          title: Certificate Authority
+          title: Device Certificate Authority
         chain:
           type: string
-          title: Certificate Chain
+          title: Device Certificate Chain
         status:
           oneOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -1399,12 +1365,12 @@ components:
           type: string
           format: date-time
           readOnly: true
-          title: Certificate request created
+          title: Device Certificate request created
         updated_at:
           type: string
           format: date-time
           readOnly: true
-          title: Certificate last updated
+          title: Device Certificate last updated
     PatchedFoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.

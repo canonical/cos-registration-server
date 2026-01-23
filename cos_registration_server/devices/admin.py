@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Certificate, Device
+from .models import Device, DeviceCertificate
 
 admin.site.register(Device)
-admin.site.register(Certificate)
+admin.site.register(DeviceCertificate)

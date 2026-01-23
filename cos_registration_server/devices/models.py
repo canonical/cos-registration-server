@@ -9,14 +9,6 @@ from applications.models import (
 from django.db import models
 
 
-class CertificateStatus(models.TextChoices):
-    """Certificate request status choices."""
-
-    PENDING = "pending", "Pending"
-    SIGNED = "signed", "Signed"
-    DENIED = "denied", "Denied"
-
-
 class Device(models.Model):
     """Device model.
 
@@ -53,8 +45,8 @@ class Device(models.Model):
         return self.uid
 
 
-class Certificate(models.Model):
-    """Certificate model.
+class DeviceCertificate(models.Model):
+    """Device Certificate model.
 
     This class represents a device certificate in the DB.
 
@@ -68,18 +60,29 @@ class Certificate(models.Model):
     updated_at: Timestamp when certificate was last updated.
     """
 
+    class CertificateStatus(models.TextChoices):
+        """Certificate request status choices."""
+
+        PENDING = "pending", "Pending"
+        SIGNED = "signed", "Signed"
+        DENIED = "denied", "Denied"
+
     device = models.OneToOneField(
         Device,
         on_delete=models.CASCADE,
         related_name="certificate",
         primary_key=True,
     )
-    csr = models.TextField("Certificate Signing Request")
+    csr = models.TextField("Device Certificate Signing Request")
     certificate = models.TextField(
-        "Signed Certificate", blank=True, default=""
+        "Signed Device Certificate", blank=True, default=""
     )
-    ca = models.TextField("Certificate Authority", blank=True, default="")
-    chain = models.TextField("Certificate Chain", blank=True, default="")
+    ca = models.TextField(
+        "Device Certificate Authority", blank=True, default=""
+    )
+    chain = models.TextField(
+        "Device Certificate Chain", blank=True, default=""
+    )
     status = models.CharField(
         max_length=20,
         choices=CertificateStatus.choices,
@@ -87,12 +90,12 @@ class Certificate(models.Model):
         default="",
     )
     created_at = models.DateTimeField(
-        "Certificate request created", auto_now_add=True
+        "Device Certificate request created", auto_now_add=True
     )
     updated_at = models.DateTimeField(
-        "Certificate last updated", auto_now=True
+        "Device Certificate last updated", auto_now=True
     )
 
     def __str__(self) -> str:
         """Str representation of a certificate."""
-        return f"Certificate for {self.device.uid}"
+        return f"Device Certificate for {self.device.uid}"
