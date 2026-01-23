@@ -2,3 +2,4 @@ include LICENSE
 include HISTORY.md
 graft cos_registration_server
 recursive-include cos_registration_server/devices/templates *
+recursive-include cos_registration_server/devices/static *
