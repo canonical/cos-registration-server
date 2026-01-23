@@ -108,7 +108,7 @@ class FoxgloveDashboardSerializer(
 class DeviceCertificateSerializer(
     serializers.ModelSerializer  # type: ignore[type-arg]
 ):
-    """Certificate Serializer class."""
+    """Device Certificate Serializer class."""
 
     class Meta:
         """DeviceCertificateSerializer Meta class."""
