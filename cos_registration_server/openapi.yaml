@@ -1232,7 +1232,7 @@ components:
       - uid
     DeviceCertificate:
       type: object
-      description: Certificate Serializer class.
+      description: Device Certificate Serializer class.
       properties:
         csr:
           type: string

@@ -306,7 +306,7 @@ class DeviceCertificateView(APIView):
                 DeviceCertificate.CertificateStatus.DENIED,
             ]:
                 raise ValidationError(
-                    "Status must be 'signed' or 'denied'"
+                    "Status must be signed or denied "
                     "when providing certificate"
                 )
 

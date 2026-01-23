@@ -123,7 +123,25 @@ class DeviceCertificateSerializer(
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("created_at", "updated_at")
+
+    def validate_csr(self, value: str) -> str:
+        """Validate CSR format.
+
+        value: CSR PEM string.
+        return: validated CSR.
+        raise: serializers.ValidationError
+        """
+        if not value:
+            raise serializers.ValidationError("CSR cannot be empty")
+
+        # Validate the CSR using x509 library
+        try:
+            x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+        except ValueError as e:
+            raise serializers.ValidationError(
+                f"Invalid CSR format: {e}"
+            ) from e
+        return value
 
 
 class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
@@ -503,42 +521,3 @@ class LokiAlertRuleFileSerializer(
         # in the model but not exposed in the API
         validated_data["template"] = is_template
         return LokiAlertRuleFile.objects.create(**validated_data)
-
-
-class DeviceCertificateSerializer(
-    serializers.ModelSerializer  # type: ignore[type-arg]
-):
-    """Device Certificate Serializer class."""
-
-    class Meta:
-        """DeviceCertificateSerializer Meta class."""
-
-        model = DeviceCertificate
-        fields = (
-            "csr",
-            "certificate",
-            "ca",
-            "chain",
-            "status",
-            "created_at",
-            "updated_at",
-        )
-
-    def validate_csr(self, value: str) -> str:
-        """Validate CSR format.
-
-        value: CSR PEM string.
-        return: validated CSR.
-        raise: serializers.ValidationError
-        """
-        if not value:
-            raise serializers.ValidationError("CSR cannot be empty")
-
-        # Validate the CSR using x509 library
-        try:
-            x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
-        except ValueError as e:
-            raise serializers.ValidationError(
-                f"Invalid CSR format: {e}"
-            ) from e
-        return value

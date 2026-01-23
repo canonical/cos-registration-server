@@ -815,11 +815,11 @@ uv/5wRkaVmEeKdM+i2l2/Hro9IMuKiLh+cOX1m/f
             format="json",
         )
 
-        # Status must be 'signed' or 'denied' when providing certificate
+        # Status must be signed or denied when providing certificate
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
         self.assertIn(
-            "Status must be 'signed' or 'denied' when providing certificate",
+            "Status must be signed or denied when providing certificate",
             str(data),
         )
 
