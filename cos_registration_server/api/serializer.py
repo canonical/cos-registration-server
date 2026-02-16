@@ -13,7 +13,9 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import is_alert_rule_a_jinja_template
-from devices.models import Device
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from devices.models import Device, DeviceCertificate
 from django.core.serializers.pyyaml import DjangoSafeDumper
 from rest_framework import serializers
 
@@ -103,6 +105,45 @@ class FoxgloveDashboardSerializer(
         return FoxgloveDashboard.objects.create(**validated_data)
 
 
+class DeviceCertificateSerializer(
+    serializers.ModelSerializer  # type: ignore[type-arg]
+):
+    """Device Certificate Serializer class."""
+
+    class Meta:
+        """DeviceCertificateSerializer Meta class."""
+
+        model = DeviceCertificate
+        fields = (
+            "csr",
+            "certificate",
+            "ca",
+            "chain",
+            "status",
+            "created_at",
+            "updated_at",
+        )
+
+    def validate_csr(self, value: str) -> str:
+        """Validate CSR format.
+
+        value: CSR PEM string.
+        return: validated CSR.
+        raise: serializers.ValidationError
+        """
+        if not value:
+            raise serializers.ValidationError("CSR cannot be empty")
+
+        # Validate the CSR using x509 library
+        try:
+            x509.load_pem_x509_csr(value.encode("utf-8"), default_backend())
+        except ValueError as e:
+            raise serializers.ValidationError(
+                f"Invalid CSR format: {e}"
+            ) from e
+        return value
+
+
 class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
     """Device Serializer class."""
 
@@ -134,6 +175,8 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
         required=False,
     )
 
+    certificate = DeviceCertificateSerializer(read_only=True)
+
     class Meta:
         """DeviceSerializer Meta class."""
 
@@ -147,6 +190,7 @@ class DeviceSerializer(serializers.ModelSerializer):  # type: ignore[type-arg]
             "foxglove_dashboards",
             "prometheus_alert_rule_files",
             "loki_alert_rule_files",
+            "certificate",
         )
 
     def to_representation(self, instance: Device) -> Dict[str, Any]:

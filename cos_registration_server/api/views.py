@@ -5,6 +5,7 @@ from typing import Any, Dict, Tuple
 
 import api.schema_status as status
 from api.serializer import (
+    DeviceCertificateSerializer,
     DeviceSerializer,
     FoxgloveDashboardSerializer,
     GrafanaDashboardSerializer,
@@ -18,7 +19,7 @@ from applications.models import (
     PrometheusAlertRuleFile,
 )
 from applications.utils import render_alert_rule_template_for_device
-from devices.models import Device
+from devices.models import Device, DeviceCertificate
 from django.http import HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -26,7 +27,8 @@ from drf_spectacular.utils import (
     OpenApiResponse,
     extend_schema,
 )
-from rest_framework.exceptions import NotFound
+from rest_framework import status as http_status
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
@@ -37,8 +39,6 @@ from rest_framework.generics import (
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .utils import generate_tls_certificate
 
 
 class HealthView(APIView):
@@ -87,7 +87,7 @@ class DevicesView(ListCreateAPIView):  # type: ignore[type-arg]
                 "Example: ?fields=uid,create_date",
                 required=False,
                 type=OpenApiTypes.STR,
-            )
+            ),
         ],
     )
     def get(
@@ -167,13 +167,60 @@ class DeviceCertificateView(APIView):
     """Device Certificate API view."""
 
     @extend_schema(
-        summary="Generate and get a device TLS certificate",
-        description="Generate and retrieve TLS certificate and "
-        "private key for a device by UID",
+        summary="Submit a Certificate Signing Request (CSR)",
+        description=(
+            "Submit a CSR for the device. The server stores it "
+            "and marks status as pending."
+        ),
+        request=DeviceCertificateSerializer,
         responses={
-            **status.code_200_device_certificate,
+            **status.code_202_csr_accepted,
+            **status.code_400_invalid_csr,
             **status.code_404_uid_not_found,
-            **status.code_404_device_certificate_not_found,
+        },
+    )
+    def post(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """POST a CSR for device certificate signing."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            raise NotFound("Device not found")
+
+        serializer = DeviceCertificateSerializer(data=request.data)
+        if not serializer.is_valid():
+            raise ValidationError(serializer.errors)
+
+        certificate, created = DeviceCertificate.objects.update_or_create(
+            device=device,
+            defaults={
+                "csr": serializer.validated_data["csr"],
+                "status": DeviceCertificate.CertificateStatus.PENDING,
+                "certificate": "",
+                "ca": "",
+                "chain": "",
+            },
+        )
+
+        return Response(status=http_status.HTTP_202_ACCEPTED)
+
+    @extend_schema(
+        summary="Check certificate signing status",
+        description=(
+            "Retrieve the status of the certificate request and "
+            "the signed certificate if available."
+        ),
+        responses={
+            200: OpenApiResponse(
+                description="Certificate status retrieved",
+                response=DeviceCertificateSerializer,
+            ),
+            **status.code_404_uid_not_found,
         },
     )
     def get(
@@ -183,28 +230,107 @@ class DeviceCertificateView(APIView):
         *args: Tuple[Any],
         **kwargs: Dict[str, Any],
     ) -> Response:
-        """GET a device TLS certificate and private key."""
+        """GET certificate signing status and certificate if signed."""
         try:
             device = Device.objects.get(uid=uid)
         except Device.DoesNotExist:
-            raise NotFound("Device does not exist")
+            raise NotFound("Device or CSR not found")
 
-        # If the device exists it will have an address,
-        # the serializer does not allow the creation of a device
-        # without an ip address.
-        cert_data = generate_tls_certificate(device.uid, device.address)
+        try:
+            certificate = device.certificate
+        except DeviceCertificate.DoesNotExist:
+            raise NotFound("Device or CSR not found")
 
-        if not cert_data.get("certificate") or not cert_data.get(
-            "private_key"
-        ):
-            raise NotFound("Certificate data for device not found")
+        response_data = {
+            "status": certificate.status,
+            "csr": certificate.csr,
+            "certificate": certificate.certificate,
+            "ca": certificate.ca,
+            "chain": certificate.chain,
+        }
 
-        return Response(
-            {
-                "certificate": cert_data["certificate"],
-                "private_key": cert_data["private_key"],
-            }
-        )
+        return Response(response_data, status=http_status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Update certificate status (internal use)",
+        description=(
+            "Internal endpoint for the charm to update certificate "
+            "status and provide signed certificate."
+        ),
+        request=DeviceCertificateSerializer,
+        responses={
+            200: OpenApiResponse(
+                description="Certificate updated successfully",
+                response=DeviceCertificateSerializer,
+            ),
+            400: OpenApiResponse(description="Invalid request data"),
+            404: OpenApiResponse(description="Device not found"),
+        },
+    )
+    def patch(
+        self,
+        request: Request,
+        uid: str,
+        *args: Tuple[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Response:
+        """PATCH certificate status and certificate data."""
+        try:
+            device = Device.objects.get(uid=uid)
+        except Device.DoesNotExist:
+            raise NotFound("Device uid not found")
+
+        try:
+            certificate = device.certificate
+        except DeviceCertificate.DoesNotExist:
+            raise NotFound("Certificate not found")
+
+        new_status = request.data.get("status")
+        if "certificate" in request.data and not new_status:
+            raise ValidationError(
+                "Status must be provided when updating certificate"
+            )
+
+        if new_status:
+            valid_statuses = [
+                DeviceCertificate.CertificateStatus.PENDING,
+                DeviceCertificate.CertificateStatus.SIGNED,
+                DeviceCertificate.CertificateStatus.DENIED,
+            ]
+            if new_status not in valid_statuses:
+                raise ValidationError("Invalid status value")
+
+            # If certificate is being provided, status must be signed or denied
+            if "certificate" in request.data and new_status not in [
+                DeviceCertificate.CertificateStatus.SIGNED,
+                DeviceCertificate.CertificateStatus.DENIED,
+            ]:
+                raise ValidationError(
+                    "Status must be signed or denied "
+                    "when providing certificate"
+                )
+
+        if new_status:
+            certificate.status = new_status
+        if "certificate" in request.data:
+            certificate.certificate = request.data["certificate"]
+        if "ca" in request.data:
+            certificate.ca = request.data["ca"]
+        if "chain" in request.data:
+            certificate.chain = request.data["chain"]
+
+        certificate.save()
+
+        response_data = {
+            "status": certificate.status,
+            "csr": certificate.csr,
+            "certificate": certificate.certificate,
+            "ca": certificate.ca,
+            "chain": certificate.chain,
+            "updated_at": certificate.updated_at,
+        }
+
+        return Response(response_data, status=http_status.HTTP_200_OK)
 
 
 class GrafanaDashboardsView(ListCreateAPIView):  # type: ignore[type-arg]

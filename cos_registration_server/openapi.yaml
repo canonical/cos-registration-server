@@ -938,12 +938,12 @@ paths:
           description: ''
         '404':
           description: UID not found
-  /api/v1/devices/{uid}/certificate:
+  /api/v1/devices/{uid}/certificate/:
     get:
       operationId: devices_certificate_retrieve
-      description: Generate and retrieve TLS certificate and private key for a device
-        by UID
-      summary: Generate and get a device TLS certificate
+      description: Retrieve the status of the certificate request and the signed certificate
+        if available.
+      summary: Check certificate signing status
       parameters:
       - in: path
         name: uid
@@ -959,17 +959,75 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  certificate:
-                    type: string
-                    description: PEM-encoded certificate
-                  private_key:
-                    type: string
-                    description: PEM-encoded private key
-          description: ''
+                $ref: '#/components/schemas/DeviceCertificate'
+          description: Certificate status retrieved
         '404':
-          description: Device certificate not found
+          description: UID not found
+    post:
+      operationId: devices_certificate_create
+      description: Submit a CSR for the device. The server stores it and marks status
+        as pending.
+      summary: Submit a Certificate Signing Request (CSR)
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCertificate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeviceCertificate'
+        required: true
+      security:
+      - {}
+      responses:
+        '202':
+          description: CSR accepted for processing
+        '400':
+          description: Invalid CSR format
+        '404':
+          description: UID not found
+    patch:
+      operationId: devices_certificate_partial_update
+      description: Internal endpoint for the charm to update certificate status and
+        provide signed certificate.
+      summary: Update certificate status (internal use)
+      parameters:
+      - in: path
+        name: uid
+        schema:
+          type: string
+        required: true
+      tags:
+      - devices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDeviceCertificate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDeviceCertificate'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCertificate'
+          description: Certificate updated successfully
+        '400':
+          description: Invalid request data
+        '404':
+          description: Device not found
   /api/v1/health/:
     get:
       operationId: health_retrieve
@@ -1127,6 +1185,9 @@ paths:
           description: ''
 components:
   schemas:
+    BlankEnum:
+      enum:
+      - ''
     Device:
       type: object
       description: Device Serializer class.
@@ -1160,10 +1221,49 @@ components:
           type: array
           items:
             type: string
+        certificate:
+          allOf:
+          - $ref: '#/components/schemas/DeviceCertificate'
+          readOnly: true
       required:
       - address
+      - certificate
       - creation_date
       - uid
+    DeviceCertificate:
+      type: object
+      description: Device Certificate Serializer class.
+      properties:
+        csr:
+          type: string
+          title: Device Certificate Signing Request
+        certificate:
+          type: string
+          title: Signed Device Certificate
+        ca:
+          type: string
+          title: Device Certificate Authority
+        chain:
+          type: string
+          title: Device Certificate Chain
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Device Certificate request created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Device Certificate last updated
+      required:
+      - created_at
+      - csr
+      - updated_at
     FoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.
@@ -1237,6 +1337,40 @@ components:
           type: array
           items:
             type: string
+        certificate:
+          allOf:
+          - $ref: '#/components/schemas/DeviceCertificate'
+          readOnly: true
+    PatchedDeviceCertificate:
+      type: object
+      description: Device Certificate Serializer class.
+      properties:
+        csr:
+          type: string
+          title: Device Certificate Signing Request
+        certificate:
+          type: string
+          title: Signed Device Certificate
+        ca:
+          type: string
+          title: Device Certificate Authority
+        chain:
+          type: string
+          title: Device Certificate Chain
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Device Certificate request created
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Device Certificate last updated
     PatchedFoxgloveDashboard:
       type: object
       description: Foxglove Dashboard Serializer class.
@@ -1297,3 +1431,13 @@ components:
       required:
       - rules
       - uid
+    StatusEnum:
+      enum:
+      - pending
+      - signed
+      - denied
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `signed` - Signed
+        * `denied` - Denied

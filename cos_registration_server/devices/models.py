@@ -43,3 +43,59 @@ class Device(models.Model):
     def __str__(self) -> str:
         """Str representation of a device."""
         return self.uid
+
+
+class DeviceCertificate(models.Model):
+    """Device Certificate model.
+
+    This class represents a device certificate in the DB.
+
+    device: OneToOne relationship to Device.
+    csr: Certificate Signing Request in PEM format.
+    certificate: Signed certificate in PEM format (null until signed).
+    ca: CA that signed the certificate.
+    chain: Certificate chain in PEM format.
+    status: Current status of the certificate request.
+    created_at: Timestamp when certificate request was created.
+    updated_at: Timestamp when certificate was last updated.
+    """
+
+    class CertificateStatus(models.TextChoices):
+        """Certificate request status choices."""
+
+        PENDING = "pending", "Pending"
+        SIGNED = "signed", "Signed"
+        DENIED = "denied", "Denied"
+
+    device = models.OneToOneField(
+        Device,
+        on_delete=models.CASCADE,
+        related_name="certificate",
+        primary_key=True,
+    )
+    csr = models.TextField("Device Certificate Signing Request")
+    certificate = models.TextField(
+        "Signed Device Certificate", blank=True, default=""
+    )
+    ca = models.TextField(
+        "Device Certificate Authority", blank=True, default=""
+    )
+    chain = models.TextField(
+        "Device Certificate Chain", blank=True, default=""
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=CertificateStatus.choices,
+        blank=True,
+        default="",
+    )
+    created_at = models.DateTimeField(
+        "Device Certificate request created", auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        "Device Certificate last updated", auto_now=True
+    )
+
+    def __str__(self) -> str:
+        """Str representation of a certificate."""
+        return f"Device Certificate for {self.device.uid}"
