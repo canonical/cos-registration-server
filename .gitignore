@@ -137,3 +137,8 @@ dmypy.json
 *.rock
 # static files
 cos_registration_server/static/
+
+# node modules
+node_modules/
+package-lock.json
+vanilla-build.scss
