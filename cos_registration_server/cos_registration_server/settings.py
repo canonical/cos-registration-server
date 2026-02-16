@@ -10,28 +10,34 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
+
+from environs import Env
+
+logger = logging.getLogger(__name__)
+
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-try:
-    SECRET_KEY = os.environ["SECRET_KEY_DJANGO"]
-except KeyError:
-    pass
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = env.bool("DEBUG", default=False)
+if DEBUG:
+    logger.warning(
+        "DEBUG mode is enabled; THIS IS NOT SUITABLE FOR PRODUCTION"
+    )
+
+SECRET_KEY = env.str("SECRET_KEY_DJANGO")
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # to be able to add the webserver address
-try:
-    additional_host = os.environ["ALLOWED_HOST_DJANGO"]
-    ALLOWED_HOSTS.extend(additional_host.split(","))
-except KeyError:
-    pass
+additional_host: list[str] = env.list("ALLOWED_HOST_DJANGO", default=[])
+ALLOWED_HOSTS.extend(additional_host)
 
 # Application definition
 
@@ -98,19 +104,14 @@ WSGI_APPLICATION = "cos_registration_server.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-# to be able to store the database in a juju storage
-try:
-    database_base_dir = Path(os.environ["DATABASE_BASE_DIR_DJANGO"])
-except KeyError:
-    database_base_dir = BASE_DIR
-
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": database_base_dir / "db.sqlite3",
-    }
+    "default": env.dj_db_url("DATABASE_URL", default="sqlite://:memory:"),
 }
+
+if DATABASES["default"].get("NAME") == ":memory:":
+    logger.warning(
+        "Using in-memory SQLite database; DATA WILL NOT BE PERSISTED."
+    )
 
 
 # Password validation
