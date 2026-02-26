@@ -34,7 +34,7 @@ jobs:
       id: rockcraft
 
     - name: Upload locally built ROCK artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: cos-registration-agent-rock
         path: ${{ steps.rockcraft.outputs.rock }}
@@ -61,7 +61,7 @@ jobs:
       run: syft $(realpath ${{ steps.rockcraft.outputs.rock }}) -o spdx-json=cos-registration-server.sbom.json
 
     - name: Upload SBOM
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: cos-registration-server-sbom
         path: "cos-registration-server.sbom.json"
