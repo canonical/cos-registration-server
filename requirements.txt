@@ -1,7 +1,7 @@
 cryptography
 django==4.2.30
 djangorestframework==3.17.1
-drf-spectacular==0.29.0
+drf-spectacular==0.30.0
 drf-standardized-errors[openapi]
 environs[django]
 gunicorn
